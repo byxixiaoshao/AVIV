@@ -143,13 +143,9 @@ If this project helps you, consider making a donation!
 
 <div align="center">
 
-### WeChat Pay
+<img src="img/Pay/wx.png" width="200" alt="WeChat Pay"> &nbsp;&nbsp; <img src="img/Pay/zfb.png" width="200" alt="Alipay">
 
-![WeChat Pay](wx.png)
-
-### Alipay
-
-![Alipay](zfb.png)
+**WeChat Pay** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; **Alipay**
 
 </div>
 

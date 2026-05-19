@@ -141,13 +141,9 @@ AVIV 是一款集白噪音播放与音乐播放于一体的 Android 应用，提
 
 <div align="center">
 
-### 微信支付
+<img src="../img/Pay/wx.png" width="200" alt="微信支付"> &nbsp;&nbsp; <img src="../img/Pay/zfb.png" width="200" alt="支付宝">
 
-![微信支付](wx.png)
-
-### 支付宝
-
-![支付宝](zfb.png)
+**微信支付** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; **支付宝**
 
 </div>
 
