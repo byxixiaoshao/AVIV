@@ -28,14 +28,13 @@ AVIV is an Android application that combines white noise playback with music pla
 
 - **Multi-format Support**: MP3, WAV, FLAC, AAC, and more
 - **3D Spatial Audio**: Sound positioning, distance attenuation
-- **12-Band Equalizer**: Multiple presets (Flat, Bass Boost, Treble Boost, Vocal Boost, Rock, Pop, Classical, Jazz, Electronic, V-shape)
+- **12-Band Equalizer**: Professional equalizer
 - **Creative Effects**:
   - Lo-Fi (Low fidelity)
   - 8-bit (Retro gaming sound)
   - Underwater effect
   - Alien signal
   - Megaphone effect
-  - Hi-Fi (High fidelity enhancement)
   - Distortion
 - **Spatial Reverb**: Room size, decay time, wet/dry mix
 - **Playback Control**: Pitch adjustment (±12 semitones), Speed control (0.3x - 3.0x)
@@ -67,7 +66,7 @@ AVIV is an Android application that combines white noise playback with music pla
 
 ### Requirements
 
-- Android 5.0 (API 21) or higher
+- Android 10.0 (API 29) or higher
 - At least 100MB free storage
 
 ### Installation
@@ -86,7 +85,7 @@ Download the latest APK from [Releases](https://github.com/byxixiaoshao/AVIV/rel
 
 ### Music Playback
 
-1. Tap bottom player bar to open player interface
+1. Swipe down the top player bar to open player interface
 2. Add music files via file picker
 3. Adjust audio effects using mixer panel
 4. Create and manage playlists
@@ -138,6 +137,24 @@ See [LICENSE](LICENSE) file for details.
 
 ---
 
+## 💰 Support the Project
+
+If this project helps you, consider making a donation!
+
+<div align="center">
+
+### WeChat Pay
+
+![WeChat Pay](wx.png)
+
+### Alipay
+
+![Alipay](zfb.png)
+
+</div>
+
+---
+
 ## 📧 Contact
 
 - **Issues**: [GitHub Issues](https://github.com/byxixiaoshao/AVIV/issues)
@@ -148,6 +165,15 @@ For questions, suggestions, or feedback, please use GitHub Issues.
 ---
 
 ## 🙏 Acknowledgments
+
+### Audio Resources
+
+White noise sources used in this project are from **[Pixabay](https://pixabay.com/)**.
+
+- Long press sound option to view audio author information
+- Please support the original creators if possible
+
+### Open Source Projects
 
 Thanks to all open-source projects contributing to audio processing technology.
 
@@ -163,6 +189,6 @@ Thanks to all open-source projects contributing to audio processing technology.
 
 **⭐ If this project helps you, please give it a Star ⭐**
 
-Made with ❤️ by byxixiaoshao
+Made with ❤️ by Bicy Studio
 
 </div>
