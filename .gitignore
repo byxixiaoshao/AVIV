@@ -1,0 +1,13 @@
+# 忽略所有文件
+/*
+
+# 但保留以下文件和文件夹
+!README.md
+!README/
+!wx.png
+!zfb.png
+!LICENSE
+!.gitignore
+
+# 忽略 README 文件夹中的某些文件（如果需要）
+# README/*.tmp
