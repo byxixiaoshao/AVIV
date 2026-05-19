@@ -1,0 +1,168 @@
+# AVIV - White Noise & Music Player
+
+<div align="center">
+
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Platform](https://img.shields.io/badge/platform-Android-green.svg)
+![License](https://img.shields.io/badge/license-CC%20BY--NC%204.0-red.svg)
+
+**A powerful white noise and music player application**
+
+[Features](#-features) • [Download](#-download) • [Usage](#-usage) • [License](#-license)
+
+**[中文文档](README/README_ZH.md)**
+
+</div>
+
+---
+
+## 📱 About
+
+AVIV is an Android application that combines white noise playback with music player functionality, offering rich audio effects and personalized settings to help users relax, improve focus, or enhance sleep quality.
+
+---
+
+## ✨ Features
+
+### 🎵 Music Player
+
+- **Multi-format Support**: MP3, WAV, FLAC, AAC, and more
+- **3D Spatial Audio**: Sound positioning, distance attenuation
+- **12-Band Equalizer**: Multiple presets (Flat, Bass Boost, Treble Boost, Vocal Boost, Rock, Pop, Classical, Jazz, Electronic, V-shape)
+- **Creative Effects**:
+  - Lo-Fi (Low fidelity)
+  - 8-bit (Retro gaming sound)
+  - Underwater effect
+  - Alien signal
+  - Megaphone effect
+  - Hi-Fi (High fidelity enhancement)
+  - Distortion
+- **Spatial Reverb**: Room size, decay time, wet/dry mix
+- **Playback Control**: Pitch adjustment (±12 semitones), Speed control (0.3x - 3.0x)
+- **Playlist Management**: Create and manage playlists
+
+### 🌊 White Noise
+
+- **Multiple Sources**: Various built-in white noise sources
+- **Audio Effects**: Independent effect configuration for each source
+- **Scatter Mode**: Random playback with customizable intervals
+- **Volume Control**: 0-300% gain range
+
+### 🎨 Personalization
+
+- **Custom Themes**: HSV color customization
+- **Timer**: Auto-stop timer (up to 23h 59m)
+- **Settings Persistence**: Auto-save effect parameters
+- **Logging**: Optional logging for troubleshooting
+
+### 🎛️ Mixer Panel
+
+- **Effect Intensity**: 0-100% adjustment for all effects
+- **Real-time Preview**: Instant effect preview
+- **Quick Reset**: One-click parameter reset
+
+---
+
+## 📥 Download
+
+### Requirements
+
+- Android 5.0 (API 21) or higher
+- At least 100MB free storage
+
+### Installation
+
+Download the latest APK from [Releases](https://github.com/byxixiaoshao/AVIV/releases) page.
+
+**Steps**:
+1. Download APK file
+2. Enable "Install from unknown sources" on your device
+3. Open APK file to install
+4. Launch the app after installation
+
+---
+
+## 📖 Usage
+
+### Music Playback
+
+1. Tap bottom player bar to open player interface
+2. Add music files via file picker
+3. Adjust audio effects using mixer panel
+4. Create and manage playlists
+
+### White Noise
+
+1. Select white noise source on main screen
+2. Tap source card to start playback
+3. Long press card to configure effects
+4. Use scatter mode for random playback
+
+### Audio Effects
+
+- **Equalizer**: Mixer → Equalizer Panel
+- **Creative Effects**: Mixer → Audio Quality Panel
+- **Spatial Reverb**: Mixer → Reverb Panel
+- **Sound Positioning**: Mixer → Spatial Audio Panel
+
+---
+
+## 🎯 Use Cases
+
+- 🛌 **Sleep Aid**: Use white noise to help fall asleep
+- 📚 **Focus Enhancement**: Improve concentration with white noise
+- 🧘 **Meditation**: Combine with music for meditation
+- 🎧 **Music Enjoyment**: Enhance music with audio effects
+- 💼 **Work Ambience**: Create comfortable work environment
+
+---
+
+## ⚠️ License
+
+This project is licensed under **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)**.
+
+### ✅ Permitted
+
+- Personal learning and research
+- Non-commercial use
+- Distribute unmodified APK (with proper attribution)
+
+### ❌ Prohibited
+
+- Commercial use
+- Redistribution of modified versions
+- Use in commercial products or services
+- Remove or modify copyright notices
+
+See [LICENSE](LICENSE) file for details.
+
+---
+
+## 📧 Contact
+
+- **Issues**: [GitHub Issues](https://github.com/byxixiaoshao/AVIV/issues)
+- **Author**: byxixiaoshao
+
+For questions, suggestions, or feedback, please use GitHub Issues.
+
+---
+
+## 🙏 Acknowledgments
+
+Thanks to all open-source projects contributing to audio processing technology.
+
+---
+
+## 📸 Screenshots
+
+> Screenshots will be added in future releases
+
+---
+
+<div align="center">
+
+**⭐ If this project helps you, please give it a Star ⭐**
+
+Made with ❤️ by byxixiaoshao
+
+</div>
