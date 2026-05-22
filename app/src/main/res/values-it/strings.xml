@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AVIV</string>
+    
+    <string name="download_failed">Download fallito</string>
+    <string name="download_failed_switch_source">Download fallito, prova un\'altra fonte</string>
+    <string name="download_already_downloading">Download in corso, attendere</string>
+    
+    <string name="sound_library">Libreria suoni</string>
+    <string name="select_white_noise">Seleziona il tuo rumore bianco preferito</string>
+    <string name="collapse">Comprimi</string>
+    <string name="expand">Espandi</string>
+    <string name="download_address">URL download</string>
+    <string name="author">Autore</string>
+    <string name="author_homepage">Pagina autore</string>
+    <string name="download_info">Info download</string>
+    <string name="download_date">Data download</string>
+    <string name="file_size">Dimensione file</string>
+    <string name="audio_duration">Durata audio</string>
+    <string name="donate_author_hint">Se ti piace il suono, considera di donare all\'autore</string>
+    <string name="close">Chiudi</string>
+    
+    <string name="now_playing">In riproduzione</string>
+    <string name="adjust_volume_effects">Regola volume ed effetti</string>
+    <string name="still_empty">Aggiungi vuoto al vuoto</string>
+    <string name="select_from_library">Seleziona il tuo rumore bianco preferito dalla libreria</string>
+    <string name="white_noise">Rumore bianco</string>
+    <string name="scattered">Sparsi</string>
+    <string name="audio_clips_count">clip audio</string>
+    <string name="config">Configurazione</string>
+    <string name="remove">Rimuovi</string>
+    <string name="play">Riproduci</string>
+    <string name="pause">Pausa</string>
+    
+    <string name="settings">Impostazioni</string>
+    <string name="customize_experience">Personalizza la tua esperienza</string>
+    <string name="music">Musica</string>
+    <string name="music_directory">Cartella musica</string>
+    <string name="directories_count">cartelle</string>
+    <string name="general">Generale</string>
+    <string name="auto_play_on_startup">Riproduzione automatica all\'avvio</string>
+    <string name="audio_effect_order">Ordine effetti audio</string>
+    <string name="customize">Personalizza</string>
+    <string name="theme_color">Colore tema</string>
+    <string name="custom_colors">Colori personalizzati</string>
+    <string name="accent_color">Colore accento</string>
+    <string name="primary_color">Colore primario</string>
+    <string name="background_color">Colore sfondo</string>
+    <string name="text_color">Colore testo</string>
+    <string name="log_recording">Registrazione log</string>
+    <string name="about_app">Info</string>
+    
+    <string name="scattered_sound_library">Libreria suoni sparsi</string>
+    <string name="select_random_sound_group">Seleziona gruppo suoni casuale da riprodurre</string>
+    <string name="add">Aggiungi</string>
+    <string name="create_player">Crea player</string>
+    <string name="no_scattered_data">Nessun dato suoni sparsi</string>
+    
+    <string name="theme_color_dialog_title">Colore tema</string>
+    <string name="custom_color">Colore personalizzato</string>
+    <string name="confirm">Conferma</string>
+    <string name="cancel">Annulla</string>
+    
+    <string name="hue">Tonalità</string>
+    <string name="saturation">Saturazione</string>
+    <string name="brightness">Luminosità</string>
+    <string name="preview_text">Testo anteprima</string>
+    
+    <string name="add_directory">Aggiungi cartella</string>
+    <string name="scanning_music">Scansione musica in corso...</string>
+    <string name="delete">Elimina</string>
+    
+    <string name="donate_support">Supporta con donazione</string>
+    <string name="unlock_premium">Sblocca premium</string>
+    <string name="thank_you_premium">Grazie per essere un utente premium!\n\nSe ti piace l\'app, puoi scansionare il codice QR per donare e supportare lo sviluppatore per continuare ad aggiungere più funzionalità.</string>
+    <string name="wechat_pay">WeChat Pay</string>
+    <string name="alipay">Alipay</string>
+    <string name="unlock_premium_hint">Sblocca premium per soli 10 CNY e goditi più funzionalità:</string>
+    <string name="feature">Funzionalità</string>
+    <string name="normal_version">Normale</string>
+    <string name="premium_version">Premium</string>
+    <string name="music_player">Lettore musicale</string>
+    <string name="basic_playback">Base</string>
+    <string name="full_feature">✓ Completo</string>
+    <string name="sound_quality_adjust">Regolazione qualità suono</string>
+    <string name="basic_adjust">Base</string>
+    <string name="sound_classification">Classificazione suoni</string>
+    <string name="preset_classification">Preset</string>
+    <string name="spatial_audio">Audio spaziale</string>
+    <string name="basic_function">Base</string>
+    <string name="import_sounds">Importa suoni</string>
+    <string name="not_supported">Non supportato</string>
+    <string name="custom_classification">Classificazione personalizzata</string>
+    <string name="weekly_usage_limit">Limite settimanale</string>
+    <string name="go_to_payment">Vai al pagamento</string>
+    
+    <string name="thank_you_support">Grazie per il tuo supporto</string>
+    <string name="thank_you_message">Ho ricevuto la tua gentilezza, tieni questi soldi per un tè al latte~</string>
+    <string name="thank_you_hint">Se hai i mezzi, puoi provare a supportare lo sviluppatore donando nelle impostazioni. Naturalmente, puoi anche supportare gli autori del rumore bianco.</string>
+    <string name="continue_">Continua</string>
+    
+    <string name="app_icon">Icona app</string>
+    <string name="open_source_license">Licenza open source</string>
+    <string name="sound_source_credit">Crediti fonte suoni</string>
+    <string name="sound_source_hint">Tutti i suoni di rumore bianco provengono da Pixabay\nSeguendo la licenza Pixabay per uso commerciale</string>
+    
+    <string name="audio_effect_order_title">Ordine elaborazione effetti audio</string>
+    <string name="audio_effect_order_hint">Clicca le frecce per regolare l\'ordine di elaborazione (dall\'alto al basso)</string>
+    <string name="spatial_offset">Offset spaziale</string>
+    <string name="spatial_reverb">Riverbero spaziale</string>
+    <string name="equalizer">Equalizzatore</string>
+    <string name="quality_effect">Effetto qualità</string>
+    
+    <string name="create_scattered_group">Crea gruppo sparso</string>
+    <string name="group_name">Nome gruppo</string>
+    <string name="create">Crea</string>
+    
+    <string name="add_to_track">Aggiungi a traccia</string>
+    <string name="select_track">Seleziona traccia</string>
+    <string name="no_available_tracks">Nessuna traccia disponibile</string>
+    <string name="create_new_track">Crea nuova traccia</string>
+    
+    <string name="more_adjustments">Più regolazioni</string>
+    <string name="premium_exclusive_feature">Funzionalità esclusiva premium</string>
+    <string name="preset">Preset</string>
+    <string name="limiter">Limitatore</string>
+    <string name="flat">Piatto</string>
+    
+    <string name="all">Tutto</string>
+    <string name="folder">Cartella</string>
+    <string name="artist">Artista</string>
+    <string name="album">Album</string>
+    <string name="title">Titolo</string>
+    <string name="duration">Durata</string>
+    <string name="date_added">Data aggiunta</string>
+    
+    <string name="music_player_premium_feature">Il lettore musicale è una funzionalità premium</string>
+    <string name="please_unlock_premium">Per favore sblocca premium</string>
+    
+    <string name="hours">Ore</string>
+    <string name="minutes">Minuti</string>
+    <string name="start_timer">Avvia timer</string>
+    <string name="pause_type">Tipo pausa</string>
+    <string name="snooze_time">Tempo snooze</string>
+    <string name="timer_end_ring">Suoneria alla fine del timer</string>
+    <string name="global">Globale</string>
+    <string name="music_only">Solo musica</string>
+    <string name="white_noise_only">Solo rumore bianco</string>
+    <string name="timer_15_min">15 min</string>
+    <string name="timer_30_min">30 min</string>
+    <string name="timer_45_min">45 min</string>
+    <string name="timer_1_hour">1 ora</string>
+    <string name="timer_2_hour">2 ore</string>
+    <string name="timer_3_hour">3 ore</string>
+    
+    <string name="audio_group_config">Configurazione gruppo audio</string>
+    <string name="add_audio">Aggiungi audio</string>
+    <string name="tap_to_add_audio">Tocca per aggiungere audio</string>
+    <string name="added_audio">Audio aggiunto (%1$d)</string>
+    <string name="playback_interval">Intervallo riproduzione</string>
+    <string name="min_interval">Intervallo minimo</string>
+    <string name="max_interval">Intervallo massimo</string>
+    <string name="seconds">sec</string>
+    <string name="overlay_mode">Modalità sovrapposizione</string>
+    <string name="overlay_mode_hint">(Il timer inizia quando l\'audio parte, non aspetta la fine)</string>
+    <string name="none">Nessuno</string>
+    <string name="room_size">Dimensione stanza</string>
+    <string name="decay_time">Tempo decadimento</string>
+    <string name="damping">Smorzamento</string>
+    <string name="wet_level">Livello wet</string>
+    <string name="dry_level">Livello dry</string>
+    <string name="pre_delay">Pre-delay</string>
+    <string name="insulation">Isolamento</string>
+    <string name="reflection_density">Densità riflessione</string>
+    <string name="reflection_spread">Diffusione riflessione</string>
+    <string name="highpass_filter">Filtro passa-alto</string>
+    <string name="early_reflection">Riflessione precoce</string>
+    
+    <string name="shining_star">Stella brillante</string>
+    <string name="dim_stardust">Polvere stellare tenue</string>
+    <string name="premium_user">Utente premium</string>
+    <string name="free_user">Utente gratuito</string>
+    <string name="donate_author">Dona all\'autore</string>
+    
+    <string name="please_add_music_directory">Per prima cosa aggiungi una cartella musica</string>
+</resources>

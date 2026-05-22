@@ -1,0 +1,427 @@
+{
+  "version": "3.1.0",
+  "categories": [
+    {
+      "id": "nature",
+      "name": "category_nature"
+    },
+    {
+      "id": "places",
+      "name": "category_places"
+    },
+    {
+      "id": "things",
+      "name": "category_things"
+    },
+    {
+      "id": "animals",
+      "name": "category_animals"
+    },
+    {
+      "id": "urban",
+      "name": "category_urban"
+    }
+  ],
+  "sounds": [
+    {
+      "id": "rain",
+      "name": "sound_rain",
+      "category": "nature",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/07/23/audio_63d9f37e74.mp3?filename=feedthestraycats-real-rain-sound-379215.mp3",
+      "author": "FeedTheStrayCats",
+      "authorUrl": "https://pixabay.com/zh/users/feedthestraycats-50622168/"
+    },
+    {
+      "id": "wind",
+      "name": "sound_wind",
+      "category": "nature",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/12/28/audio_51b7de1a9f.mp3?filename=soundreality-wind-blowing-457954.mp3",
+      "author": "SoundReality",
+      "authorUrl": "https://pixabay.com/zh/users/soundreality-31074404/"
+    },
+    {
+      "id": "campfire",
+      "name": "sound_campfire",
+      "category": "nature",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2026/01/16/audio_9b2a34b5c3.mp3?filename=dragon-studio-campfire-in-the-woods-467491.mp3",
+      "author": "DRAGON-STUDIO",
+      "authorUrl": "https://pixabay.com/zh/users/dragon-studio-38165424/"
+    },
+    {
+      "id": "river",
+      "name": "sound_river",
+      "category": "nature",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/07/09/audio_d96d46f019.mp3?filename=dragon-studio-soothing-river-flow-372456.mp3",
+      "author": "DRAGON-STUDIO",
+      "authorUrl": "https://pixabay.com/zh/users/dragon-studio-38165424/"
+    },
+    {
+      "id": "waterfall",
+      "name": "sound_waterfall",
+      "category": "nature",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/09/audio_1ea8b97189.mp3?filename=freesound_community-waterfall-24060.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "walk-in-snow",
+      "name": "sound_walk_in_snow",
+      "category": "nature",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/01/audio_b4c20cec5d.mp3?filename=sspsurvival-footsteps-in-the-snow-21811.mp3",
+      "author": "SSPsurvival",
+      "authorUrl": "https://pixabay.com/zh/users/sspsurvival-22364443/"
+    },
+    {
+      "id": "droplets",
+      "name": "sound_droplets",
+      "category": "nature",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2021/08/09/audio_a2f0a8169b.mp3?filename=freesound_community-droplets-in-a-cave-6785.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "waves",
+      "name": "sound_waves",
+      "category": "nature",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/07/18/audio_91fda6f9b0.mp3?filename=dragon-studio-ocean-waves-376898.mp3",
+      "author": "DRAGON-STUDIO",
+      "authorUrl": "https://pixabay.com/zh/users/dragon-studio-38165424/"
+    },
+    {
+      "id": "airport",
+      "name": "sound_airport",
+      "category": "places",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/09/audio_5c64ac3836.mp3?filename=freesound_community-airport-ambience-27164.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "cafe",
+      "name": "sound_cafe",
+      "category": "places",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/05/05/audio_434d6977f5.mp3?filename=soul_serenity_sounds-cafe_paris_ambience_chatter-4-337118.mp3",
+      "author": "Soul_Serenity_Sounds",
+      "authorUrl": "https://pixabay.com/zh/users/soul_serenity_sounds-6817262/"
+    },
+    {
+      "id": "church",
+      "name": "sound_church",
+      "category": "places",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/10/audio_d70cd16386.mp3?filename=freesound_community-creepy-church-bell-33827.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "library",
+      "name": "sound_library",
+      "category": "places",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/14/audio_6ba98a34ab.mp3?filename=freesound_community-turning-pages-of-a-book-2-64981.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "supermarket",
+      "name": "sound_supermarket",
+      "category": "places",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/14/audio_3e64f828a1.mp3?filename=freesound_community-supermarket-67653.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "subway",
+      "name": "sound_subway",
+      "category": "places",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/10/audio_540d3f70b7.mp3?filename=freesound_community-subway-sound-38903.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "train",
+      "name": "sound_train",
+      "category": "places",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/10/audio_e0289a7b1f.mp3?filename=freesound_community-train-voice-32560.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "office",
+      "name": "sound_office",
+      "category": "places",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/15/audio_b200e4cfef.mp3?filename=freesound_community-computer-labbusy-73577.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "clock",
+      "name": "sound_clock",
+      "category": "things",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/15/audio_790971df2d.mp3?filename=freesound_community-clock-ticking-83775.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "boiling-water",
+      "name": "sound_boiling_water",
+      "category": "things",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/14/audio_8dc6653bf9.mp3?filename=freesound_community-boiling-water-sound-62556.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "fan",
+      "name": "sound_fan",
+      "category": "things",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2023/01/15/audio_b129c60903.mp3?filename=colto-fan-wind-133457.mp3",
+      "author": "Colto",
+      "authorUrl": "https://pixabay.com/zh/users/colto-32590111/"
+    },
+    {
+      "id": "keyboard",
+      "name": "sound_keyboard",
+      "category": "things",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/06/06/audio_1a8e296837.mp3?filename=dragon-studio-typing-keyboard-asmr-356116.mp3",
+      "author": "DRAGON-STUDIO",
+      "authorUrl": "https://pixabay.com/zh/users/dragon-studio-38165424/"
+    },
+    {
+      "id": "washing-machine",
+      "name": "sound_washing_machine",
+      "category": "things",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/09/audio_9d1aa38546.mp3?filename=freesound_community-washing-machine-spin_cleaned_up-24477.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "wind-chime",
+      "name": "sound_wind_chime",
+      "category": "things",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/14/audio_bf89b6bd41.mp3?filename=freesound_community-wind-chime-small-64660.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "windscreen-wiper",
+      "name": "sound_windscreen_wiper",
+      "category": "things",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/10/audio_fcff039ab2.mp3?filename=freesound_community-windscreen-wiper-34432.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "air-conditioner",
+      "name": "sound_air_conditioner",
+      "category": "things",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/10/audio_b009525c9a.mp3?filename=freesound_community-wall-air-conditioner-43901.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "printer",
+      "name": "sound_printer",
+      "category": "things",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/09/audio_2d54252f5b.mp3?filename=freesound_community-printer-25474.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "typewriter",
+      "name": "sound_typewriter",
+      "category": "things",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/14/audio_0983f5419c.mp3?filename=freesound_community-typewriter-typing-68696.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "vinyl-record",
+      "name": "sound_vinyl_record",
+      "category": "things",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/26/audio_938590db02.mp3?filename=freesound_community-record-crackles-and-pops-1-108111.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "cricket",
+      "name": "sound_cricket",
+      "category": "animals",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/24/audio_b41475c22c.mp3?filename=freesound_community-cricket-chirp-101026.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "dog",
+      "name": "sound_dog",
+      "category": "animals",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/09/18/audio_dd6700a2a1.mp3?filename=dragon-studio-dog-barking-406629.mp3",
+      "author": "DRAGON-STUDIO",
+      "authorUrl": "https://pixabay.com/zh/users/dragon-studio-38165424/"
+    },
+    {
+      "id": "bird",
+      "name": "sound_bird",
+      "category": "animals",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2026/03/10/audio_faf557b629.mp3?filename=loswin23-bird-chirp-499423.mp3",
+      "author": "loswin23",
+      "authorUrl": "https://pixabay.com/zh/users/loswin23-15879800/"
+    },
+    {
+      "id": "cat-purr",
+      "name": "sound_cat_purr",
+      "category": "animals",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/09/08/audio_e1d497a3b6.mp3?filename=dragon-studio-purring-cat-401727.mp3",
+      "author": "DRAGON-STUDIO",
+      "authorUrl": "https://pixabay.com/zh/users/dragon-studio-38165424/"
+    },
+    {
+      "id": "heartbeat",
+      "name": "sound_heartbeat",
+      "category": "animals",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/07/09/audio_5ce966c181.mp3?filename=dragon-studio-thudding-heartbeat-372487.mp3",
+      "author": "DRAGON-STUDIO",
+      "authorUrl": "https://pixabay.com/zh/users/dragon-studio-38165424/"
+    },
+    {
+      "id": "city-traffic",
+      "name": "sound_city_traffic",
+      "category": "urban",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/14/audio_1cf9a56d0d.mp3?filename=freesound_community-car-street-noise-68104.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "crowd",
+      "name": "sound_crowd",
+      "category": "urban",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2021/08/09/audio_75eeef56e4.mp3?filename=freesound_community-crowd_talking-6762.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    }
+  ],
+  "Language": {
+    "zh": {
+      "category_nature": "自然",
+      "category_places": "场所",
+      "category_things": "物品",
+      "category_animals": "动物",
+      "category_urban": "城市",
+      "category_uncategorized": "未分类",
+      "sound_rain": "雨",
+      "sound_wind": "风",
+      "sound_campfire": "篝火",
+      "sound_river": "河流",
+      "sound_waterfall": "瀑布",
+      "sound_walk_in_snow": "雪中漫步",
+      "sound_droplets": "水滴",
+      "sound_waves": "海浪",
+      "sound_airport": "机场",
+      "sound_cafe": "咖啡馆",
+      "sound_church": "教堂",
+      "sound_library": "图书馆",
+      "sound_supermarket": "超市",
+      "sound_subway": "地铁",
+      "sound_train": "火车",
+      "sound_office": "办公室",
+      "sound_clock": "时钟",
+      "sound_boiling_water": "沸水",
+      "sound_fan": "风扇",
+      "sound_keyboard": "键盘",
+      "sound_washing_machine": "洗衣机",
+      "sound_wind_chime": "风铃",
+      "sound_windscreen_wiper": "雨刮器",
+      "sound_air_conditioner": "空调",
+      "sound_printer": "打印机",
+      "sound_typewriter": "打字机",
+      "sound_vinyl_record": "黑胶唱片",
+      "sound_cricket": "蟋蟀",
+      "sound_dog": "犬",
+      "sound_bird": "鸟",
+      "sound_cat_purr": "猫呼噜",
+      "sound_heartbeat": "心跳",
+      "sound_city_traffic": "城市交通",
+      "sound_crowd": "人群"
+    },
+    "en": {
+      "category_nature": "Nature",
+      "category_places": "Places",
+      "category_things": "Things",
+      "category_animals": "Animals",
+      "category_urban": "Urban",
+      "category_uncategorized": "Uncategorized",
+      "sound_rain": "Rain",
+      "sound_wind": "Wind",
+      "sound_campfire": "Campfire",
+      "sound_river": "River",
+      "sound_waterfall": "Waterfall",
+      "sound_walk_in_snow": "Walk in Snow",
+      "sound_droplets": "Droplets",
+      "sound_waves": "Waves",
+      "sound_airport": "Airport",
+      "sound_cafe": "Cafe",
+      "sound_church": "Church",
+      "sound_library": "Library",
+      "sound_supermarket": "Supermarket",
+      "sound_subway": "Subway",
+      "sound_train": "Train",
+      "sound_office": "Office",
+      "sound_clock": "Clock",
+      "sound_boiling_water": "Boiling Water",
+      "sound_fan": "Fan",
+      "sound_keyboard": "Keyboard",
+      "sound_washing_machine": "Washing Machine",
+      "sound_wind_chime": "Wind Chime",
+      "sound_windscreen_wiper": "Windscreen Wiper",
+      "sound_air_conditioner": "Air Conditioner",
+      "sound_printer": "Printer",
+      "sound_typewriter": "Typewriter",
+      "sound_vinyl_record": "Vinyl Record",
+      "sound_cricket": "Cricket",
+      "sound_dog": "Dog",
+      "sound_bird": "Bird",
+      "sound_cat_purr": "Cat Purr",
+      "sound_heartbeat": "Heartbeat",
+      "sound_city_traffic": "City Traffic",
+      "sound_crowd": "Crowd"
+    },
+    "jp": {
+      "category_nature": "自然",
+      "category_places": "場所",
+      "category_things": "物",
+      "category_animals": "動物",
+      "category_urban": "都市",
+      "category_uncategorized": "未分類",
+      "sound_rain": "雨",
+      "sound_wind": "風",
+      "sound_campfire": "焚き火",
+      "sound_river": "川",
+      "sound_waterfall": "滝",
+      "sound_walk_in_snow": "雪の中を歩く",
+      "sound_droplets": "水滴",
+      "sound_waves": "波",
+      "sound_airport": "空港",
+      "sound_cafe": "カフェ",
+      "sound_church": "教会",
+      "sound_library": "図書館",
+      "sound_supermarket": "スーパーマーケット",
+      "sound_subway": "地下鉄",
+      "sound_train": "電車",
+      "sound_office": "オフィス",
+      "sound_clock": "時計",
+      "sound_boiling_water": "沸騰する水",
+      "sound_fan": "扇風機",
+      "sound_keyboard": "キーボード",
+      "sound_washing_machine": "洗濯機",
+      "sound_wind_chime": "風鈴",
+      "sound_windscreen_wiper": "ワイパー",
+      "sound_air_conditioner": "エアコン",
+      "sound_printer": "プリンター",
+      "sound_typewriter": "タイプライター",
+      "sound_vinyl_record": "レコード",
+      "sound_cricket": "コオロギ",
+      "sound_dog": "犬",
+      "sound_bird": "鳥",
+      "sound_cat_purr": "猫の喉鳴らし",
+      "sound_heartbeat": "心臓の鼓動",
+      "sound_city_traffic": "都市の交通",
+      "sound_crowd": "人混み"
+    }
+  }
+}

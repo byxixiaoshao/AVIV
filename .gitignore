@@ -4,10 +4,25 @@
 # 但保留以下文件和文件夹
 !README.md
 !README/
-!wx.png
-!zfb.png
+!img/
 !LICENSE
 !.gitignore
+!gradlew
+!gradlew.bat
+!gradle.properties
+!build.gradle.kts
+!settings.gradle.kts
+!local.properties
+!gradle/
+!app/
 
-# 忽略 README 文件夹中的某些文件（如果需要）
-# README/*.tmp
+# 不发布的目录
+app/src/main/cpp/
+app/.cxx/
+app/build/
+备份/
+code_dictionary/
+error_1.txt
+keystore.properties
+*.jks
+*.so

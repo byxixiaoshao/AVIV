@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AVIV</string>
+    
+    <string name="download_failed">Ошибка загрузки</string>
+    <string name="download_failed_switch_source">Ошибка загрузки, попробуйте другой источник</string>
+    <string name="download_already_downloading">Загрузка, подождите</string>
+    
+    <string name="sound_library">Библиотека звуков</string>
+    <string name="select_white_noise">Выберите любимый белый шум</string>
+    <string name="collapse">Свернуть</string>
+    <string name="expand">Развернуть</string>
+    <string name="download_address">URL загрузки</string>
+    <string name="author">Автор</string>
+    <string name="author_homepage">Страница автора</string>
+    <string name="download_info">Информация о загрузке</string>
+    <string name="download_date">Дата загрузки</string>
+    <string name="file_size">Размер файла</string>
+    <string name="audio_duration">Длительность аудио</string>
+    <string name="donate_author_hint">Если вам нравится звук, рассмотрите возможность пожертвования автору</string>
+    <string name="close">Закрыть</string>
+    
+    <string name="now_playing">Сейчас играет</string>
+    <string name="adjust_volume_effects">Настроить громкость и эффекты</string>
+    <string name="still_empty">Добавить пустоту в пустоту</string>
+    <string name="select_from_library">Выберите любимый белый шум из библиотеки</string>
+    <string name="white_noise">Белый шум</string>
+    <string name="scattered">Разбросанный</string>
+    <string name="audio_clips_count">аудиоклипов</string>
+    <string name="config">Настройки</string>
+    <string name="remove">Удалить</string>
+    <string name="play">Воспроизвести</string>
+    <string name="pause">Пауза</string>
+    
+    <string name="settings">Настройки</string>
+    <string name="customize_experience">Настройте свой опыт</string>
+    <string name="music">Музыка</string>
+    <string name="music_directory">Музыкальная папка</string>
+    <string name="directories_count">папок</string>
+    <string name="general">Общие</string>
+    <string name="auto_play_on_startup">Автовоспроизведение при запуске</string>
+    <string name="audio_effect_order">Порядок аудиоэффектов</string>
+    <string name="customize">Настроить</string>
+    <string name="theme_color">Цвет темы</string>
+    <string name="custom_colors">Пользовательские цвета</string>
+    <string name="accent_color">Акцентный цвет</string>
+    <string name="primary_color">Основной цвет</string>
+    <string name="background_color">Цвет фона</string>
+    <string name="text_color">Цвет текста</string>
+    <string name="log_recording">Запись логов</string>
+    <string name="about_app">О приложении</string>
+    
+    <string name="scattered_sound_library">Библиотека разбросанных звуков</string>
+    <string name="select_random_sound_group">Выберите случайную группу звуков для воспроизведения</string>
+    <string name="add">Добавить</string>
+    <string name="create_player">Создать плеер</string>
+    <string name="no_scattered_data">Нет данных разбросанных звуков</string>
+    
+    <string name="theme_color_dialog_title">Цвет темы</string>
+    <string name="custom_color">Пользовательский цвет</string>
+    <string name="confirm">Подтвердить</string>
+    <string name="cancel">Отмена</string>
+    
+    <string name="hue">Оттенок</string>
+    <string name="saturation">Насыщенность</string>
+    <string name="brightness">Яркость</string>
+    <string name="preview_text">Текст предпросмотра</string>
+    
+    <string name="add_directory">Добавить папку</string>
+    <string name="scanning_music">Сканирование музыки...</string>
+    <string name="delete">Удалить</string>
+    
+    <string name="donate_support">Поддержать пожертвованием</string>
+    <string name="unlock_premium">Разблокировать премиум</string>
+    <string name="thank_you_premium">Спасибо за использование премиум!\n\nЕсли вам нравится приложение, вы можете отсканировать QR-код для пожертвования и поддержки разработчика.</string>
+    <string name="wechat_pay">WeChat Pay</string>
+    <string name="alipay">Alipay</string>
+    <string name="unlock_premium_hint">Разблокируйте премиум всего за 10 юаней и наслаждайтесь дополнительными функциями:</string>
+    <string name="feature">Функция</string>
+    <string name="normal_version">Обычная</string>
+    <string name="premium_version">Премиум</string>
+    <string name="music_player">Музыкальный плеер</string>
+    <string name="basic_playback">Базовый</string>
+    <string name="full_feature">✓ Полный</string>
+    <string name="sound_quality_adjust">Настройка качества звука</string>
+    <string name="basic_adjust">Базовый</string>
+    <string name="sound_classification">Классификация звуков</string>
+    <string name="preset_classification">Пресет</string>
+    <string name="spatial_audio">Пространственное аудио</string>
+    <string name="basic_function">Базовая</string>
+    <string name="import_sounds">Импорт звуков</string>
+    <string name="not_supported">Не поддерживается</string>
+    <string name="custom_classification">Пользовательская классификация</string>
+    <string name="weekly_usage_limit">Недельный лимит</string>
+    <string name="go_to_payment">Перейти к оплате</string>
+    
+    <string name="thank_you_support">Спасибо за вашу поддержку</string>
+    <string name="thank_you_message">Я получил вашу доброту, оставьте эти деньги на чашку чая с молоком~</string>
+    <string name="thank_you_hint">Если у вас есть возможность, вы можете поддержать разработчика пожертвованием в настройках. Конечно, вы также можете поддержать авторов белого шума.</string>
+    <string name="continue_">Продолжить</string>
+    
+    <string name="app_icon">Иконка приложения</string>
+    <string name="open_source_license">Лицензия open source</string>
+    <string name="sound_source_credit">Благодарность источнику звуков</string>
+    <string name="sound_source_hint">Все звуки белого шума с Pixabay\nСледуя лицензии Pixabay для коммерческого использования</string>
+    
+    <string name="audio_effect_order_title">Порядок обработки аудиоэффектов</string>
+    <string name="audio_effect_order_hint">Нажимайте стрелки для настройки порядка обработки (сверху вниз)</string>
+    <string name="spatial_offset">Пространственное смещение</string>
+    <string name="spatial_reverb">Пространственная реверберация</string>
+    <string name="equalizer">Эквалайзер</string>
+    <string name="quality_effect">Эффект качества</string>
+    
+    <string name="create_scattered_group">Создать разбросанную группу</string>
+    <string name="group_name">Название группы</string>
+    <string name="create">Создать</string>
+    
+    <string name="add_to_track">Добавить в трек</string>
+    <string name="select_track">Выбрать трек</string>
+    <string name="no_available_tracks">Нет доступных треков</string>
+    <string name="create_new_track">Создать новый трек</string>
+    
+    <string name="more_adjustments">Больше настроек</string>
+    <string name="premium_exclusive_feature">Премиум-функция</string>
+    <string name="preset">Пресет</string>
+    <string name="limiter">Лимитер</string>
+    <string name="flat">Плоский</string>
+    
+    <string name="all">Все</string>
+    <string name="folder">Папка</string>
+    <string name="artist">Исполнитель</string>
+    <string name="album">Альбом</string>
+    <string name="title">Название</string>
+    <string name="duration">Длительность</string>
+    <string name="date_added">Дата добавления</string>
+    
+    <string name="music_player_premium_feature">Музыкальный плеер - премиум-функция</string>
+    <string name="please_unlock_premium">Пожалуйста, разблокируйте премиум</string>
+    
+    <string name="hours">Часы</string>
+    <string name="minutes">Минуты</string>
+    <string name="start_timer">Запустить таймер</string>
+    <string name="pause_type">Тип паузы</string>
+    <string name="snooze_time">Время отложенного сигнала</string>
+    <string name="timer_end_ring">Звонок по окончании таймера</string>
+    <string name="global">Глобальный</string>
+    <string name="music_only">Только музыка</string>
+    <string name="white_noise_only">Только белый шум</string>
+    <string name="timer_15_min">15 мин</string>
+    <string name="timer_30_min">30 мин</string>
+    <string name="timer_45_min">45 мин</string>
+    <string name="timer_1_hour">1 час</string>
+    <string name="timer_2_hour">2 часа</string>
+    <string name="timer_3_hour">3 часа</string>
+    
+    <string name="audio_group_config">Конфигурация аудиогруппы</string>
+    <string name="add_audio">Добавить аудио</string>
+    <string name="tap_to_add_audio">Нажмите, чтобы добавить аудио</string>
+    <string name="added_audio">Добавлено аудио (%1$d)</string>
+    <string name="playback_interval">Интервал воспроизведения</string>
+    <string name="min_interval">Мин. интервал</string>
+    <string name="max_interval">Макс. интервал</string>
+    <string name="seconds">сек</string>
+    <string name="overlay_mode">Режим наложения</string>
+    <string name="overlay_mode_hint">(Таймер запускается при старте аудио, не дожидаясь окончания)</string>
+    <string name="none">Нет</string>
+    <string name="room_size">Размер комнаты</string>
+    <string name="decay_time">Время затухания</string>
+    <string name="damping">Демпфирование</string>
+    <string name="wet_level">Уровень влажности</string>
+    <string name="dry_level">Уровень сухости</string>
+    <string name="pre_delay">Предварительная задержка</string>
+    <string name="insulation">Изоляция</string>
+    <string name="reflection_density">Плотность отражения</string>
+    <string name="reflection_spread">Распространение отражения</string>
+    <string name="highpass_filter">Фильтр высоких частот</string>
+    <string name="early_reflection">Раннее отражение</string>
+    
+    <string name="shining_star">Сияющая звезда</string>
+    <string name="dim_stardust">Тусклая звёздная пыль</string>
+    <string name="premium_user">Премиум-пользователь</string>
+    <string name="free_user">Бесплатный пользователь</string>
+    <string name="donate_author">Пожертвовать автору</string>
+    
+    <string name="please_add_music_directory">Пожалуйста, сначала добавьте музыкальную папку</string>
+</resources>

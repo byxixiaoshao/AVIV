@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AVIV</string>
+    
+    <string name="download_failed">ダウンロード失敗</string>
+    <string name="download_failed_switch_source">ダウンロード失敗、別のソースをお試しください</string>
+    <string name="download_already_downloading">ダウンロード中、お待ちください</string>
+    
+    <string name="sound_library">サウンドライブラリ</string>
+    <string name="select_white_noise">お気に入りのホワイトノイズを選択</string>
+    <string name="collapse">折りたたむ</string>
+    <string name="expand">展開</string>
+    <string name="download_address">ダウンロードURL</string>
+    <string name="author">作者</string>
+    <string name="author_homepage">作者ホームページ</string>
+    <string name="download_info">ダウンロード情報</string>
+    <string name="download_date">ダウンロード日</string>
+    <string name="file_size">ファイルサイズ</string>
+    <string name="audio_duration">再生時間</string>
+    <string name="donate_author_hint">気に入ったら、作者への寄付をご検討ください</string>
+    <string name="close">閉じる</string>
+    
+    <string name="now_playing">再生中</string>
+    <string name="adjust_volume_effects">音量とエフェクトを調整</string>
+    <string name="still_empty">虚空に虚空を添えて</string>
+    <string name="select_from_library">ライブラリからお気に入りのホワイトノイズを選択</string>
+    <string name="white_noise">ホワイトノイズ</string>
+    <string name="scattered">散布</string>
+    <string name="audio_clips_count">オーディオクリップ</string>
+    <string name="config">設定</string>
+    <string name="remove">削除</string>
+    <string name="play">再生</string>
+    <string name="pause">一時停止</string>
+    
+    <string name="settings">設定</string>
+    <string name="customize_experience">体験をカスタマイズ</string>
+    <string name="music">音楽</string>
+    <string name="music_directory">音楽ディレクトリ</string>
+    <string name="directories_count">ディレクトリ</string>
+    <string name="general">一般</string>
+    <string name="auto_play_on_startup">起動時に自動再生</string>
+    <string name="audio_effect_order">オーディオエフェクト順序</string>
+    <string name="customize">カスタマイズ</string>
+    <string name="theme_color">テーマカラー</string>
+    <string name="custom_colors">カスタムカラー</string>
+    <string name="accent_color">アクセントカラー</string>
+    <string name="primary_color">プライマリカラー</string>
+    <string name="background_color">背景色</string>
+    <string name="text_color">テキスト色</string>
+    <string name="log_recording">ログ記録</string>
+    <string name="about_app">について</string>
+    
+    <string name="scattered_sound_library">散布サウンドライブラリ</string>
+    <string name="select_random_sound_group">再生するランダムサウンドグループを選択</string>
+    <string name="add">追加</string>
+    <string name="create_player">プレイヤー作成</string>
+    <string name="no_scattered_data">散布サウンドデータがありません</string>
+    
+    <string name="theme_color_dialog_title">テーマカラー</string>
+    <string name="custom_color">カスタムカラー</string>
+    <string name="confirm">確認</string>
+    <string name="cancel">キャンセル</string>
+    
+    <string name="hue">色相</string>
+    <string name="saturation">彩度</string>
+    <string name="brightness">明度</string>
+    <string name="preview_text">プレビューテキスト</string>
+    
+    <string name="add_directory">ディレクトリ追加</string>
+    <string name="scanning_music">音楽をスキャン中...</string>
+    <string name="delete">削除</string>
+    
+    <string name="donate_support">寄付サポート</string>
+    <string name="unlock_premium">プレミアム解除</string>
+    <string name="thank_you_premium">プレミアムユーザーありがとうございます！\n\nアプリを気に入ったら、QRコードをスキャンして開発者に寄付し、より多くの機能を追加し続けることをサポートしてください。</string>
+    <string name="wechat_pay">WeChat Pay</string>
+    <string name="alipay">Alipay</string>
+    <string name="unlock_premium_hint">わずか10元でプレミアムを解除し、より多くの機能をお楽しみください：</string>
+    <string name="feature">機能</string>
+    <string name="normal_version">通常版</string>
+    <string name="premium_version">プレミアム版</string>
+    <string name="music_player">音楽プレイヤー</string>
+    <string name="basic_playback">基本</string>
+    <string name="full_feature">✓ 完全</string>
+    <string name="sound_quality_adjust">音質調整</string>
+    <string name="basic_adjust">基本</string>
+    <string name="sound_classification">サウンド分類</string>
+    <string name="preset_classification">プリセット</string>
+    <string name="spatial_audio">空間オーディオ</string>
+    <string name="basic_function">基本</string>
+    <string name="import_sounds">サウンドインポート</string>
+    <string name="not_supported">非対応</string>
+    <string name="custom_classification">カスタム分類</string>
+    <string name="weekly_usage_limit">週間制限</string>
+    <string name="go_to_payment">支払いへ</string>
+    
+    <string name="thank_you_support">ご支援ありがとうございます</string>
+    <string name="thank_you_message">あなたの親切を受け取りました、このお金でタピオカミルクティーでも~</string>
+    <string name="thank_you_hint">余裕があれば、設定で開発者への寄付を検討してください。もちろん、ホワイトノイズの作者をサポートすることもできます。</string>
+    <string name="continue_">続ける</string>
+    
+    <string name="app_icon">アプリアイコン</string>
+    <string name="open_source_license">オープンソースライセンス</string>
+    <string name="sound_source_credit">サウンドソースクレジット</string>
+    <string name="sound_source_hint">すべてのホワイトノイズはPixabayから\n商業利用のためにPixabayライセンスに従います</string>
+    
+    <string name="audio_effect_order_title">オーディオエフェクト処理順序</string>
+    <string name="audio_effect_order_hint">矢印をクリックして処理順序を調整（上から下へ）</string>
+    <string name="spatial_offset">空間オフセット</string>
+    <string name="spatial_reverb">空間リバーブ</string>
+    <string name="equalizer">イコライザー</string>
+    <string name="quality_effect">音質エフェクト</string>
+    
+    <string name="create_scattered_group">散布グループ作成</string>
+    <string name="group_name">グループ名</string>
+    <string name="create">作成</string>
+    
+    <string name="add_to_track">トラックに追加</string>
+    <string name="select_track">トラック選択</string>
+    <string name="no_available_tracks">利用可能なトラックがありません</string>
+    <string name="create_new_track">新しいトラック作成</string>
+    
+    <string name="more_adjustments">詳細調整</string>
+    <string name="premium_exclusive_feature">プレミアム限定機能</string>
+    <string name="preset">プリセット</string>
+    <string name="limiter">リミッター</string>
+    <string name="flat">フラット</string>
+    
+    <string name="all">すべて</string>
+    <string name="folder">フォルダ</string>
+    <string name="artist">アーティスト</string>
+    <string name="album">アルバム</string>
+    <string name="title">タイトル</string>
+    <string name="duration">再生時間</string>
+    <string name="date_added">追加日</string>
+    
+    <string name="music_player_premium_feature">音楽プレイヤーはプレミアム機能です</string>
+    <string name="please_unlock_premium">プレミアムを解除してください</string>
+    
+    <string name="hours">時間</string>
+    <string name="minutes">分</string>
+    <string name="start_timer">タイマー開始</string>
+    <string name="pause_type">一時停止タイプ</string>
+    <string name="snooze_time">スヌーズ時間</string>
+    <string name="timer_end_ring">タイマー終了時のリング</string>
+    <string name="global">グローバル</string>
+    <string name="music_only">音楽のみ</string>
+    <string name="white_noise_only">ホワイトノイズのみ</string>
+    <string name="timer_15_min">15分</string>
+    <string name="timer_30_min">30分</string>
+    <string name="timer_45_min">45分</string>
+    <string name="timer_1_hour">1時間</string>
+    <string name="timer_2_hour">2時間</string>
+    <string name="timer_3_hour">3時間</string>
+    
+    <string name="audio_group_config">オーディオグループ設定</string>
+    <string name="add_audio">オーディオ追加</string>
+    <string name="tap_to_add_audio">タップしてオーディオを追加</string>
+    <string name="added_audio">追加済みオーディオ (%1$d)</string>
+    <string name="playback_interval">再生間隔</string>
+    <string name="min_interval">最小間隔</string>
+    <string name="max_interval">最大間隔</string>
+    <string name="seconds">秒</string>
+    <string name="overlay_mode">オーバーレイモード</string>
+    <string name="overlay_mode_hint">(オーディオ開始時にタイマー開始、再生終了を待たない)</string>
+    <string name="none">なし</string>
+    <string name="room_size">ルームサイズ</string>
+    <string name="decay_time">減衰時間</string>
+    <string name="damping">ダンピング</string>
+    <string name="wet_level">ウェットレベル</string>
+    <string name="dry_level">ドライレベル</string>
+    <string name="pre_delay">プリディレイ</string>
+    <string name="insulation">遮音</string>
+    <string name="reflection_density">反射密度</string>
+    <string name="reflection_spread">反射拡散</string>
+    <string name="highpass_filter">ハイパスフィルター</string>
+    <string name="early_reflection">初期反射</string>
+    
+    <string name="shining_star">輝く星</string>
+    <string name="dim_stardust">薄暗い星屑</string>
+    <string name="premium_user">プレミアムユーザー</string>
+    <string name="free_user">無料ユーザー</string>
+    <string name="donate_author">作者に寄付</string>
+    
+    <string name="please_add_music_directory">最初に音楽ディレクトリを追加してください</string>
+</resources>

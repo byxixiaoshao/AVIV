@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">添空</string>
+    
+    <string name="download_failed">下载失败</string>
+    <string name="download_failed_switch_source">下载失败，请尝试切换下载源</string>
+    <string name="download_already_downloading">正在下载，请稍后</string>
+    
+    <string name="sound_library">声音库</string>
+    <string name="select_white_noise">选择你喜欢的白噪音</string>
+    <string name="collapse">收起</string>
+    <string name="expand">展开</string>
+    <string name="download_address">下载地址</string>
+    <string name="author">作者</string>
+    <string name="author_homepage">作者主页</string>
+    <string name="download_info">下载信息</string>
+    <string name="download_date">下载日期</string>
+    <string name="file_size">文件大小</string>
+    <string name="audio_duration">音频时长</string>
+    <string name="donate_author_hint">如果觉得声音不错，可以尝试给声音作者捐赠</string>
+    <string name="close">关闭</string>
+    
+    <string name="now_playing">正在播放</string>
+    <string name="adjust_volume_effects">调整音量和效果</string>
+    <string name="still_empty">依旧添空</string>
+    <string name="select_from_library">从声音库选择你喜欢的白噪音</string>
+    <string name="white_noise">白噪音</string>
+    <string name="scattered">散点</string>
+    <string name="audio_clips_count">个音频</string>
+    <string name="config">配置</string>
+    <string name="remove">移除</string>
+    <string name="play">播放</string>
+    <string name="pause">暂停</string>
+    
+    <string name="settings">设置</string>
+    <string name="customize_experience">自定义你的体验</string>
+    <string name="music">音乐</string>
+    <string name="music_directory">音乐目录</string>
+    <string name="directories_count">个目录</string>
+    <string name="general">通用</string>
+    <string name="auto_play_on_startup">启动时自动播放</string>
+    <string name="audio_effect_order">音频效果处理顺序</string>
+    <string name="customize">自定义</string>
+    <string name="theme_color">主题色</string>
+    <string name="custom_colors">自定义颜色</string>
+    <string name="accent_color">强调色</string>
+    <string name="primary_color">主题色</string>
+    <string name="background_color">背景色</string>
+    <string name="text_color">文本色</string>
+    <string name="log_recording">日志记录</string>
+    <string name="about_app">关于添空</string>
+    
+    <string name="scattered_sound_library">散点声音库</string>
+    <string name="select_random_sound_group">选择随机播放的声音组</string>
+    <string name="add">添加</string>
+    <string name="create_player">创建播放器</string>
+    <string name="no_scattered_data">暂无散点声音数据</string>
+    
+    <string name="theme_color_dialog_title">主题色</string>
+    <string name="custom_color">自定义颜色</string>
+    <string name="confirm">确定</string>
+    <string name="cancel">取消</string>
+    
+    <string name="hue">色相</string>
+    <string name="saturation">饱和度</string>
+    <string name="brightness">明度</string>
+    <string name="preview_text">预览文本</string>
+    
+    <string name="add_directory">添加目录</string>
+    <string name="scanning_music">正在扫描音乐...</string>
+    <string name="delete">删除</string>
+    <string name="delete_confirm">确认删除</string>
+    <string name="delete_sound_hint">确定要删除此声音吗？此操作无法撤销。</string>
+    
+    <string name="donate_support">捐赠支持</string>
+    <string name="unlock_premium">解锁高级版</string>
+    <string name="thank_you_premium">感谢您成为高级版用户！\n\n如果您觉得应用不错，可以扫码捐赠支持作者继续开发更多功能。</string>
+    <string name="wechat_pay">微信支付</string>
+    <string name="alipay">支付宝</string>
+    <string name="unlock_premium_hint">解锁高级版，仅需10元，享受更多功能：</string>
+    <string name="feature">功能</string>
+    <string name="normal_version">普通版</string>
+    <string name="premium_version">高级版</string>
+    <string name="music_player">音乐播放器</string>
+    <string name="basic_playback">基础播放</string>
+    <string name="full_feature">✓ 完整</string>
+    <string name="sound_quality_adjust">音质调节</string>
+    <string name="basic_adjust">基础调节</string>
+    <string name="sound_classification">声音分类</string>
+    <string name="preset_classification">预设分类</string>
+    <string name="spatial_audio">空间音频</string>
+    <string name="basic_function">基础功能</string>
+    <string name="import_sounds">导入声音</string>
+    <string name="not_supported">不支持</string>
+    <string name="custom_classification">自定义分类</string>
+    <string name="weekly_usage_limit">每周使用限制</string>
+    <string name="go_to_payment">前往支付界面</string>
+    
+    <string name="thank_you_support">感谢您的支持</string>
+    <string name="thank_you_message">您的心意我收下了，这笔钱您留下用来买一杯奶茶叭~</string>
+    <string name="thank_you_hint">如果有条件了，可以尝试支持前往设置点击捐赠以支持作者，当然，您也可以尝试支持白噪音的作者。</string>
+    <string name="continue_">继续</string>
+    
+    <string name="app_icon">应用图标</string>
+    <string name="open_source_license">开源许可</string>
+    <string name="sound_source_credit">音源致谢</string>
+    <string name="sound_source_hint">所有白噪音音源均来自 Pixabay\n遵循 Pixabay License 允许商用</string>
+    
+    <string name="audio_effect_order_title">音频效果处理顺序</string>
+    <string name="audio_effect_order_hint">点击箭头调整处理顺序（从上到下依次处理）</string>
+    <string name="spatial_offset">声向偏移</string>
+    <string name="spatial_reverb">空间混响</string>
+    <string name="equalizer">均衡器</string>
+    <string name="quality_effect">音质效果</string>
+    
+    <string name="create_scattered_group">创建散点组</string>
+    <string name="group_name">组名称</string>
+    <string name="create">创建</string>
+    
+    <string name="add_to_track">添加到音轨</string>
+    <string name="select_track">选择音轨</string>
+    <string name="no_available_tracks">暂无可用音轨</string>
+    <string name="create_new_track">创建新音轨</string>
+    
+    <string name="more_adjustments">更多调整</string>
+    <string name="premium_exclusive_feature">高级用户专属功能</string>
+    <string name="preset">预设</string>
+    <string name="limiter">限制器</string>
+    <string name="flat">平坦</string>
+    
+    <string name="all">所有</string>
+    <string name="folder">文件夹</string>
+    <string name="artist">歌手</string>
+    <string name="album">专辑</string>
+    <string name="title">标题</string>
+    <string name="duration">时长</string>
+    <string name="date_added">添加时间</string>
+    
+    <string name="music_player_premium_feature">音乐播放器为高级版功能</string>
+    <string name="please_unlock_premium">请解锁高级版</string>
+    
+    <string name="hours">小时</string>
+    <string name="minutes">分钟</string>
+    <string name="start_timer">开始定时</string>
+    <string name="pause_type">暂停类型</string>
+    <string name="snooze_time">贪睡时间</string>
+    <string name="timer_end_ring">定时结束响铃</string>
+    <string name="global">全局</string>
+    <string name="music_only">仅音乐</string>
+    <string name="white_noise_only">仅白噪音</string>
+    <string name="timer_15_min">15分钟</string>
+    <string name="timer_30_min">30分钟</string>
+    <string name="timer_45_min">45分钟</string>
+    <string name="timer_1_hour">1小时</string>
+    <string name="timer_2_hour">2小时</string>
+    <string name="timer_3_hour">3小时</string>
+    
+    <string name="audio_group_config">音频组配置</string>
+    <string name="add_audio">添加音频</string>
+    <string name="tap_to_add_audio">点音频添加</string>
+    <string name="added_audio">已添加音频 (%1$d)</string>
+    <string name="playback_interval">播放间隔</string>
+    <string name="min_interval">最小间隔</string>
+    <string name="max_interval">最大间隔</string>
+    <string name="seconds">秒</string>
+    <string name="overlay_mode">叠加态</string>
+    <string name="overlay_mode_hint">(开启后音频开始即计时，不等待播放结束)</string>
+    <string name="none">无</string>
+    <string name="room_size">房间大小</string>
+    <string name="decay_time">衰减时间</string>
+    <string name="damping">阻尼</string>
+    <string name="wet_level">湿声电平</string>
+    <string name="dry_level">干声电平</string>
+    <string name="pre_delay">预延迟</string>
+    <string name="insulation">隔离度</string>
+    <string name="reflection_density">反射密度</string>
+    <string name="reflection_spread">反射扩散</string>
+    <string name="highpass_filter">高通滤波</string>
+    <string name="early_reflection">早期反射</string>
+    
+    <string name="shining_star">闪耀之星</string>
+    <string name="dim_stardust">暗淡星尘</string>
+    <string name="premium_user">高级版用户</string>
+    <string name="free_user">免费版用户</string>
+    <string name="donate_author">捐赠作者</string>
+    
+    <string name="please_add_music_directory">请先添加音乐目录</string>
+</resources>

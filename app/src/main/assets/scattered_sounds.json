@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "categories": [
+    {
+      "id": "things",
+      "name": "category_things"
+    }
+  ],
+  "soundTypes": [
+    {
+      "id": "fireworks",
+      "name": "sound_type_fireworks",
+      "category": "things"
+    }
+  ],
+  "sounds": [
+    {
+      "id": "fireworks_1",
+      "name": "sound_fireworks_1",
+      "type": "fireworks",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/10/12/audio_16f9557616.mp3?filename=dragon-studio-fireworks-01-419018.mp3",
+      "author": "DRAGON-STUDIO",
+      "authorUrl": "https://pixabay.com/zh/users/dragon-studio-38165424/"
+    },
+    {
+      "id": "fireworks_2",
+      "name": "sound_fireworks_2",
+      "type": "fireworks",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/10/12/audio_574ad62568.mp3?filename=dragon-studio-fireworks-02-419019.mp3",
+      "author": "DRAGON-STUDIO",
+      "authorUrl": "https://pixabay.com/zh/users/dragon-studio-38165424/"
+    }
+  ],
+  "Language": {
+    "zh": {
+      "category_things": "物品",
+      "sound_type_fireworks": "烟花",
+      "sound_fireworks_1": "烟花1",
+      "sound_fireworks_2": "烟花2"
+    },
+    "en": {
+      "category_things": "Things",
+      "sound_type_fireworks": "Fireworks",
+      "sound_fireworks_1": "Fireworks 1",
+      "sound_fireworks_2": "Fireworks 2"
+    },
+    "jp": {
+      "category_things": "物",
+      "sound_type_fireworks": "花火",
+      "sound_fireworks_1": "花火1",
+      "sound_fireworks_2": "花火2"
+    }
+  }
+}

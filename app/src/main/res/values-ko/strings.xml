@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AVIV</string>
+    
+    <string name="download_failed">다운로드 실패</string>
+    <string name="download_failed_switch_source">다운로드 실패, 다른 소스를 시도해 주세요</string>
+    <string name="download_already_downloading">다운로드 중, 잠시 기다려 주세요</string>
+    
+    <string name="sound_library">사운드 라이브러리</string>
+    <string name="select_white_noise">좋아하는 백색 소음 선택</string>
+    <string name="collapse">접기</string>
+    <string name="expand">펼치기</string>
+    <string name="download_address">다운로드 URL</string>
+    <string name="author">작성자</string>
+    <string name="author_homepage">작성자 홈페이지</string>
+    <string name="download_info">다운로드 정보</string>
+    <string name="download_date">다운로드 날짜</string>
+    <string name="file_size">파일 크기</string>
+    <string name="audio_duration">재생 시간</string>
+    <string name="donate_author_hint">마음에 드시면 작성자에게 기부를 고려해 주세요</string>
+    <string name="close">닫기</string>
+    
+    <string name="now_playing">재생 중</string>
+    <string name="adjust_volume_effects">볼륨 및 효과 조정</string>
+    <string name="still_empty">공허에 공허를 더하다</string>
+    <string name="select_from_library">라이브러리에서 좋아하는 백색 소음 선택</string>
+    <string name="white_noise">백색 소음</string>
+    <string name="scattered">분산</string>
+    <string name="audio_clips_count">오디오 클립</string>
+    <string name="config">설정</string>
+    <string name="remove">제거</string>
+    <string name="play">재생</string>
+    <string name="pause">일시정지</string>
+    
+    <string name="settings">설정</string>
+    <string name="customize_experience">경험 사용자 정의</string>
+    <string name="music">음악</string>
+    <string name="music_directory">음악 디렉토리</string>
+    <string name="directories_count">디렉토리</string>
+    <string name="general">일반</string>
+    <string name="auto_play_on_startup">시작 시 자동 재생</string>
+    <string name="audio_effect_order">오디오 효과 순서</string>
+    <string name="customize">사용자 정의</string>
+    <string name="theme_color">테마 색상</string>
+    <string name="custom_colors">사용자 정의 색상</string>
+    <string name="accent_color">강조 색상</string>
+    <string name="primary_color">기본 색상</string>
+    <string name="background_color">배경 색상</string>
+    <string name="text_color">텍스트 색상</string>
+    <string name="log_recording">로그 기록</string>
+    <string name="about_app">정보</string>
+    
+    <string name="scattered_sound_library">분산 사운드 라이브러리</string>
+    <string name="select_random_sound_group">재생할 무작위 사운드 그룹 선택</string>
+    <string name="add">추가</string>
+    <string name="create_player">플레이어 생성</string>
+    <string name="no_scattered_data">분산 사운드 데이터 없음</string>
+    
+    <string name="theme_color_dialog_title">테마 색상</string>
+    <string name="custom_color">사용자 정의 색상</string>
+    <string name="confirm">확인</string>
+    <string name="cancel">취소</string>
+    
+    <string name="hue">색조</string>
+    <string name="saturation">채도</string>
+    <string name="brightness">밝기</string>
+    <string name="preview_text">미리보기 텍스트</string>
+    
+    <string name="add_directory">디렉토리 추가</string>
+    <string name="scanning_music">음악 스캔 중...</string>
+    <string name="delete">삭제</string>
+    
+    <string name="donate_support">기부 지원</string>
+    <string name="unlock_premium">프리미엄 잠금 해제</string>
+    <string name="thank_you_premium">프리미엄 사용자가 되어 주셔서 감사합니다!\n\n앱이 마음에 드시면 QR 코드를 스캔하여 개발자에게 기부하고 더 많은 기능을 추가할 수 있도록 지원해 주세요.</string>
+    <string name="wechat_pay">WeChat Pay</string>
+    <string name="alipay">Alipay</string>
+    <string name="unlock_premium_hint">단 10위안으로 프리미엄을 잠금 해제하고 더 많은 기능을 즐기세요:</string>
+    <string name="feature">기능</string>
+    <string name="normal_version">일반</string>
+    <string name="premium_version">프리미엄</string>
+    <string name="music_player">음악 플레이어</string>
+    <string name="basic_playback">기본</string>
+    <string name="full_feature">✓ 전체</string>
+    <string name="sound_quality_adjust">음질 조정</string>
+    <string name="basic_adjust">기본</string>
+    <string name="sound_classification">사운드 분류</string>
+    <string name="preset_classification">프리셋</string>
+    <string name="spatial_audio">공간 오디오</string>
+    <string name="basic_function">기본</string>
+    <string name="import_sounds">사운드 가져오기</string>
+    <string name="not_supported">지원되지 않음</string>
+    <string name="custom_classification">사용자 정의 분류</string>
+    <string name="weekly_usage_limit">주간 제한</string>
+    <string name="go_to_payment">결제로 이동</string>
+    
+    <string name="thank_you_support">지원해 주셔서 감사합니다</string>
+    <string name="thank_you_message">당신의 친절을 받았습니다, 이 돈으로 밀크티 한 잔이라도~</string>
+    <string name="thank_you_hint">여유가 있으시다면 설정에서 개발자에게 기부하는 것을 고려해 보세요. 물론 백색 소음 작성자를 지원할 수도 있습니다.</string>
+    <string name="continue_">계속</string>
+    
+    <string name="app_icon">앱 아이콘</string>
+    <string name="open_source_license">오픈 소스 라이선스</string>
+    <string name="sound_source_credit">사운드 소스 크레딧</string>
+    <string name="sound_source_hint">모든 백색 소음은 Pixabay에서\n상업적 사용을 위해 Pixabay 라이선스를 따릅니다</string>
+    
+    <string name="audio_effect_order_title">오디오 효과 처리 순서</string>
+    <string name="audio_effect_order_hint">화살표를 클릭하여 처리 순서 조정 (위에서 아래로)</string>
+    <string name="spatial_offset">공간 오프셋</string>
+    <string name="spatial_reverb">공간 리버브</string>
+    <string name="equalizer">이퀄라이저</string>
+    <string name="quality_effect">음질 효과</string>
+    
+    <string name="create_scattered_group">분산 그룹 생성</string>
+    <string name="group_name">그룹 이름</string>
+    <string name="create">생성</string>
+    
+    <string name="add_to_track">트랙에 추가</string>
+    <string name="select_track">트랙 선택</string>
+    <string name="no_available_tracks">사용 가능한 트랙 없음</string>
+    <string name="create_new_track">새 트랙 생성</string>
+    
+    <string name="more_adjustments">추가 조정</string>
+    <string name="premium_exclusive_feature">프리미엄 전용 기능</string>
+    <string name="preset">프리셋</string>
+    <string name="limiter">리미터</string>
+    <string name="flat">플랫</string>
+    
+    <string name="all">전체</string>
+    <string name="folder">폴더</string>
+    <string name="artist">아티스트</string>
+    <string name="album">앨범</string>
+    <string name="title">제목</string>
+    <string name="duration">재생 시간</string>
+    <string name="date_added">추가 날짜</string>
+    
+    <string name="music_player_premium_feature">음악 플레이어는 프리미엄 기능입니다</string>
+    <string name="please_unlock_premium">프리미엄을 잠금 해제하세요</string>
+    
+    <string name="hours">시간</string>
+    <string name="minutes">분</string>
+    <string name="start_timer">타이머 시작</string>
+    <string name="pause_type">일시정지 유형</string>
+    <string name="snooze_time">스누즈 시간</string>
+    <string name="timer_end_ring">타이머 종료 시 벨소리</string>
+    <string name="global">전역</string>
+    <string name="music_only">음악만</string>
+    <string name="white_noise_only">백색 소음만</string>
+    <string name="timer_15_min">15분</string>
+    <string name="timer_30_min">30분</string>
+    <string name="timer_45_min">45분</string>
+    <string name="timer_1_hour">1시간</string>
+    <string name="timer_2_hour">2시간</string>
+    <string name="timer_3_hour">3시간</string>
+    
+    <string name="audio_group_config">오디오 그룹 설정</string>
+    <string name="add_audio">오디오 추가</string>
+    <string name="tap_to_add_audio">탭하여 오디오 추가</string>
+    <string name="added_audio">추가된 오디오 (%1$d)</string>
+    <string name="playback_interval">재생 간격</string>
+    <string name="min_interval">최소 간격</string>
+    <string name="max_interval">최대 간격</string>
+    <string name="seconds">초</string>
+    <string name="overlay_mode">오버레이 모드</string>
+    <string name="overlay_mode_hint">(오디오 시작 시 타이머 시작, 재생 종료 대기 안 함)</string>
+    <string name="none">없음</string>
+    <string name="room_size">룸 크기</string>
+    <string name="decay_time">감쇠 시간</string>
+    <string name="damping">댐핑</string>
+    <string name="wet_level">웻 레벨</string>
+    <string name="dry_level">드라이 레벨</string>
+    <string name="pre_delay">프리 딜레이</string>
+    <string name="insulation">차음</string>
+    <string name="reflection_density">반사 밀도</string>
+    <string name="reflection_spread">반사 확산</string>
+    <string name="highpass_filter">하이패스 필터</string>
+    <string name="early_reflection">초기 반사</string>
+    
+    <string name="shining_star">빛나는 별</string>
+    <string name="dim_stardust">희미한 성진</string>
+    <string name="premium_user">프리미엄 사용자</string>
+    <string name="free_user">무료 사용자</string>
+    <string name="donate_author">작성자에게 기부</string>
+    
+    <string name="please_add_music_directory">먼저 음악 디렉토리를 추가하세요</string>
+</resources>

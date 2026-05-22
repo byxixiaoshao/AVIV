@@ -1,0 +1,277 @@
+package com.bicy.whitenoise.H3HO
+
+object OboeAudioEngine {
+    
+    init {
+        System.loadLibrary("oboe")
+        System.loadLibrary("whitenoise")
+        registerNatives()
+    }
+    
+    fun init(): Boolean {
+        return nativeInit()
+    }
+    
+    fun warmup() {
+        nativeWarmup()
+    }
+    
+    fun release() {
+        nativeRelease()
+    }
+    
+    fun loadSound(soundId: String, filePath: String): Int {
+        return nativeLoadSound(soundId, filePath)
+    }
+    
+    fun loadSoundFromFd(soundId: String, fd: Int, offset: Long = 0, length: Long = -1): Int {
+        return nativeLoadSoundFromFd(soundId, fd, offset, length)
+    }
+    
+    fun unloadSound(soundId: String) {
+        nativeUnloadSound(soundId)
+    }
+    
+    fun playSound(soundId: String) {
+        nativePlaySound(soundId)
+    }
+    
+    fun stopSound(soundId: String) {
+        nativeStopSound(soundId)
+    }
+    
+    fun stopAllSounds() {
+        nativeStopAllSounds()
+    }
+    
+    fun pauseSound(soundId: String) {
+        nativePauseSound(soundId)
+    }
+    
+    fun resumeSound(soundId: String) {
+        nativeResumeSound(soundId)
+    }
+    
+    fun setVolume(soundId: String, volume: Float) {
+        nativeSetVolume(soundId, volume)
+    }
+    
+    fun getVolume(soundId: String): Float {
+        return nativeGetVolume(soundId)
+    }
+    
+    fun pauseAll() {
+        nativePauseAll()
+    }
+    
+    fun resumeAll() {
+        nativeResumeAll()
+    }
+    
+    fun isPlaying(soundId: String): Boolean {
+        return nativeIsPlaying(soundId)
+    }
+    
+    fun isLoaded(soundId: String): Boolean {
+        return nativeIsLoaded(soundId)
+    }
+    
+    fun isLoading(soundId: String): Boolean {
+        return nativeIsLoading(soundId)
+    }
+    
+    fun setEffectEnabled(soundId: String, enabled: Boolean) {
+        nativeSetEffectEnabled(soundId, enabled)
+    }
+    
+    fun setReverbParams(soundId: String, roomSize: Float, damping: Float, wetLevel: Float) {
+        nativeSetReverbParams(soundId, roomSize, damping, wetLevel)
+    }
+    
+    fun setInsulation(soundId: String, insulation: Float) {
+        nativeSetInsulation(soundId, insulation)
+    }
+    
+    fun setReverbDecayTime(soundId: String, decayTime: Float) {
+        nativeSetReverbDecayTime(soundId, decayTime)
+    }
+    
+    fun setReverbPreDelay(soundId: String, preDelay: Float) {
+        nativeSetReverbPreDelay(soundId, preDelay)
+    }
+    
+    fun setReverbDryLevel(soundId: String, dryLevel: Float) {
+        nativeSetReverbDryLevel(soundId, dryLevel)
+    }
+    
+    fun setReflectionDensity(soundId: String, density: Float) {
+        nativeSetReflectionDensity(soundId, density)
+    }
+    
+    fun setReflectionSpread(soundId: String, spread: Float) {
+        nativeSetReflectionSpread(soundId, spread)
+    }
+    
+    fun setHighpassCutoff(soundId: String, cutoff: Float) {
+        nativeSetHighpassCutoff(soundId, cutoff)
+    }
+    
+    fun setEarlyReflectionLevel(soundId: String, level: Float) {
+        nativeSetEarlyReflectionLevel(soundId, level)
+    }
+    
+    fun setCreativeEffectIntensity(soundId: String, effectType: Int, intensity: Float) {
+        nativeSetCreativeEffectIntensity(soundId, effectType, intensity)
+    }
+    
+    fun seekTo(soundId: String, positionMs: Long) {
+        nativeSeekTo(soundId, positionMs)
+    }
+    
+    fun getPosition(soundId: String): Long {
+        return nativeGetPosition(soundId)
+    }
+    
+    fun getDuration(soundId: String): Long {
+        return nativeGetDuration(soundId)
+    }
+    
+    fun setLooping(soundId: String, looping: Boolean) {
+        nativeSetLooping(soundId, looping)
+    }
+    
+    fun isLooping(soundId: String): Boolean {
+        return nativeIsLooping(soundId)
+    }
+    
+    fun needsRestart(): Boolean {
+        return nativeNeedsRestart()
+    }
+    
+    fun clearRestartFlag() {
+        nativeClearRestartFlag()
+    }
+    
+    fun setEqBandGain(soundId: String, bandIndex: Int, gain: Float) {
+        nativeSetEqBandGain(soundId, bandIndex, gain)
+    }
+    
+    fun getEqBandGain(soundId: String, bandIndex: Int): Float {
+        return nativeGetEqBandGain(soundId, bandIndex)
+    }
+    
+    fun setEqEnabled(soundId: String, enabled: Boolean) {
+        nativeSetEqEnabled(soundId, enabled)
+    }
+    
+    fun setEqLimiterEnabled(soundId: String, enabled: Boolean) {
+        nativeSetEqLimiterEnabled(soundId, enabled)
+    }
+    
+    fun setEqGains(soundId: String, gains: FloatArray) {
+        nativeSetEqGains(soundId, gains)
+    }
+    
+    fun getEqGains(soundId: String): FloatArray {
+        return nativeGetEqGains(soundId)
+    }
+    
+    fun setSpatialEnabled(soundId: String, enabled: Boolean) {
+        nativeSetSpatialEnabled(soundId, enabled)
+    }
+    
+    fun setSpatialIntensity(soundId: String, intensity: Float) {
+        nativeSetSpatialIntensity(soundId, intensity)
+    }
+    
+    fun setSpatialOffsetType(soundId: String, type: Int) {
+        nativeSetSpatialOffsetType(soundId, type)
+    }
+    
+    fun setSpatialFixedOffset(soundId: String, leftRight: Float, upDown: Float, frontBack: Float, multiplier: Float) {
+        nativeSetSpatialFixedOffset(soundId, leftRight, upDown, frontBack, multiplier)
+    }
+    
+    fun setSpatialSurroundParams(soundId: String, mode: Int, radius: Float, speed: Float) {
+        nativeSetSpatialSurroundParams(soundId, mode, radius, speed)
+    }
+    
+    fun setSpatialRandomParams(soundId: String, maxDistance: Float, minDistance: Float, randomValue: Float, speed: Float) {
+        nativeSetSpatialRandomParams(soundId, maxDistance, minDistance, randomValue, speed)
+    }
+    
+    fun setFadeDuration(soundId: String, durationSeconds: Float) {
+        nativeSetFadeDuration(soundId, durationSeconds)
+    }
+    
+    fun isFadingOut(soundId: String): Boolean {
+        return nativeIsFadingOut(soundId)
+    }
+    
+    fun cancelFadeOut(soundId: String) {
+        nativeCancelFadeOut(soundId)
+    }
+    
+    fun clearAllEffectBuffers() {
+        nativeClearAllEffectBuffers()
+    }
+    
+    fun setEffectOrder(soundId: String, order: IntArray) {
+        nativeSetEffectOrder(soundId, order)
+    }
+    
+    private external fun registerNatives(): Boolean
+    private external fun nativeInit(): Boolean
+    private external fun nativeWarmup()
+    private external fun nativeRelease()
+    private external fun nativeLoadSound(soundId: String, filePath: String): Int
+    private external fun nativeLoadSoundFromFd(soundId: String, fd: Int, offset: Long, length: Long): Int
+    private external fun nativeUnloadSound(soundId: String)
+    private external fun nativePlaySound(soundId: String)
+    private external fun nativeStopSound(soundId: String)
+    private external fun nativeStopAllSounds()
+    private external fun nativePauseSound(soundId: String)
+    private external fun nativeResumeSound(soundId: String)
+    private external fun nativeSetVolume(soundId: String, volume: Float)
+    private external fun nativeGetVolume(soundId: String): Float
+    private external fun nativePauseAll()
+    private external fun nativeResumeAll()
+    private external fun nativeIsPlaying(soundId: String): Boolean
+    private external fun nativeIsLoaded(soundId: String): Boolean
+    private external fun nativeIsLoading(soundId: String): Boolean
+    private external fun nativeSetEffectEnabled(soundId: String, enabled: Boolean)
+    private external fun nativeSetReverbParams(soundId: String, roomSize: Float, damping: Float, wetLevel: Float)
+    private external fun nativeSetInsulation(soundId: String, insulation: Float)
+    private external fun nativeSetReverbDecayTime(soundId: String, decayTime: Float)
+    private external fun nativeSetReverbPreDelay(soundId: String, preDelay: Float)
+    private external fun nativeSetReverbDryLevel(soundId: String, dryLevel: Float)
+    private external fun nativeSetReflectionDensity(soundId: String, density: Float)
+    private external fun nativeSetReflectionSpread(soundId: String, spread: Float)
+    private external fun nativeSetHighpassCutoff(soundId: String, cutoff: Float)
+    private external fun nativeSetEarlyReflectionLevel(soundId: String, level: Float)
+    private external fun nativeSetCreativeEffectIntensity(soundId: String, effectType: Int, intensity: Float)
+    private external fun nativeSeekTo(soundId: String, positionMs: Long)
+    private external fun nativeGetPosition(soundId: String): Long
+    private external fun nativeGetDuration(soundId: String): Long
+    private external fun nativeSetLooping(soundId: String, looping: Boolean)
+    private external fun nativeIsLooping(soundId: String): Boolean
+    private external fun nativeNeedsRestart(): Boolean
+    private external fun nativeClearRestartFlag()
+    private external fun nativeSetEqBandGain(soundId: String, bandIndex: Int, gain: Float)
+    private external fun nativeGetEqBandGain(soundId: String, bandIndex: Int): Float
+    private external fun nativeSetEqEnabled(soundId: String, enabled: Boolean)
+    private external fun nativeSetEqLimiterEnabled(soundId: String, enabled: Boolean)
+    private external fun nativeSetEqGains(soundId: String, gains: FloatArray)
+    private external fun nativeGetEqGains(soundId: String): FloatArray
+    private external fun nativeSetSpatialEnabled(soundId: String, enabled: Boolean)
+    private external fun nativeSetSpatialIntensity(soundId: String, intensity: Float)
+    private external fun nativeSetSpatialOffsetType(soundId: String, type: Int)
+    private external fun nativeSetSpatialFixedOffset(soundId: String, leftRight: Float, upDown: Float, frontBack: Float, multiplier: Float)
+    private external fun nativeSetSpatialSurroundParams(soundId: String, mode: Int, radius: Float, speed: Float)
+    private external fun nativeSetSpatialRandomParams(soundId: String, maxDistance: Float, minDistance: Float, randomValue: Float, speed: Float)
+    private external fun nativeSetFadeDuration(soundId: String, durationSeconds: Float)
+    private external fun nativeIsFadingOut(soundId: String): Boolean
+    private external fun nativeCancelFadeOut(soundId: String)
+    private external fun nativeClearAllEffectBuffers()
+    private external fun nativeSetEffectOrder(soundId: String, order: IntArray)
+}

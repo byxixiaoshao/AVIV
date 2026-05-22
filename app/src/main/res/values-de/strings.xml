@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AVIV</string>
+    
+    <string name="download_failed">Download fehlgeschlagen</string>
+    <string name="download_failed_switch_source">Download fehlgeschlagen, bitte andere Quelle versuchen</string>
+    <string name="download_already_downloading">Download läuft, bitte warten</string>
+    
+    <string name="sound_library">Sound-Bibliothek</string>
+    <string name="select_white_noise">Wählen Sie Ihren Lieblings-Weißes Rauschen</string>
+    <string name="collapse">Einklappen</string>
+    <string name="expand">Ausklappen</string>
+    <string name="download_address">Download-URL</string>
+    <string name="author">Autor</string>
+    <string name="author_homepage">Autoren-Homepage</string>
+    <string name="download_info">Download-Info</string>
+    <string name="download_date">Download-Datum</string>
+    <string name="file_size">Dateigröße</string>
+    <string name="audio_duration">Audiodauer</string>
+    <string name="donate_author_hint">Wenn Ihnen der Sound gefällt, erwägen Sie eine Spende an den Autor</string>
+    <string name="close">Schließen</string>
+    
+    <string name="now_playing">Jetzt läuft</string>
+    <string name="adjust_volume_effects">Lautstärke und Effekte anpassen</string>
+    <string name="still_empty">Leere zum Leeren hinzufügen</string>
+    <string name="select_from_library">Wählen Sie Ihr Lieblings-Weißes Rauschen aus der Bibliothek</string>
+    <string name="white_noise">Weißes Rauschen</string>
+    <string name="scattered">Verstreut</string>
+    <string name="audio_clips_count">Audio-Clips</string>
+    <string name="config">Konfiguration</string>
+    <string name="remove">Entfernen</string>
+    <string name="play">Abspielen</string>
+    <string name="pause">Pause</string>
+    
+    <string name="settings">Einstellungen</string>
+    <string name="customize_experience">Passen Sie Ihre Erfahrung an</string>
+    <string name="music">Musik</string>
+    <string name="music_directory">Musikverzeichnis</string>
+    <string name="directories_count">Verzeichnisse</string>
+    <string name="general">Allgemein</string>
+    <string name="auto_play_on_startup">Automatische Wiedergabe beim Start</string>
+    <string name="audio_effect_order">Audio-Effekt-Reihenfolge</string>
+    <string name="customize">Anpassen</string>
+    <string name="theme_color">Themenfarbe</string>
+    <string name="custom_colors">Benutzerdefinierte Farben</string>
+    <string name="accent_color">Akzentfarbe</string>
+    <string name="primary_color">Primärfarbe</string>
+    <string name="background_color">Hintergrundfarbe</string>
+    <string name="text_color">Textfarbe</string>
+    <string name="log_recording">Protokollaufzeichnung</string>
+    <string name="about_app">Über</string>
+    
+    <string name="scattered_sound_library">Verstreute Sound-Bibliothek</string>
+    <string name="select_random_sound_group">Wählen Sie eine zufällige Soundgruppe zum Abspielen</string>
+    <string name="add">Hinzufügen</string>
+    <string name="create_player">Player erstellen</string>
+    <string name="no_scattered_data">Keine verstreuten Sound-Daten</string>
+    
+    <string name="theme_color_dialog_title">Themenfarbe</string>
+    <string name="custom_color">Benutzerdefinierte Farbe</string>
+    <string name="confirm">Bestätigen</string>
+    <string name="cancel">Abbrechen</string>
+    
+    <string name="hue">Farbton</string>
+    <string name="saturation">Sättigung</string>
+    <string name="brightness">Helligkeit</string>
+    <string name="preview_text">Vorschautext</string>
+    
+    <string name="add_directory">Verzeichnis hinzufügen</string>
+    <string name="scanning_music">Musik wird gescannt...</string>
+    <string name="delete">Löschen</string>
+    
+    <string name="donate_support">Spenden-Unterstützung</string>
+    <string name="unlock_premium">Premium freischalten</string>
+    <string name="thank_you_premium">Danke, dass Sie Premium-Nutzer sind!\n\nWenn Ihnen die App gefällt, können Sie den QR-Code scannen, um zu spenden und den Entwickler zu unterstützen, weitere Funktionen hinzuzufügen.</string>
+    <string name="wechat_pay">WeChat Pay</string>
+    <string name="alipay">Alipay</string>
+    <string name="unlock_premium_hint">Schalten Sie Premium für nur 10 CNY frei und genießen Sie mehr Funktionen:</string>
+    <string name="feature">Funktion</string>
+    <string name="normal_version">Normal</string>
+    <string name="premium_version">Premium</string>
+    <string name="music_player">Musikplayer</string>
+    <string name="basic_playback">Basis</string>
+    <string name="full_feature">✓ Vollständig</string>
+    <string name="sound_quality_adjust">Klangqualität anpassen</string>
+    <string name="basic_adjust">Basis</string>
+    <string name="sound_classification">Sound-Klassifizierung</string>
+    <string name="preset_classification">Preset</string>
+    <string name="spatial_audio">Räumliches Audio</string>
+    <string name="basic_function">Basis</string>
+    <string name="import_sounds">Sounds importieren</string>
+    <string name="not_supported">Nicht unterstützt</string>
+    <string name="custom_classification">Benutzerdefinierte Klassifizierung</string>
+    <string name="weekly_usage_limit">Wochenlimit</string>
+    <string name="go_to_payment">Zur Zahlung</string>
+    
+    <string name="thank_you_support">Danke für Ihre Unterstützung</string>
+    <string name="thank_you_message">Ich habe Ihre Freundlichkeit erhalten, behalten Sie dieses Geld für einen Milchtee~</string>
+    <string name="thank_you_hint">Wenn Sie die Mittel haben, können Sie versuchen, den Entwickler durch eine Spende in den Einstellungen zu unterstützen. Natürlich können Sie auch die Weißes Rauschen-Autoren unterstützen.</string>
+    <string name="continue_">Weiter</string>
+    
+    <string name="app_icon">App-Symbol</string>
+    <string name="open_source_license">Open-Source-Lizenz</string>
+    <string name="sound_source_credit">Sound-Quelle Credits</string>
+    <string name="sound_source_hint">Alle Weißes Rauschen-Sounds stammen von Pixabay\nFolgend der Pixabay-Lizenz für kommerzielle Nutzung</string>
+    
+    <string name="audio_effect_order_title">Audio-Effekt-Verarbeitungsreihenfolge</string>
+    <string name="audio_effect_order_hint">Klicken Sie auf Pfeile, um die Verarbeitungsreihenfolge anzupassen (von oben nach unten)</string>
+    <string name="spatial_offset">Räumlicher Versatz</string>
+    <string name="spatial_reverb">Räumlicher Hall</string>
+    <string name="equalizer">Equalizer</string>
+    <string name="quality_effect">Qualitätseffekt</string>
+    
+    <string name="create_scattered_group">Verstreute Gruppe erstellen</string>
+    <string name="group_name">Gruppenname</string>
+    <string name="create">Erstellen</string>
+    
+    <string name="add_to_track">Zur Spur hinzufügen</string>
+    <string name="select_track">Spur auswählen</string>
+    <string name="no_available_tracks">Keine Spuren verfügbar</string>
+    <string name="create_new_track">Neue Spur erstellen</string>
+    
+    <string name="more_adjustments">Weitere Anpassungen</string>
+    <string name="premium_exclusive_feature">Premium-Exklusivfunktion</string>
+    <string name="preset">Preset</string>
+    <string name="limiter">Limiter</string>
+    <string name="flat">Flach</string>
+    
+    <string name="all">Alle</string>
+    <string name="folder">Ordner</string>
+    <string name="artist">Künstler</string>
+    <string name="album">Album</string>
+    <string name="title">Titel</string>
+    <string name="duration">Dauer</string>
+    <string name="date_added">Hinzugefügt am</string>
+    
+    <string name="music_player_premium_feature">Musikplayer ist eine Premium-Funktion</string>
+    <string name="please_unlock_premium">Bitte Premium freischalten</string>
+    
+    <string name="hours">Stunden</string>
+    <string name="minutes">Minuten</string>
+    <string name="start_timer">Timer starten</string>
+    <string name="pause_type">Pausentyp</string>
+    <string name="snooze_time">Schlummerzeit</string>
+    <string name="timer_end_ring">Klingelton bei Timer-Ende</string>
+    <string name="global">Global</string>
+    <string name="music_only">Nur Musik</string>
+    <string name="white_noise_only">Nur Weißes Rauschen</string>
+    <string name="timer_15_min">15 Min</string>
+    <string name="timer_30_min">30 Min</string>
+    <string name="timer_45_min">45 Min</string>
+    <string name="timer_1_hour">1 Stunde</string>
+    <string name="timer_2_hour">2 Stunden</string>
+    <string name="timer_3_hour">3 Stunden</string>
+    
+    <string name="audio_group_config">Audio-Gruppenkonfiguration</string>
+    <string name="add_audio">Audio hinzufügen</string>
+    <string name="tap_to_add_audio">Tippen Sie, um Audio hinzuzufügen</string>
+    <string name="added_audio">Hinzugefügtes Audio (%1$d)</string>
+    <string name="playback_interval">Wiedergabeintervall</string>
+    <string name="min_interval">Min. Intervall</string>
+    <string name="max_interval">Max. Intervall</string>
+    <string name="seconds">Sek</string>
+    <string name="overlay_mode">Overlay-Modus</string>
+    <string name="overlay_mode_hint">(Timer startet wenn Audio beginnt, wartet nicht auf Ende)</string>
+    <string name="none">Keine</string>
+    <string name="room_size">Raumgröße</string>
+    <string name="decay_time">Abklingzeit</string>
+    <string name="damping">Dämpfung</string>
+    <string name="wet_level">Wet-Level</string>
+    <string name="dry_level">Dry-Level</string>
+    <string name="pre_delay">Pre-Delay</string>
+    <string name="insulation">Isolierung</string>
+    <string name="reflection_density">Reflexionsdichte</string>
+    <string name="reflection_spread">Reflexionsverteilung</string>
+    <string name="highpass_filter">Hochpassfilter</string>
+    <string name="early_reflection">Frühe Reflexion</string>
+    
+    <string name="shining_star">Leuchtender Stern</string>
+    <string name="dim_stardust">Schwaches Sternenstaub</string>
+    <string name="premium_user">Premium-Nutzer</string>
+    <string name="free_user">Kostenloser Nutzer</string>
+    <string name="donate_author">An Autor spenden</string>
+    
+    <string name="please_add_music_directory">Bitte fügen Sie zuerst ein Musikverzeichnis hinzu</string>
+</resources>
