@@ -103,6 +103,7 @@
     <string name="open_source_license">Лицензия open source</string>
     <string name="sound_source_credit">Благодарность источнику звуков</string>
     <string name="sound_source_hint">Все звуки белого шума с Pixabay\nСледуя лицензии Pixabay для коммерческого использования</string>
+    <string name="sound_source_tip">Долгое нажатие на опцию белого шума покажет детали аудио и автора. Поддержка приветствуется.</string>
     
     <string name="audio_effect_order_title">Порядок обработки аудиоэффектов</string>
     <string name="audio_effect_order_hint">Нажимайте стрелки для настройки порядка обработки (сверху вниз)</string>
@@ -110,6 +111,7 @@
     <string name="spatial_reverb">Пространственная реверберация</string>
     <string name="equalizer">Эквалайзер</string>
     <string name="quality_effect">Эффект качества</string>
+    <string name="pseudo_restoration_processing">Обработка псевдо-восстановления</string>
     
     <string name="create_scattered_group">Создать разбросанную группу</string>
     <string name="group_name">Название группы</string>
@@ -183,4 +185,19 @@
     <string name="donate_author">Пожертвовать автору</string>
     
     <string name="please_add_music_directory">Пожалуйста, сначала добавьте музыкальную папку</string>
+    
+    <string name="personalization">Персонализация</string>
+    <string name="viz_wn_sensitivity">Чувствительность визуализации белого шума</string>
+    <string name="viz_music_sensitivity">Чувствительность визуализации музыки</string>
+    <string name="viz_flash_sensitivity">Чувствительность вспышки музыки</string>
+    <string name="viz_refresh_rate">Скорость изменения визуализации</string>
+    <string name="low">Низкий</string>
+    <string name="medium">Средний</string>
+    <string name="high">Высокий</string>
+    <string name="slow">Медленно</string>
+    <string name="fast">Быстро</string>
+    
+    <string name="security_warning_title">Предупреждение безопасности</string>
+    <string name="security_warning_message">Внимание: Этот установочный пакет может быть скомпрометирован!\n\nТекущий пакет мог быть изменен другими.\nВ целях безопасности, пожалуйста, удалите это приложение.\n(Это нельзя обойти)</string>
+    <string name="security_warning_uninstall">Подтвердить удаление</string>
 </resources>

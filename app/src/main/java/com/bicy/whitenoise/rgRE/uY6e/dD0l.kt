@@ -21,24 +21,32 @@ class AudioFocusManager(private val context: Context) {
         private set
     
     val audioFocusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
+        Log.d(TAG, "Audio focus changed: $focusChange, wasPlayingBeforeFocusLoss=$wasPlayingBeforeFocusLoss")
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS -> {
+                Log.w(TAG, "AUDIOFOCUS_LOSS - Permanent focus loss")
                 wasPlayingBeforeFocusLoss = true
                 hasAudioFocus = false
                 onAudioFocusLoss?.invoke(true)
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                Log.w(TAG, "AUDIOFOCUS_LOSS_TRANSIENT - Temporary focus loss")
                 wasPlayingBeforeFocusLoss = true
                 onAudioFocusLoss?.invoke(false)
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                Log.d(TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK - Ducking allowed")
                 onAudioFocusDuck?.invoke()
             }
             AudioManager.AUDIOFOCUS_GAIN -> {
+                Log.i(TAG, "AUDIOFOCUS_GAIN - Focus regained, wasPlayingBeforeFocusLoss=$wasPlayingBeforeFocusLoss")
                 hasAudioFocus = true
                 if (wasPlayingBeforeFocusLoss) {
+                    Log.i(TAG, "Calling onAudioFocusGain callback")
                     wasPlayingBeforeFocusLoss = false
                     onAudioFocusGain?.invoke()
+                } else {
+                    Log.d(TAG, "Not calling onAudioFocusGain - wasPlayingBeforeFocusLoss is false")
                 }
             }
         }

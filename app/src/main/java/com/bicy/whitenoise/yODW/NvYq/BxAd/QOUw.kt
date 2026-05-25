@@ -17,6 +17,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -35,6 +37,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bicy.whitenoise.R
+import com.bicy.whitenoise.yODW.SrEO.InteractiveSlider
 import com.bicy.whitenoise.yODW.ZFNn.ShadowConfig
 import com.bicy.whitenoise.yODW.ZFNn.ThemeColorManager
 import com.bicy.whitenoise.yODW.ZFNn.dropShadow
@@ -191,5 +194,103 @@ fun UserLevelCard(
                 fontWeight = FontWeight.Bold
             )
         }
+    }
+}
+
+@Composable
+fun SettingSliderItem(
+    title: String,
+    value: Int,
+    valueRange: ClosedRange<Int> = 0..2,
+    onValueChange: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .dropShadow(
+                config = ShadowConfig.Light,
+                shape = RoundedCornerShape(12.dp),
+                clip = false
+            )
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        InteractiveSlider(
+            value = value.toFloat(),
+            onValueChange = { onValueChange(it.toInt()) },
+            valueRange = valueRange.start.toFloat()..valueRange.endInclusive.toFloat(),
+            steps = (valueRange.endInclusive - valueRange.start - 1).coerceAtLeast(0),
+            modifier = Modifier.width(120.dp)
+        )
+    }
+}
+
+@Composable
+fun SettingSliderWithCheckboxItem(
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    value: Int,
+    valueRange: ClosedRange<Int> = 0..2,
+    onValueChange: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .dropShadow(
+                config = ShadowConfig.Light,
+                shape = RoundedCornerShape(12.dp),
+                clip = false
+            )
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (checked) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            modifier = Modifier.weight(1f)
+        )
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = MaterialTheme.colorScheme.primary,
+                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+                uncheckedThumbColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        )
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        InteractiveSlider(
+            value = value.toFloat(),
+            onValueChange = { onValueChange(it.toInt()) },
+            valueRange = valueRange.start.toFloat()..valueRange.endInclusive.toFloat(),
+            steps = (valueRange.endInclusive - valueRange.start - 1).coerceAtLeast(0),
+            modifier = Modifier.width(120.dp),
+            enabled = checked
+        )
     }
 }

@@ -117,6 +117,7 @@ import com.bicy.whitenoise.yODW.SrEO.Xomm.calculateTransitionProgress
 import com.bicy.whitenoise.yODW.ZFNn.ShadowConfig
 import com.bicy.whitenoise.yODW.ZFNn.ThemeColorManager
 import com.bicy.whitenoise.yODW.ZFNn.dropShadow
+import com.bicy.whitenoise.yODW.ZFNn.mGbG
 import com.bicy.whitenoise.y10p.AudioMetadataReader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -580,6 +581,11 @@ private fun ExpandedTopBarContent(
             .alpha(alpha)
     ) {
         if (alpha > 0.1f) {
+            mGbG(
+                iPg = playerState.isPlaying,
+                modifier = Modifier.fillMaxSize()
+            )
+            
             Box(
                 modifier = Modifier.fillMaxSize()
             ) {

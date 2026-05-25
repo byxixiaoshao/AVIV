@@ -56,6 +56,7 @@ object MusicPlayerController {
     private var progressJob: Job? = null
     private var isInitialized = false
     private var wasPlayingBeforeFocusLoss = false
+    private var wasPlayingBeforeStreamDisconnect = false
     private var lastSkipTime = 0L
     private var isLoading = false
     private var pendingPlay = false
@@ -67,22 +68,46 @@ object MusicPlayerController {
     val duration: Long get() = _state.value.duration
     
     fun init(context: Context) {
+        Log.w(TAG, "init() called, isInitialized=$isInitialized")
         if (isInitialized) return
         this.context = context.applicationContext
         MusicCacheManager.init(context)
         MusicStorage.init()
         
+        val limiterConfig = MusicStorage.getLimiterConfig()
+        OboeAudioEngine.setGlobalLimiterConfig(
+            enabled = limiterConfig.enabled,
+            limitEqualizer = limiterConfig.limitEqualizer,
+            limitEffects = limiterConfig.limitEffects,
+            limitReverb = limiterConfig.limitReverb,
+            limitSpatial = limiterConfig.limitSpatial,
+            threshold = limiterConfig.threshold,
+            attack = limiterConfig.attack,
+            release = limiterConfig.release
+        )
+        Log.d(TAG, "限幅器配置已应用: enabled=${limiterConfig.enabled}")
+        
         MusicService.onAudioStreamRestarted = {
+            Log.w(TAG, "onAudioStreamRestarted callback triggered")
             handleAudioStreamRestarted()
+        }
+        
+        MusicService.onAudioStreamDisconnect = {
+            Log.w(TAG, "onAudioStreamDisconnect callback triggered, isPlaying=${_state.value.isPlaying}")
+            if (_state.value.isPlaying) {
+                wasPlayingBeforeStreamDisconnect = true
+                Log.w(TAG, "音频流断开，保存播放状态: wasPlayingBeforeStreamDisconnect=true")
+            }
         }
 
         MusicService.onAudioFocusLost = {
+            Log.w(TAG, "onAudioFocusLost callback triggered, isPlaying=${_state.value.isPlaying}")
             wasPlayingBeforeFocusLoss = _state.value.isPlaying
             _state.value = _state.value.copy(isPlaying = false)
         }
         
         isInitialized = true
-        Log.d(TAG, "MusicPlayerController initialized")
+        Log.w(TAG, "MusicPlayerController initialized, onAudioStreamRestarted callback set")
     }
     
     fun restoreLastPlayback(): Boolean {
@@ -263,7 +288,12 @@ object MusicPlayerController {
         val eqConfig = MusicStorage.getEqualizerConfig()
         OboeAudioEngine.setEqGains(soundId, eqConfig.gains)
         OboeAudioEngine.setEqEnabled(soundId, eqConfig.enabled)
-        OboeAudioEngine.setEqLimiterEnabled(soundId, eqConfig.limiterEnabled)
+        
+        val limiterConfig = MusicStorage.getLimiterConfig()
+        OboeAudioEngine.setEqLimiterEnabled(soundId, limiterConfig.limitEqualizer)
+        OboeAudioEngine.setLimitEffectsEnabled(soundId, limiterConfig.limitEffects)
+        OboeAudioEngine.setLimitReverbEnabled(soundId, limiterConfig.limitReverb)
+        OboeAudioEngine.setLimitSpatialEnabled(soundId, limiterConfig.limitSpatial)
         
         val spatialConfig = MusicStorage.getSpatialAudioConfig()
         OboeAudioEngine.setSpatialEnabled(soundId, spatialConfig.enabled)
@@ -383,18 +413,26 @@ object MusicPlayerController {
     }
     
     private fun handleAudioStreamRestarted() {
-        val track = _state.value.currentTrack
-        val wasPlaying = _state.value.isPlaying || wasPlayingBeforeFocusLoss
-        val savedPosition = _state.value.position
-
-        wasPlayingBeforeFocusLoss = false
-        
-        if (track == null) {
-            Log.d(TAG, "音频流重启，但没有当前音轨")
+        if (isLoading) {
+            Log.w(TAG, "音频流重启，但正在加载中，跳过")
             return
         }
         
-        Log.d(TAG, "音频流重启，恢复播放: ${track.title}, 位置: $savedPosition, 正在播放: $wasPlaying")
+        val track = _state.value.currentTrack
+        val wasPlaying = _state.value.isPlaying || wasPlayingBeforeFocusLoss || wasPlayingBeforeStreamDisconnect
+        val savedPosition = _state.value.position
+
+        wasPlayingBeforeFocusLoss = false
+        wasPlayingBeforeStreamDisconnect = false
+        
+        if (track == null) {
+            Log.w(TAG, "音频流重启，但没有当前音轨")
+            return
+        }
+        
+        isLoading = true
+        stopAllMusicSounds()
+        Log.w(TAG, "音频流重启，恢复播放: ${track.title}, 位置: $savedPosition, 正在播放: $wasPlaying, isPlaying=${_state.value.isPlaying}, wasPlayingBeforeFocusLoss=$wasPlayingBeforeFocusLoss")
         
         val soundId = MusicCacheManager.getSoundId(track.id)
         
@@ -408,6 +446,7 @@ object MusicPlayerController {
                     }
                     
                     if (OboeAudioEngine.isLoaded(soundId)) {
+                        Log.w(TAG, "音频流重启后音轨加载成功: ${track.title}")
                         applyEffectIntensitiesToCurrentTrack()
                         
                         if (savedPosition > 0) {
@@ -419,16 +458,20 @@ object MusicPlayerController {
                             OboeAudioEngine.setLooping(soundId, _state.value.repeatMode == MusicRepeatMode.ONE)
                             OboeAudioEngine.playSound(soundId)
                             startProgressUpdates()
-                            Log.d(TAG, "音频流重启后恢复播放成功")
+                            _state.value = _state.value.copy(isPlaying = true)
+                            Log.w(TAG, "音频流重启后恢复播放成功")
                         }
+                        
+                        preloadNextTrack()
                     } else {
-                        Log.e(TAG, "音频流重启后加载音轨失败")
+                        Log.e(TAG, "音频流重启后加载音轨失败: isLoaded=false after $retries retries")
                         _state.value = _state.value.copy(isPlaying = false)
                     }
                 } else {
-                    Log.e(TAG, "音频流重启后加载音轨失败")
+                    Log.e(TAG, "音频流重启后加载音轨失败: loadTrack returned false")
                     _state.value = _state.value.copy(isPlaying = false)
                 }
+                isLoading = false
             }
         }
     }

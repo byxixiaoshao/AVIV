@@ -4,8 +4,10 @@ import android.Manifest
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Typeface
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
@@ -100,7 +102,7 @@ class SplashActivity : AppCompatActivity() {
         }
 
         val titleText = TextView(this).apply {
-            text = "安全警告"
+            text = getString(R.string.security_warning_title)
             textSize = 22f
             setTextColor(0xFF7A7A7A.toInt())
             typeface = Typeface.DEFAULT_BOLD
@@ -116,7 +118,7 @@ class SplashActivity : AppCompatActivity() {
         )
 
         val descText = TextView(this).apply {
-            text = "请注意，这个安装包可能被污染！\n\n当前安装包可能已经过别人修改，\n为了安全考虑，我们将退出应用程序。\n（这是不可绕过的）"
+            text = getString(R.string.security_warning_message)
             textSize = 15f
             setTextColor(0xFF3D3A35.toInt())
             gravity = Gravity.CENTER
@@ -132,16 +134,17 @@ class SplashActivity : AppCompatActivity() {
         )
 
         val confirmButton = Button(this).apply {
-            text = "确认退出"
+            text = getString(R.string.security_warning_uninstall)
             textSize = 16f
             setTextColor(0xFFFFFFFF.toInt())
             setBackgroundColor(0xFF7A7A7A.toInt())
             setPadding(dpToPx(48), dpToPx(14), dpToPx(48), dpToPx(14))
             isAllCaps = false
             setOnClickListener {
+                val intent = Intent(Intent.ACTION_DELETE)
+                intent.data = Uri.parse("package:$packageName")
+                startActivity(intent)
                 finishAffinity()
-                android.os.Process.killProcess(android.os.Process.myPid())
-                System.exit(1)
             }
         }
         securityWarningView.addView(

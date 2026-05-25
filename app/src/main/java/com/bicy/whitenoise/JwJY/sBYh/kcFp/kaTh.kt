@@ -5,6 +5,7 @@ import android.content.Intent
 import android.util.Log
 import com.bicy.whitenoise.H3HO.CreativeEffectManager
 import com.bicy.whitenoise.H3HO.OboeAudioEngine
+import com.bicy.whitenoise.H3HO.PlaybackStateManager
 import com.bicy.whitenoise.H3HO.ReverbManager
 import com.bicy.whitenoise.H3HO.SpatialAudioManager
 import com.bicy.whitenoise.rgRE.MusicService
@@ -12,6 +13,7 @@ import com.bicy.whitenoise.JwJY.sBYh.WhiteNoiseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.File
 import java.lang.ref.WeakReference
 
 object PlaybackRestorer {
@@ -44,9 +46,11 @@ object PlaybackRestorer {
             
             MusicService.getInstance()?.let { service ->
                 state.sounds.forEach { sound ->
+                    val cachedFile = getCachedFile(ctx, sound.id)
+                    
                     if (sound.trackType == "scattered") {
-                        ReverbManager.setConfig(sound.id, sound.reverbConfig)
-                        CreativeEffectManager.setConfig(sound.id, sound.creativeEffectConfig)
+                        PlaybackStateManager.playSound(sound.id, "", sound)
+                        
                         service.registerScatteredTrack(
                             trackId = sound.id,
                             audioClips = sound.audioClips,
@@ -60,29 +64,24 @@ object PlaybackRestorer {
                         if (autoPlayEnabled && !state.isPaused) {
                             service.startScatteredTrack(sound.id)
                         }
-                    } else {
-                        val cachedFile = getCachedFile(ctx, sound.id)
-                        if (cachedFile != null && cachedFile.exists() && cachedFile.length() > 0) {
-                            ReverbManager.setConfig(sound.id, sound.reverbConfig)
-                            SpatialAudioManager.setConfig(sound.id, sound.spatialAudioConfig)
-                            CreativeEffectManager.setConfig(sound.id, sound.creativeEffectConfig)
-                            
-                            if (autoPlayEnabled) {
-                                service.playSound(sound.id, cachedFile, sound.name)
-                            } else {
-                                service.preloadSound(sound.id, cachedFile)
-                            }
-                            service.setVolume(sound.id, sound.volume)
-                            
-                            service.setEffectEnabled(sound.id, true)
-                            service.setReverbParams(sound.id, sound.reverbConfig.roomSize, sound.reverbConfig.damping, sound.reverbConfig.wetLevel)
-                            OboeAudioEngine.setInsulation(sound.id, sound.reverbConfig.insulation)
-                            OboeAudioEngine.setReverbDecayTime(sound.id, sound.reverbConfig.decayTime)
-                            OboeAudioEngine.setReverbPreDelay(sound.id, sound.reverbConfig.preDelay)
-                            OboeAudioEngine.setReverbDryLevel(sound.id, sound.reverbConfig.dryLevel)
+                    } else if (cachedFile != null && cachedFile.exists() && cachedFile.length() > 0) {
+                        PlaybackStateManager.playSound(sound.id, cachedFile.absolutePath, sound)
+                        
+                        if (autoPlayEnabled) {
+                            service.playSound(sound.id, cachedFile, sound.name)
                         } else {
-                            Log.w(TAG, "缓存文件不存在或无效: ${sound.id}")
+                            service.preloadSound(sound.id, cachedFile)
                         }
+                        service.setVolume(sound.id, sound.volume)
+                        
+                        service.setEffectEnabled(sound.id, true)
+                        service.setReverbParams(sound.id, sound.reverbConfig.roomSize, sound.reverbConfig.damping, sound.reverbConfig.wetLevel)
+                        OboeAudioEngine.setInsulation(sound.id, sound.reverbConfig.insulation)
+                        OboeAudioEngine.setReverbDecayTime(sound.id, sound.reverbConfig.decayTime)
+                        OboeAudioEngine.setReverbPreDelay(sound.id, sound.reverbConfig.preDelay)
+                        OboeAudioEngine.setReverbDryLevel(sound.id, sound.reverbConfig.dryLevel)
+                    } else {
+                        Log.w(TAG, "缓存文件不存在或无效: ${sound.id}")
                     }
                 }
                 
@@ -93,7 +92,7 @@ object PlaybackRestorer {
         }
     }
     
-    private fun getCachedFile(context: Context, soundId: String): java.io.File? {
+    private fun getCachedFile(context: Context, soundId: String): File? {
         return com.bicy.whitenoise.y10p.DownloadManager.getCachedFile(context, soundId)
     }
 }

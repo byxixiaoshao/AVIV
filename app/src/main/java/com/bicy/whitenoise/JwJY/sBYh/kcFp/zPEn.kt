@@ -32,13 +32,18 @@ object ConfigParser {
     fun parseReverbConfig(json: JSONObject?): ReverbConfig {
         if (json == null) return ReverbConfig()
         return ReverbConfig(
+            enabled = json.optBoolean("enabled", false),
             roomSize = json.optDouble("roomSize", 0.0).toFloat(),
-            decayTime = json.optDouble("decayTime", 0.0).toFloat(),
+            decayTime = json.optDouble("decayTime", 1.5).toFloat(),
             damping = json.optDouble("damping", 0.0).toFloat(),
             wetLevel = json.optDouble("wetLevel", 0.0).toFloat(),
             dryLevel = json.optDouble("dryLevel", 1.0).toFloat(),
             preDelay = json.optDouble("preDelay", 0.025).toFloat(),
-            insulation = json.optDouble("insulation", 0.0).toFloat()
+            insulation = json.optDouble("insulation", 0.0).toFloat(),
+            reflectionDensity = json.optDouble("reflectionDensity", 0.5).toFloat(),
+            reflectionSpread = json.optDouble("reflectionSpread", 0.5).toFloat(),
+            highpassCutoff = json.optDouble("highpassCutoff", 100.0).toFloat(),
+            earlyReflectionLevel = json.optDouble("earlyReflectionLevel", 0.0).toFloat()
         )
     }
     
@@ -155,6 +160,7 @@ object ConfigParser {
     
     fun toJson(config: ReverbConfig): JSONObject {
         return JSONObject().apply {
+            put("enabled", config.enabled)
             put("roomSize", config.roomSize)
             put("decayTime", config.decayTime)
             put("damping", config.damping)
@@ -162,6 +168,10 @@ object ConfigParser {
             put("dryLevel", config.dryLevel)
             put("preDelay", config.preDelay)
             put("insulation", config.insulation)
+            put("reflectionDensity", config.reflectionDensity)
+            put("reflectionSpread", config.reflectionSpread)
+            put("highpassCutoff", config.highpassCutoff)
+            put("earlyReflectionLevel", config.earlyReflectionLevel)
         }
     }
     

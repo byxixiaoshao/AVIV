@@ -8,9 +8,11 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -50,11 +52,15 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import com.bicy.whitenoise.R
 import com.bicy.whitenoise.H3HO.OboeAudioEngine
 import com.bicy.whitenoise.H3HO.CreativeEffectType
@@ -104,6 +110,8 @@ fun MixerPanel(
     modifier: Modifier = Modifier
 ) {
     var selectedTab by remember { mutableStateOf(1) }
+    var limiterMenuExpanded by remember { mutableStateOf(false) }
+    val limiterConfig = MusicStorage.getLimiterConfig()
     
     Column(
         modifier = modifier
@@ -126,18 +134,34 @@ fun MixerPanel(
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 .padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             TabButton(
                 text = stringResource(R.string.equalizer),
                 isSelected = selectedTab == 0,
-                onClick = { selectedTab = 0 }
+                onClick = { selectedTab = 0 },
+                modifier = Modifier.weight(1f)
             )
             TabButton(
                 text = stringResource(R.string.more_adjustments),
                 isSelected = selectedTab == 1,
-                onClick = { selectedTab = 1 }
+                onClick = { selectedTab = 1 },
+                modifier = Modifier.weight(1f)
             )
+            
+            Box {
+                LimiterButton(
+                    enabled = limiterConfig.enabled,
+                    onClick = { limiterMenuExpanded = true }
+                )
+                
+                LimiterDropdownMenu(
+                    expanded = limiterMenuExpanded,
+                    onDismissRequest = { limiterMenuExpanded = false },
+                    config = limiterConfig
+                )
+            }
         }
     }
 }
@@ -146,17 +170,18 @@ fun MixerPanel(
 fun TabButton(
     text: String,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .clip(RoundedCornerShape(8.dp))
             .background(
                 if (isSelected) MaterialTheme.colorScheme.primary
                 else MaterialTheme.colorScheme.surfaceVariant
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 24.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -165,6 +190,193 @@ fun TabButton(
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
             color = if (isSelected) MaterialTheme.colorScheme.onPrimary
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+        )
+    }
+}
+
+@Composable
+fun LimiterButton(
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(
+                if (enabled) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                else MaterialTheme.colorScheme.surfaceVariant
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.limiter),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            color = if (enabled) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        )
+        Icon(
+            imageVector = Icons.Default.ArrowDropDown,
+            contentDescription = null,
+            tint = if (enabled) MaterialTheme.colorScheme.primary
+                   else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            modifier = Modifier
+                .size(16.dp)
+                .graphicsLayer { rotationZ = 180f }
+        )
+    }
+}
+
+@Composable
+fun LimiterDropdownMenu(
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    config: com.bicy.whitenoise.JwJY.EY9i.LimiterConfig
+) {
+    var limitEqualizer by remember { mutableStateOf(config.limitEqualizer) }
+    var limitEffects by remember { mutableStateOf(config.limitEffects) }
+    var limitReverb by remember { mutableStateOf(config.limitReverb) }
+    var limitSpatial by remember { mutableStateOf(config.limitSpatial) }
+    
+    val updateLimiterConfig: () -> Unit = {
+        val newConfig = com.bicy.whitenoise.JwJY.EY9i.LimiterConfig(
+            enabled = config.enabled,
+            limitEqualizer = limitEqualizer,
+            limitEffects = limitEffects,
+            limitReverb = limitReverb,
+            limitSpatial = limitSpatial,
+            threshold = config.threshold,
+            attack = config.attack,
+            release = config.release
+        )
+        MusicStorage.updateLimiterConfig(newConfig)
+        OboeAudioEngine.setGlobalLimiterConfig(
+            enabled = newConfig.enabled,
+            limitEqualizer = newConfig.limitEqualizer,
+            limitEffects = newConfig.limitEffects,
+            limitReverb = newConfig.limitReverb,
+            limitSpatial = newConfig.limitSpatial,
+            threshold = newConfig.threshold,
+            attack = newConfig.attack,
+            release = newConfig.release
+        )
+        
+        val track = MusicPlayerController.currentTrack
+        val soundId = track?.let { MusicCacheManager.getSoundId(it.id) }
+        if (soundId != null) {
+            OboeAudioEngine.setEqLimiterEnabled(soundId, newConfig.limitEqualizer)
+            OboeAudioEngine.setLimitEffectsEnabled(soundId, newConfig.limitEffects)
+            OboeAudioEngine.setLimitReverbEnabled(soundId, newConfig.limitReverb)
+            OboeAudioEngine.setLimitSpatialEnabled(soundId, newConfig.limitSpatial)
+        }
+    }
+    
+    if (expanded) {
+        Popup(
+            onDismissRequest = onDismissRequest,
+            properties = PopupProperties(
+                focusable = true,
+                dismissOnBackPress = true,
+                dismissOnClickOutside = true
+            )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 80.dp)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { onDismissRequest() },
+                contentAlignment = Alignment.BottomEnd
+            ) {
+                Column(
+                    modifier = Modifier
+                        .width(IntrinsicSize.Max)
+                        .padding(end = 8.dp, bottom = 8.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { }
+                        .padding(vertical = 4.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.limiter),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                    )
+                    
+                    LimiterMenuItem(
+                        text = stringResource(R.string.limit_equalizer),
+                        checked = limitEqualizer,
+                        onCheckedChange = {
+                            limitEqualizer = it
+                            updateLimiterConfig()
+                        }
+                    )
+                    
+                    LimiterMenuItem(
+                        text = stringResource(R.string.limit_effects),
+                        checked = limitEffects,
+                        onCheckedChange = {
+                            limitEffects = it
+                            updateLimiterConfig()
+                        }
+                    )
+                    
+                    LimiterMenuItem(
+                        text = stringResource(R.string.limit_reverb),
+                        checked = limitReverb,
+                        onCheckedChange = {
+                            limitReverb = it
+                            updateLimiterConfig()
+                        }
+                    )
+                    
+                    LimiterMenuItem(
+                        text = stringResource(R.string.limit_spatial),
+                        checked = limitSpatial,
+                        onCheckedChange = {
+                            limitSpatial = it
+                            updateLimiterConfig()
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LimiterMenuItem(
+    text: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -206,7 +418,6 @@ fun EqualizerPanel() {
     val savedEqConfig = MusicStorage.getEqualizerConfig()
     var gains by remember { mutableStateOf(savedEqConfig.gains.copyOf()) }
     var selectedPreset by remember { mutableStateOf("平坦") }
-    var limiterEnabled by remember { mutableStateOf(savedEqConfig.limiterEnabled) }
     var presetExpanded by remember { mutableStateOf(false) }
     
     LaunchedEffect(soundId) {
@@ -214,9 +425,7 @@ fun EqualizerPanel() {
             val eqConfig = MusicStorage.getEqualizerConfig()
             OboeAudioEngine.setEqGains(soundId, eqConfig.gains)
             OboeAudioEngine.setEqEnabled(soundId, eqConfig.enabled)
-            OboeAudioEngine.setEqLimiterEnabled(soundId, eqConfig.limiterEnabled)
             gains = eqConfig.gains.copyOf()
-            limiterEnabled = eqConfig.limiterEnabled
         }
     }
     
@@ -239,11 +448,9 @@ fun EqualizerPanel() {
         if (soundId != null) {
             OboeAudioEngine.setEqGains(soundId, newGains)
             OboeAudioEngine.setEqEnabled(soundId, true)
-            OboeAudioEngine.setEqLimiterEnabled(soundId, limiterEnabled)
             MusicStorage.updateEqualizerConfig(
                 EqualizerConfig(
                     enabled = true,
-                    limiterEnabled = limiterEnabled,
                     gains = newGains.copyOf()
                 )
             )
@@ -262,27 +469,12 @@ fun EqualizerPanel() {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(R.string.equalizer),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            
-            Text(
-                text = if (limiterEnabled) "${stringResource(R.string.limiter)}: ${stringResource(R.string.config)}" else "${stringResource(R.string.limiter)}: ${stringResource(R.string.close)}",
-                fontSize = 12.sp,
-                color = if (limiterEnabled) 
-                    MaterialTheme.colorScheme.primary 
-                else 
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-            )
-        }
+        Text(
+            text = stringResource(R.string.equalizer),
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
         
         Spacer(modifier = Modifier.height(12.dp))
         
@@ -376,59 +568,18 @@ fun EqualizerPanel() {
         
         Spacer(modifier = Modifier.height(12.dp))
         
-        Row(
+        Button(
+            onClick = {
+                gains = FloatArray(12) { 0f }
+                selectedPreset = "平坦"
+                applyGains(gains)
+            },
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
         ) {
-            Button(
-                onClick = {
-                    gains = FloatArray(12) { 0f }
-                    selectedPreset = "平坦"
-                    applyGains(gains)
-                },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Text("重置", color = MaterialTheme.colorScheme.onSurface)
-            }
-            
-            Spacer(modifier = Modifier.width(8.dp))
-            
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                    .clickable {
-                        limiterEnabled = !limiterEnabled
-                        if (soundId != null) {
-                            OboeAudioEngine.setEqLimiterEnabled(soundId, limiterEnabled)
-                            MusicStorage.updateEqualizerLimiterEnabled(limiterEnabled)
-                        }
-                    }
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
-            ) {
-                Checkbox(
-                    checked = limiterEnabled,
-                    onCheckedChange = { checked ->
-                        limiterEnabled = checked
-                        if (soundId != null) {
-                            OboeAudioEngine.setEqLimiterEnabled(soundId, limiterEnabled)
-                            MusicStorage.updateEqualizerLimiterEnabled(limiterEnabled)
-                        }
-                    },
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "限幅器",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
+            Text("重置", color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
@@ -911,7 +1062,7 @@ fun ReverbPanel() {
             )
             Spacer(modifier = Modifier.height(8.dp))
             EffectSliderItem(
-                name = "Hi-Fi",
+                name = stringResource(R.string.pseudo_restoration_processing),
                 intensity = hifiIntensity,
                 onIntensityChange = { 
                     hifiIntensity = it

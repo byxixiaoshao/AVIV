@@ -52,6 +52,8 @@ import com.bicy.whitenoise.yODW.NvYq.BxAd.ContentPaddingTop
 import com.bicy.whitenoise.yODW.NvYq.BxAd.EffectOrderDialog
 import com.bicy.whitenoise.yODW.NvYq.BxAd.MusicDirectoryDialog
 import com.bicy.whitenoise.yODW.NvYq.BxAd.SettingClickItem
+import com.bicy.whitenoise.yODW.NvYq.BxAd.SettingSliderItem
+import com.bicy.whitenoise.yODW.NvYq.BxAd.SettingSliderWithCheckboxItem
 import com.bicy.whitenoise.yODW.NvYq.BxAd.SettingSwitchItem
 import com.bicy.whitenoise.yODW.NvYq.BxAd.SingleColorPickerDialog
 import com.bicy.whitenoise.yODW.NvYq.BxAd.ThankYouDialog
@@ -147,7 +149,6 @@ fun SettingScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
     ) {
         LazyColumn(
             modifier = Modifier
@@ -210,35 +211,11 @@ fun SettingScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = stringResource(R.string.general),
+                    text = stringResource(R.string.personalization),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
-            }
-            
-            item {
-                SettingSwitchItem(
-                    title = stringResource(R.string.auto_play_on_startup),
-                    checked = autoPlayEnabled,
-                    onCheckedChange = { viewModel.setAutoPlay(it) }
-                )
-            }
-            
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-            
-            item {
-                SettingClickItem(
-                    title = stringResource(R.string.audio_effect_order),
-                    value = stringResource(R.string.customize),
-                    onClick = { showEffectOrderDialog = true }
-                )
-            }
-            
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
             }
             
             item {
@@ -301,6 +278,91 @@ fun SettingScreen(
                         }
                     }
                 }
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            
+            item {
+                SettingSliderWithCheckboxItem(
+                    title = stringResource(R.string.viz_wn_sensitivity),
+                    checked = globalState.vizWnEnabled,
+                    onCheckedChange = { enabled -> ConfigStorage.setVizWnEnabled(enabled) },
+                    value = globalState.vizWnSensitivity,
+                    onValueChange = { value -> ConfigStorage.setVizWnSensitivity(value) }
+                )
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            
+            item {
+                SettingSliderWithCheckboxItem(
+                    title = stringResource(R.string.viz_music_sensitivity),
+                    checked = globalState.vizMusicEnabled,
+                    onCheckedChange = { enabled -> ConfigStorage.setVizMusicEnabled(enabled) },
+                    value = globalState.vizMusicSensitivity,
+                    onValueChange = { value -> ConfigStorage.setVizMusicSensitivity(value) }
+                )
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            
+            item {
+                SettingSliderWithCheckboxItem(
+                    title = stringResource(R.string.viz_flash_sensitivity),
+                    checked = globalState.vizFlashEnabled,
+                    onCheckedChange = { enabled -> ConfigStorage.setVizFlashEnabled(enabled) },
+                    value = globalState.vizFlashSensitivity,
+                    onValueChange = { value -> ConfigStorage.setVizFlashSensitivity(value) }
+                )
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            
+            item {
+                SettingSliderItem(
+                    title = stringResource(R.string.viz_refresh_rate),
+                    value = globalState.vizRefreshRate,
+                    onValueChange = { ConfigStorage.setVizRefreshRate(it) }
+                )
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = stringResource(R.string.general),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
+            
+            item {
+                SettingSwitchItem(
+                    title = stringResource(R.string.auto_play_on_startup),
+                    checked = autoPlayEnabled,
+                    onCheckedChange = { viewModel.setAutoPlay(it) }
+                )
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            
+            item {
+                SettingClickItem(
+                    title = stringResource(R.string.audio_effect_order),
+                    value = stringResource(R.string.customize),
+                    onClick = { showEffectOrderDialog = true }
+                )
             }
             
             item {

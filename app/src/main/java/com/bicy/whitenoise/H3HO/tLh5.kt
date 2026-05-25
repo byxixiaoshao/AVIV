@@ -7,28 +7,24 @@ object SpatialAudioManager {
     
     private const val TAG = "SpatialAudioManager"
     
-    private val soundSpatialConfigs = mutableMapOf<String, SpatialAudioConfig>()
-    
     fun getConfig(soundId: String): SpatialAudioConfig? {
-        return soundSpatialConfigs[soundId]
+        val soundConfig = PlaybackStateManager.getSoundConfig(soundId)
+        return soundConfig?.spatialAudioConfig
     }
     
     fun setConfig(soundId: String, config: SpatialAudioConfig) {
-        soundSpatialConfigs[soundId] = config
+        PlaybackStateManager.updateSpatialConfig(soundId, config)
         Log.d(TAG, "Set spatial config for sound: $soundId, enabled=${config.enabled}")
     }
     
     fun removeConfig(soundId: String) {
-        soundSpatialConfigs.remove(soundId)
         Log.d(TAG, "Removed spatial config for sound: $soundId")
     }
     
     fun clearConfig(soundId: String? = null) {
         if (soundId != null) {
-            soundSpatialConfigs.remove(soundId)
             Log.d(TAG, "Cleared spatial config for sound: $soundId")
         } else {
-            soundSpatialConfigs.clear()
             Log.d(TAG, "Cleared all spatial configs")
         }
     }

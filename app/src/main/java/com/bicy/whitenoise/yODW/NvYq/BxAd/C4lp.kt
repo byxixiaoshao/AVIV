@@ -990,40 +990,15 @@ fun AboutDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 
-                val soundAuthors = listOf(
-                    "FeedTheStrayCats" to "雨",
-                    "SoundReality" to "风",
-                    "DRAGON-STUDIO" to "篝火、河流、键盘",
-                    "Soul_Serenity_Sounds" to "咖啡馆",
-                    "Colto" to "风扇",
-                    "SSPsurvival" to "雪中漫步",
-                    "freesound_community" to "其他音源"
+                Text(
+                    text = stringResource(R.string.sound_source_tip),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
                 )
-                
-                soundAuthors.forEach { (author, sounds) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = author,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            text = sounds,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            modifier = Modifier.weight(1f),
-                            textAlign = TextAlign.End
-                        )
-                    }
-                }
             }
         },
         confirmButton = {

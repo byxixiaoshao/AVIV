@@ -1,7 +1,16 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+}
+
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -14,7 +23,7 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = 1
-        versionName = "BicyOne"
+        versionName = "Bicy V1.260525"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -31,9 +40,19 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(keystoreProperties.getProperty("storeFile", "../bicy_studio.jks"))
+            storePassword = keystoreProperties.getProperty("storePassword", "")
+            keyAlias = keystoreProperties.getProperty("keyAlias", "ab_games")
+            keyPassword = keystoreProperties.getProperty("keyPassword", "")
+        }
+    }
+
     buildTypes {
         debug {
             isDebuggable = true
+            signingConfig = signingConfigs.getByName("release")
             buildConfigField("boolean", "ENABLE_INTEGRITY", "true")
         }
         release {
@@ -43,6 +62,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
             buildConfigField("boolean", "ENABLE_INTEGRITY", "true")
         }
     }

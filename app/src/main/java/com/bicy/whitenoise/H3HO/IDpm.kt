@@ -220,6 +220,58 @@ object OboeAudioEngine {
         nativeSetEffectOrder(soundId, order)
     }
     
+    fun getVisualizationData(): FloatArray {
+        return nativeGetVisualizationData()
+    }
+    
+    fun getWhiteNoiseVisualizationData(): FloatArray {
+        return nativeGetWhiteNoiseVisualizationData()
+    }
+    
+    fun getMusicVisualizationData(): FloatArray {
+        return nativeGetMusicVisualizationData()
+    }
+    
+    fun getVisualizationEnergy(): Float {
+        return nativeGetVisualizationEnergy()
+    }
+    
+    fun getWhiteNoiseVisualizationEnergy(): Float {
+        return nativeGetWhiteNoiseVisualizationEnergy()
+    }
+    
+    fun getMusicVisualizationEnergy(): Float {
+        return nativeGetMusicVisualizationEnergy()
+    }
+    
+    fun setGlobalLimiterConfig(
+        enabled: Boolean,
+        limitEqualizer: Boolean,
+        limitEffects: Boolean,
+        limitReverb: Boolean,
+        limitSpatial: Boolean,
+        threshold: Float = 0.9f,
+        attack: Float = 5.0f,
+        release: Float = 50.0f
+    ) {
+        nativeSetGlobalLimiterConfig(
+            enabled, limitEqualizer, limitEffects, limitReverb,
+            limitSpatial, threshold, attack, release
+        )
+    }
+    
+    fun getGlobalLimiterConfig(): BooleanArray {
+        return nativeGetGlobalLimiterConfig()
+    }
+    
+    fun setGlobalLimiterEnabled(enabled: Boolean) {
+        nativeSetGlobalLimiterEnabled(enabled)
+    }
+    
+    fun isGlobalLimiterEnabled(): Boolean {
+        return nativeIsGlobalLimiterEnabled()
+    }
+    
     private external fun registerNatives(): Boolean
     private external fun nativeInit(): Boolean
     private external fun nativeWarmup()
@@ -274,4 +326,39 @@ object OboeAudioEngine {
     private external fun nativeCancelFadeOut(soundId: String)
     private external fun nativeClearAllEffectBuffers()
     private external fun nativeSetEffectOrder(soundId: String, order: IntArray)
+    private external fun nativeGetVisualizationData(): FloatArray
+    private external fun nativeGetWhiteNoiseVisualizationData(): FloatArray
+    private external fun nativeGetMusicVisualizationData(): FloatArray
+    private external fun nativeGetVisualizationEnergy(): Float
+    private external fun nativeGetWhiteNoiseVisualizationEnergy(): Float
+    private external fun nativeGetMusicVisualizationEnergy(): Float
+    private external fun nativeSetGlobalLimiterConfig(
+        enabled: Boolean,
+        limitEqualizer: Boolean,
+        limitEffects: Boolean,
+        limitReverb: Boolean,
+        limitSpatial: Boolean,
+        threshold: Float,
+        attack: Float,
+        release: Float
+    )
+    private external fun nativeGetGlobalLimiterConfig(): BooleanArray
+    private external fun nativeSetGlobalLimiterEnabled(enabled: Boolean)
+    private external fun nativeIsGlobalLimiterEnabled(): Boolean
+    
+    fun setLimitEffectsEnabled(soundId: String, enabled: Boolean) {
+        nativeSetLimitEffectsEnabled(soundId, enabled)
+    }
+    
+    fun setLimitReverbEnabled(soundId: String, enabled: Boolean) {
+        nativeSetLimitReverbEnabled(soundId, enabled)
+    }
+    
+    fun setLimitSpatialEnabled(soundId: String, enabled: Boolean) {
+        nativeSetLimitSpatialEnabled(soundId, enabled)
+    }
+    
+    private external fun nativeSetLimitEffectsEnabled(soundId: String, enabled: Boolean)
+    private external fun nativeSetLimitReverbEnabled(soundId: String, enabled: Boolean)
+    private external fun nativeSetLimitSpatialEnabled(soundId: String, enabled: Boolean)
 }

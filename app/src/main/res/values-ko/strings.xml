@@ -103,6 +103,7 @@
     <string name="open_source_license">오픈 소스 라이선스</string>
     <string name="sound_source_credit">사운드 소스 크레딧</string>
     <string name="sound_source_hint">모든 백색 소음은 Pixabay에서\n상업적 사용을 위해 Pixabay 라이선스를 따릅니다</string>
+    <string name="sound_source_tip">백색 소음 옵션을 길게 누르면 오디오 및 작성자 세부 정보를 볼 수 있습니다. 가능하면 지원해 주세요.</string>
     
     <string name="audio_effect_order_title">오디오 효과 처리 순서</string>
     <string name="audio_effect_order_hint">화살표를 클릭하여 처리 순서 조정 (위에서 아래로)</string>
@@ -110,6 +111,7 @@
     <string name="spatial_reverb">공간 리버브</string>
     <string name="equalizer">이퀄라이저</string>
     <string name="quality_effect">음질 효과</string>
+    <string name="pseudo_restoration_processing">의사 복원 처리</string>
     
     <string name="create_scattered_group">분산 그룹 생성</string>
     <string name="group_name">그룹 이름</string>
@@ -183,4 +185,19 @@
     <string name="donate_author">작성자에게 기부</string>
     
     <string name="please_add_music_directory">먼저 음악 디렉토리를 추가하세요</string>
+    
+    <string name="personalization">개인화</string>
+    <string name="viz_wn_sensitivity">백색 소음 시각화 감도</string>
+    <string name="viz_music_sensitivity">음악 시각화 감도</string>
+    <string name="viz_flash_sensitivity">음악 플래시 감도</string>
+    <string name="viz_refresh_rate">시각화 변화 속도</string>
+    <string name="low">낮음</string>
+    <string name="medium">중간</string>
+    <string name="high">높음</string>
+    <string name="slow">느림</string>
+    <string name="fast">빠름</string>
+    
+    <string name="security_warning_title">보안 경고</string>
+    <string name="security_warning_message">경고: 이 설치 패키지는 손상되었을 수 있습니다!\n\n현재 패키지는 다른 사람에 의해 수정되었을 수 있습니다.\n보안상의 이유로 이 앱을 제거해 주세요.\n(이것은 우회할 수 없습니다)</string>
+    <string name="security_warning_uninstall">제거 확인</string>
 </resources>

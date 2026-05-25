@@ -68,6 +68,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     
+    private val storageListener: () -> Unit = {
+        viewModelScope.launch {
+            syncPlayListState()
+        }
+    }
+    
     init {
         setupListeners()
         updatePlayingSounds()
@@ -110,11 +116,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
         
-        WhiteNoiseStorage.addListener {
-            viewModelScope.launch {
-                syncPlayListState()
-            }
-        }
+        WhiteNoiseStorage.addListener(storageListener)
     }
     
     private fun syncPlayListState() {
@@ -227,12 +229,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     private fun playSound(sound: SoundMetadata) {
-        val reverbConfig = com.bicy.whitenoise.H3HO.ReverbManager.getConfig(sound.id) ?: com.bicy.whitenoise.H3HO.ReverbConfig()
+        val savedConfig = WhiteNoiseStorage.getPlaybackState().sounds.find { it.id == sound.id }
+        val reverbConfig = savedConfig?.reverbConfig ?: com.bicy.whitenoise.H3HO.ReverbConfig()
+        val spatialConfig = savedConfig?.spatialAudioConfig ?: com.bicy.whitenoise.JwJY.sBYh.kcFp.SpatialAudioConfig()
+        val creativeConfig = savedConfig?.creativeEffectConfig ?: com.bicy.whitenoise.JwJY.sBYh.kcFp.CreativeEffectConfig()
+        val volume = savedConfig?.volume ?: 1f
+        
         val soundConfig = SoundPlayConfig(
             id = sound.id,
             name = sound.name,
-            volume = 1f,
+            volume = volume,
             reverbConfig = reverbConfig,
+            spatialAudioConfig = spatialConfig,
+            creativeEffectConfig = creativeConfig,
             translations = sound.translations
         )
         WhiteNoiseStorage.addPlayingSound(soundConfig)
@@ -514,5 +523,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         super.onCleared()
         Function.clearDownloadProgressListener()
         MusicService.onPlaybackStateChangeListener = null
+        WhiteNoiseStorage.removeListener(storageListener)
     }
 }

@@ -50,10 +50,13 @@ object Function {
         val cachedFile = getCachedFile(context, sound.id)
         
         if (cachedFile != null) {
-            val serviceIntent = Intent(context, MusicService::class.java)
+            val serviceIntent = Intent(context, MusicService::class.java).apply {
+                action = MusicService.ACTION_PLAY_SOUND
+                putExtra(MusicService.EXTRA_SOUND_ID, sound.id)
+                putExtra(MusicService.EXTRA_FILE_PATH, cachedFile.absolutePath)
+                putExtra(MusicService.EXTRA_SOUND_NAME, sound.name)
+            }
             context.startForegroundService(serviceIntent)
-            
-            MusicService.getInstance()?.playSound(sound.id, cachedFile, sound.name)
             Log.d(TAG, "播放缓存文件: ${sound.name}")
         } else {
             Log.d(TAG, "音频未缓存，需要先下载: ${sound.name}")

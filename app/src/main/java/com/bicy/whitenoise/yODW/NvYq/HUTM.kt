@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -131,6 +132,7 @@ fun ScatteredConfigDialog(
     var underwaterIntensity by remember { mutableFloatStateOf(savedCreativeConfig.underwater) }
     var alienSignalIntensity by remember { mutableFloatStateOf(savedCreativeConfig.alienSignal) }
     var megaphoneIntensity by remember { mutableFloatStateOf(savedCreativeConfig.megaphone) }
+    var hifiIntensity by remember { mutableFloatStateOf(savedCreativeConfig.hifi) }
     
     val saveCreativeConfig: () -> Unit = {
         val config = CreativeEffectConfig(
@@ -138,7 +140,8 @@ fun ScatteredConfigDialog(
             eightBit = eightBitIntensity,
             underwater = underwaterIntensity,
             alienSignal = alienSignalIntensity,
-            megaphone = megaphoneIntensity
+            megaphone = megaphoneIntensity,
+            hifi = hifiIntensity
         )
         WhiteNoiseStorage.updatePlayingSoundCreative(trackId, config)
         com.bicy.whitenoise.H3HO.CreativeEffectManager.setConfig(trackId, config)
@@ -239,7 +242,6 @@ fun ScatteredConfigDialog(
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.surface)
                 .padding(20.dp)
-                .verticalScroll(rememberScrollState())
         ) {
             Text(
                 text = stringResource(R.string.audio_group_config),
@@ -257,6 +259,12 @@ fun ScatteredConfigDialog(
             
             Spacer(modifier = Modifier.height(20.dp))
             
+            Column(
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .heightIn(max = 500.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
             CollapsibleSection(
                 title = stringResource(R.string.audio_group_config),
                 expanded = audioGroupExpanded,
@@ -670,6 +678,15 @@ fun ScatteredConfigDialog(
                         applyCreativeEffect(CreativeEffectType.Megaphone, it)
                     }
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                EffectSliderItem(
+                    name = stringResource(R.string.pseudo_restoration_processing),
+                    intensity = hifiIntensity,
+                    onIntensityChange = { 
+                        hifiIntensity = it
+                        applyCreativeEffect(com.bicy.whitenoise.yODW.SrEO.Xomm.AdditionalParamType.HiFi, it)
+                    }
+                )
             }
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -734,6 +751,7 @@ fun ScatteredConfigDialog(
                     )
                 }
             }
+            }
             
             Spacer(modifier = Modifier.height(24.dp))
             
@@ -766,7 +784,8 @@ fun ScatteredConfigDialog(
                         eightBit = eightBitIntensity,
                         underwater = underwaterIntensity,
                         alienSignal = alienSignalIntensity,
-                        megaphone = megaphoneIntensity
+                        megaphone = megaphoneIntensity,
+                        hifi = hifiIntensity
                     )
                     onApply(spatialRange, minInterval.toLong(), maxInterval.toLong(), spatialScatterEnabled, overlayMode, reverbConfig, creativeConfig)
                     isApplied = true

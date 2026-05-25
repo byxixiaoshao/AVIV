@@ -6,6 +6,7 @@ import com.bicy.whitenoise.JwJY.NATg.ConfigStorage
 import com.bicy.whitenoise.JwJY.Jauc.StorageManager
 import com.bicy.whitenoise.JwJY.EY9i.MusicStorage
 import com.bicy.whitenoise.JwJY.sBYh.WhiteNoiseStorage
+import com.bicy.whitenoise.JwJY.sBYh.kcFp.PlaybackRestorer
 
 object AppStorage {
     
@@ -26,6 +27,8 @@ object AppStorage {
         ConfigStorage.init()
         WhiteNoiseStorage.init()
         MusicStorage.init()
+        
+        PlaybackRestorer.init(context)
         
         isInitialized = true
         Log.d(TAG, "AppStorage initialized successfully")

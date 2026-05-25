@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -107,6 +108,7 @@ fun ReverbConfigDialog(
     var underwaterIntensity by remember { mutableFloatStateOf(savedCreativeConfig.underwater) }
     var alienSignalIntensity by remember { mutableFloatStateOf(savedCreativeConfig.alienSignal) }
     var megaphoneIntensity by remember { mutableFloatStateOf(savedCreativeConfig.megaphone) }
+    var hifiIntensity by remember { mutableFloatStateOf(savedCreativeConfig.hifi) }
     
     val saveCreativeConfig: () -> Unit = {
         val config = CreativeEffectConfig(
@@ -114,7 +116,8 @@ fun ReverbConfigDialog(
             eightBit = eightBitIntensity,
             underwater = underwaterIntensity,
             alienSignal = alienSignalIntensity,
-            megaphone = megaphoneIntensity
+            megaphone = megaphoneIntensity,
+            hifi = hifiIntensity
         )
         WhiteNoiseStorage.updatePlayingSoundCreative(soundId, config)
         com.bicy.whitenoise.H3HO.CreativeEffectManager.setConfig(soundId, config)
@@ -224,7 +227,6 @@ fun ReverbConfigDialog(
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.surface)
                 .padding(20.dp)
-                .verticalScroll(rememberScrollState())
         ) {
             Text(
                 text = "音频效果配置",
@@ -242,6 +244,12 @@ fun ReverbConfigDialog(
             
             Spacer(modifier = Modifier.height(20.dp))
             
+            Column(
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .heightIn(max = 500.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
             CollapsibleSection(
                 title = "空间混响",
                 expanded = spatialReverbExpanded,
@@ -484,6 +492,16 @@ fun ReverbConfigDialog(
                     onIntensityChange = { 
                         megaphoneIntensity = it
                         OboeAudioEngine.setCreativeEffectIntensity(soundId, CreativeEffectType.Megaphone, it)
+                        saveCreativeConfig()
+                    }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                EffectSliderItem(
+                    name = stringResource(R.string.pseudo_restoration_processing),
+                    intensity = hifiIntensity,
+                    onIntensityChange = { 
+                        hifiIntensity = it
+                        OboeAudioEngine.setCreativeEffectIntensity(soundId, com.bicy.whitenoise.yODW.SrEO.Xomm.AdditionalParamType.HiFi, it)
                         saveCreativeConfig()
                     }
                 )
@@ -773,6 +791,7 @@ fun ReverbConfigDialog(
                     )
                 }
             }
+            }
             
             Spacer(modifier = Modifier.height(24.dp))
             
@@ -821,6 +840,7 @@ fun ReverbConfigDialog(
                         isApplied = true
                         saveSpatialConfig()
                         val config = ReverbConfig(
+                            enabled = true,
                             roomSize = roomSize,
                             decayTime = decayTime,
                             damping = damping,

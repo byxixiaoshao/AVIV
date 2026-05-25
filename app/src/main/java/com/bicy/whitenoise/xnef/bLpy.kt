@@ -108,6 +108,8 @@ object MusicCacheManager {
     fun loadTrack(track: MusicTrack, callback: ((Boolean) -> Unit)? = null) {
         val soundId = getSoundId(track.id)
         
+        Log.w(TAG, "loadTrack: ${track.title}, soundId=$soundId, isLoaded=${OboeAudioEngine.isLoaded(soundId)}, isLoading=${OboeAudioEngine.isLoading(soundId)}")
+        
         if (OboeAudioEngine.isLoaded(soundId)) {
             loadedTracks[soundId] = track.path
             callback?.invoke(true)
@@ -126,7 +128,7 @@ object MusicCacheManager {
         }
         
         callback?.invoke(success)
-        Log.d(TAG, "Loading track: ${track.title}, success=$success")
+        Log.w(TAG, "Loading track: ${track.title}, success=$success")
     }
     
     fun setCurrentPlaying(trackId: String) {

@@ -103,6 +103,7 @@
     <string name="open_source_license">Open-Source-Lizenz</string>
     <string name="sound_source_credit">Sound-Quelle Credits</string>
     <string name="sound_source_hint">Alle Weißes Rauschen-Sounds stammen von Pixabay\nFolgend der Pixabay-Lizenz für kommerzielle Nutzung</string>
+    <string name="sound_source_tip">Drücken Sie lange auf die Weißes Rauschen-Option, um Audio- und Autorendetails anzuzeigen. Unterstützung wird geschätzt.</string>
     
     <string name="audio_effect_order_title">Audio-Effekt-Verarbeitungsreihenfolge</string>
     <string name="audio_effect_order_hint">Klicken Sie auf Pfeile, um die Verarbeitungsreihenfolge anzupassen (von oben nach unten)</string>
@@ -110,6 +111,7 @@
     <string name="spatial_reverb">Räumlicher Hall</string>
     <string name="equalizer">Equalizer</string>
     <string name="quality_effect">Qualitätseffekt</string>
+    <string name="pseudo_restoration_processing">Pseudo-Restaurationsverarbeitung</string>
     
     <string name="create_scattered_group">Verstreute Gruppe erstellen</string>
     <string name="group_name">Gruppenname</string>
@@ -183,4 +185,19 @@
     <string name="donate_author">An Autor spenden</string>
     
     <string name="please_add_music_directory">Bitte fügen Sie zuerst ein Musikverzeichnis hinzu</string>
+    
+    <string name="personalization">Personalisierung</string>
+    <string name="viz_wn_sensitivity">Weißes Rauschen Visualisierungsempfindlichkeit</string>
+    <string name="viz_music_sensitivity">Musik-Visualisierungsempfindlichkeit</string>
+    <string name="viz_flash_sensitivity">Musik-Flash-Empfindlichkeit</string>
+    <string name="viz_refresh_rate">Visualisierungs-Änderungsgeschwindigkeit</string>
+    <string name="low">Niedrig</string>
+    <string name="medium">Mittel</string>
+    <string name="high">Hoch</string>
+    <string name="slow">Langsam</string>
+    <string name="fast">Schnell</string>
+    
+    <string name="security_warning_title">Sicherheitswarnung</string>
+    <string name="security_warning_message">Warnung: Dieses Installationspaket könnte kompromittiert sein!\n\nDas aktuelle Paket könnte von anderen verändert worden sein.\nAus Sicherheitsgründen bitte deinstallieren Sie diese App.\n(Dies kann nicht umgangen werden)</string>
+    <string name="security_warning_uninstall">Deinstallation bestätigen</string>
 </resources>

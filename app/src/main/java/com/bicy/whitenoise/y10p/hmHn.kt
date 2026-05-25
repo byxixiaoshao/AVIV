@@ -3,6 +3,7 @@ package com.bicy.whitenoise.y10p
 import android.app.Application
 import android.content.Context
 import com.bicy.whitenoise.H3HO.ReverbManager
+import com.bicy.whitenoise.H3HO.aVzM
 import com.bicy.whitenoise.xnef.MusicLibrary
 import com.bicy.whitenoise.xnef.MusicPlayerController
 import com.bicy.whitenoise.xnef.MusicScanner
@@ -34,6 +35,8 @@ object AppInitializer {
         MusicLibrary.init(applicationContext)
         MusicPlayerController.init(applicationContext)
         PlaylistManager.init(applicationContext)
+        
+        aVzM.start()
     }
     
     fun getContext(): Context = applicationContext

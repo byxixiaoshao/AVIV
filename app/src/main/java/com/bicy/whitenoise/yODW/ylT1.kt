@@ -43,6 +43,7 @@ import com.bicy.whitenoise.yODW.NvYq.HomeScreen
 import com.bicy.whitenoise.yODW.NvYq.PlayScreen
 import com.bicy.whitenoise.yODW.NvYq.ScatteredScreen
 import com.bicy.whitenoise.yODW.NvYq.SettingScreen
+import com.bicy.whitenoise.yODW.ZFNn.wNvB
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -101,6 +102,10 @@ fun MainScreen() {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        wNvB(
+            modifier = Modifier.fillMaxSize()
+        )
+        
         Column(
             modifier = Modifier
                 .fillMaxSize()

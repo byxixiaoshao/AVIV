@@ -105,6 +105,7 @@
     <string name="open_source_license">Open Source License</string>
     <string name="sound_source_credit">Sound Source Credit</string>
     <string name="sound_source_hint">All white noise sounds are from Pixabay\nFollowing Pixabay License for commercial use</string>
+    <string name="sound_source_tip">Long press a white noise option to view audio and author details. Support is appreciated if possible.</string>
     
     <string name="audio_effect_order_title">Audio Effect Processing Order</string>
     <string name="audio_effect_order_hint">Click arrows to adjust processing order (top to bottom)</string>
@@ -112,6 +113,7 @@
     <string name="spatial_reverb">Spatial Reverb</string>
     <string name="equalizer">Equalizer</string>
     <string name="quality_effect">Quality Effect</string>
+    <string name="pseudo_restoration_processing">Pseudo-Restoration Processing</string>
     
     <string name="create_scattered_group">Create Scattered Group</string>
     <string name="group_name">Group Name</string>
@@ -127,6 +129,11 @@
     <string name="preset">Preset</string>
     <string name="limiter">Limiter</string>
     <string name="flat">Flat</string>
+    
+    <string name="limit_equalizer">Limit Equalizer</string>
+    <string name="limit_effects">Limit Quality Effects</string>
+    <string name="limit_reverb">Limit Spatial Reverb</string>
+    <string name="limit_spatial">Limit Spatial Offset</string>
     
     <string name="all">All</string>
     <string name="folder">Folder</string>
@@ -185,4 +192,19 @@
     <string name="donate_author">Donate Author</string>
     
     <string name="please_add_music_directory">Please add music directory first</string>
+    
+    <string name="personalization">Personalization</string>
+    <string name="viz_wn_sensitivity">White Noise Visualization Sensitivity</string>
+    <string name="viz_music_sensitivity">Music Visualization Sensitivity</string>
+    <string name="viz_flash_sensitivity">Music Flash Sensitivity</string>
+    <string name="viz_refresh_rate">Visualization Change Speed</string>
+    <string name="low">Low</string>
+    <string name="medium">Medium</string>
+    <string name="high">High</string>
+    <string name="slow">Slow</string>
+    <string name="fast">Fast</string>
+    
+    <string name="security_warning_title">Security Warning</string>
+    <string name="security_warning_message">Warning: This installation package may be compromised!\n\nThe current package may have been modified by others.\nFor security reasons, please uninstall this app.\n(This cannot be bypassed)</string>
+    <string name="security_warning_uninstall">Confirm Uninstall</string>
 </resources>

@@ -52,8 +52,12 @@ fun InteractiveSlider(
     
     val density = LocalDensity.current
     
-    val rawFraction = ((value - valueRange.start) / (valueRange.endInclusive - valueRange.start))
-        .coerceIn(0f, 1f)
+    val rawFraction = if (valueRange.endInclusive - valueRange.start == 0f) {
+        0f
+    } else {
+        ((value - valueRange.start) / (valueRange.endInclusive - valueRange.start))
+            .coerceIn(0f, 1f)
+    }
     
     val fraction = if (steps > 0) {
         val stepCount = steps + 1

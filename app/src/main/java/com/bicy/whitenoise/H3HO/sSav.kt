@@ -121,29 +121,41 @@ object ReverbManager {
         notifyListeners()
     }
     
-    private val soundReverbConfigs = mutableMapOf<String, ReverbConfig>()
-    
     fun getConfig(soundId: String): ReverbConfig? {
-        return soundReverbConfigs[soundId]
+        val soundConfig = PlaybackStateManager.getSoundConfig(soundId)
+        val config = soundConfig?.reverbConfig
+        
+        if (config != null && !config.enabled) {
+            val hasEffectParams = config.insulation > 0 || 
+                                   config.roomSize > 0 || 
+                                   config.wetLevel > 0 ||
+                                   config.decayTime != 1.5f ||
+                                   config.damping > 0
+            
+            if (hasEffectParams) {
+                Log.w(TAG, "Auto-fixing reverb config for $soundId: enabled=false but has effect params, setting enabled=true")
+                val fixedConfig = config.copy(enabled = true)
+                PlaybackStateManager.updateReverbConfig(soundId, fixedConfig)
+                return fixedConfig
+            }
+        }
+        
+        return config
     }
     
     fun setReverbEffect(soundId: String, config: ReverbConfig) {
-        soundReverbConfigs[soundId] = config
-        com.bicy.whitenoise.JwJY.sBYh.WhiteNoiseStorage.updatePlayingSoundReverb(soundId, config)
+        PlaybackStateManager.updateReverbConfig(soundId, config)
         Log.d(TAG, "Set reverb effect for sound: $soundId, roomSize=${config.roomSize}, insulation=${config.insulation}, decayTime=${config.decayTime}")
     }
     
     fun removeReverbEffect(soundId: String) {
-        soundReverbConfigs.remove(soundId)
         Log.d(TAG, "Removed reverb effect for sound: $soundId")
     }
     
     fun clearConfig(soundId: String? = null) {
         if (soundId != null) {
-            soundReverbConfigs.remove(soundId)
             Log.d(TAG, "Cleared reverb config for sound: $soundId")
         } else {
-            soundReverbConfigs.clear()
             Log.d(TAG, "Cleared all sound reverb configs")
         }
     }

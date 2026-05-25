@@ -103,6 +103,7 @@
     <string name="open_source_license">オープンソースライセンス</string>
     <string name="sound_source_credit">サウンドソースクレジット</string>
     <string name="sound_source_hint">すべてのホワイトノイズはPixabayから\n商業利用のためにPixabayライセンスに従います</string>
+    <string name="sound_source_tip">ホワイトノイズオプションを長押しすると、オーディオと作者の詳細が表示されます。可能であればサポートをお願いします。</string>
     
     <string name="audio_effect_order_title">オーディオエフェクト処理順序</string>
     <string name="audio_effect_order_hint">矢印をクリックして処理順序を調整（上から下へ）</string>
@@ -110,6 +111,7 @@
     <string name="spatial_reverb">空間リバーブ</string>
     <string name="equalizer">イコライザー</string>
     <string name="quality_effect">音質エフェクト</string>
+    <string name="pseudo_restoration_processing">疑似復元処理</string>
     
     <string name="create_scattered_group">散布グループ作成</string>
     <string name="group_name">グループ名</string>
@@ -183,4 +185,19 @@
     <string name="donate_author">作者に寄付</string>
     
     <string name="please_add_music_directory">最初に音楽ディレクトリを追加してください</string>
+    
+    <string name="personalization">パーソナライズ</string>
+    <string name="viz_wn_sensitivity">ホワイトノイズ視覚化感度</string>
+    <string name="viz_music_sensitivity">音楽視覚化感度</string>
+    <string name="viz_flash_sensitivity">音楽フラッシュ感度</string>
+    <string name="viz_refresh_rate">視覚化変化速度</string>
+    <string name="low">低</string>
+    <string name="medium">中</string>
+    <string name="high">高</string>
+    <string name="slow">遅</string>
+    <string name="fast">速</string>
+    
+    <string name="security_warning_title">セキュリティ警告</string>
+    <string name="security_warning_message">警告: このインストールパッケージは改ざんされている可能性があります！\n\n現在のパッケージは他者によって変更された可能性があります。\nセキュリティ上の理由から、このアプリをアンインストールしてください。\n（これは回避できません）</string>
+    <string name="security_warning_uninstall">アンインストール確認</string>
 </resources>

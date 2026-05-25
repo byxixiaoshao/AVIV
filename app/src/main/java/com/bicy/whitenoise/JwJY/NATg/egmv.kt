@@ -23,7 +23,14 @@ data class AppConfig(
     val customTextColor: Int = -1,
     val language: String = "zh_CN",
     val logEnabled: Boolean = true,
-    val audioEffectOrder: List<String> = listOf("spatial", "reverb", "equalizer", "quality")
+    val audioEffectOrder: List<String> = listOf("spatial", "reverb", "equalizer", "quality"),
+    val vizWnEnabled: Boolean = true,
+    val vizMusicEnabled: Boolean = true,
+    val vizFlashEnabled: Boolean = true,
+    val vizWnSensitivity: Int = 1,
+    val vizMusicSensitivity: Int = 1,
+    val vizFlashSensitivity: Int = 1,
+    val vizRefreshRate: Int = 1
 )
 
 data class CustomColors(
@@ -73,7 +80,14 @@ object ConfigStorage {
                 customTextColor = json.optInt("customTextColor", -1),
                 language = json.optString("language", "zh_CN"),
                 logEnabled = json.optBoolean("logEnabled", false),
-                audioEffectOrder = audioEffectOrder
+                audioEffectOrder = audioEffectOrder,
+                vizWnEnabled = json.optBoolean("vizWnEnabled", true),
+                vizMusicEnabled = json.optBoolean("vizMusicEnabled", true),
+                vizFlashEnabled = json.optBoolean("vizFlashEnabled", true),
+                vizWnSensitivity = json.optInt("vizWnSensitivity", 1),
+                vizMusicSensitivity = json.optInt("vizMusicSensitivity", 1),
+                vizFlashSensitivity = json.optInt("vizFlashSensitivity", 1),
+                vizRefreshRate = json.optInt("vizRefreshRate", 1)
             )
             Log.d(TAG, "Config loaded: isPremium=${_config.value.isPremium}")
         }
@@ -97,6 +111,13 @@ object ConfigStorage {
             put("language", config.language)
             put("logEnabled", config.logEnabled)
             put("audioEffectOrder", JSONArray(config.audioEffectOrder))
+            put("vizWnEnabled", config.vizWnEnabled)
+            put("vizMusicEnabled", config.vizMusicEnabled)
+            put("vizFlashEnabled", config.vizFlashEnabled)
+            put("vizWnSensitivity", config.vizWnSensitivity)
+            put("vizMusicSensitivity", config.vizMusicSensitivity)
+            put("vizFlashSensitivity", config.vizFlashSensitivity)
+            put("vizRefreshRate", config.vizRefreshRate)
         }
         
         StorageManager.saveJsonSync(file, json)
@@ -188,6 +209,48 @@ object ConfigStorage {
     
     fun setAudioEffectOrder(order: List<String>) {
         updateConfig { it.copy(audioEffectOrder = order) }
+    }
+    
+    fun getVizWnEnabled(): Boolean = _config.value.vizWnEnabled
+    
+    fun setVizWnEnabled(enabled: Boolean) {
+        updateConfig { it.copy(vizWnEnabled = enabled) }
+    }
+    
+    fun getVizMusicEnabled(): Boolean = _config.value.vizMusicEnabled
+    
+    fun setVizMusicEnabled(enabled: Boolean) {
+        updateConfig { it.copy(vizMusicEnabled = enabled) }
+    }
+    
+    fun getVizFlashEnabled(): Boolean = _config.value.vizFlashEnabled
+    
+    fun setVizFlashEnabled(enabled: Boolean) {
+        updateConfig { it.copy(vizFlashEnabled = enabled) }
+    }
+    
+    fun getVizWnSensitivity(): Int = _config.value.vizWnSensitivity
+    
+    fun setVizWnSensitivity(value: Int) {
+        updateConfig { it.copy(vizWnSensitivity = value) }
+    }
+    
+    fun getVizMusicSensitivity(): Int = _config.value.vizMusicSensitivity
+    
+    fun setVizMusicSensitivity(value: Int) {
+        updateConfig { it.copy(vizMusicSensitivity = value) }
+    }
+    
+    fun getVizFlashSensitivity(): Int = _config.value.vizFlashSensitivity
+    
+    fun setVizFlashSensitivity(value: Int) {
+        updateConfig { it.copy(vizFlashSensitivity = value) }
+    }
+    
+    fun getVizRefreshRate(): Int = _config.value.vizRefreshRate
+    
+    fun setVizRefreshRate(value: Int) {
+        updateConfig { it.copy(vizRefreshRate = value) }
     }
     
     fun clearAllData() {

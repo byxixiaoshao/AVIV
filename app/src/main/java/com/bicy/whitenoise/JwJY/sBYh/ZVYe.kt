@@ -66,6 +66,7 @@ object WhiteNoiseStorage {
         loadCategories()
         loadPlaybackState()
         loadScatteredSounds()
+        notifyListeners()
         Log.d(TAG, "WhiteNoiseStorage initialized")
     }
     

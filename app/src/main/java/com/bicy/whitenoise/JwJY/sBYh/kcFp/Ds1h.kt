@@ -88,7 +88,8 @@ data class CreativeEffectConfig(
     val eightBit: Float = 0f,
     val underwater: Float = 0f,
     val alienSignal: Float = 0f,
-    val megaphone: Float = 0f
+    val megaphone: Float = 0f,
+    val hifi: Float = 0f
 )
 
 data class PlaybackState(

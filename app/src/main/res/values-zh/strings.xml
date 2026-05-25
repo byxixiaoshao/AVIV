@@ -105,6 +105,7 @@
     <string name="open_source_license">开源许可</string>
     <string name="sound_source_credit">音源致谢</string>
     <string name="sound_source_hint">所有白噪音音源均来自 Pixabay\n遵循 Pixabay License 允许商用</string>
+    <string name="sound_source_tip">长按白噪音选项即可查看音频及其作者详情，有条件的可以支持一下</string>
     
     <string name="audio_effect_order_title">音频效果处理顺序</string>
     <string name="audio_effect_order_hint">点击箭头调整处理顺序（从上到下依次处理）</string>
@@ -112,6 +113,7 @@
     <string name="spatial_reverb">空间混响</string>
     <string name="equalizer">均衡器</string>
     <string name="quality_effect">音质效果</string>
+    <string name="pseudo_restoration_processing">伪还原二次处理</string>
     
     <string name="create_scattered_group">创建散点组</string>
     <string name="group_name">组名称</string>
@@ -127,6 +129,11 @@
     <string name="preset">预设</string>
     <string name="limiter">限制器</string>
     <string name="flat">平坦</string>
+    
+    <string name="limit_equalizer">限制均衡器</string>
+    <string name="limit_effects">限制音质效果</string>
+    <string name="limit_reverb">限制空间混响</string>
+    <string name="limit_spatial">限制声向偏移</string>
     
     <string name="all">所有</string>
     <string name="folder">文件夹</string>
@@ -185,4 +192,19 @@
     <string name="donate_author">捐赠作者</string>
     
     <string name="please_add_music_directory">请先添加音乐目录</string>
+    
+    <string name="personalization">个性化</string>
+    <string name="viz_wn_sensitivity">白噪音可视化灵敏度</string>
+    <string name="viz_music_sensitivity">音乐可视化灵敏度</string>
+    <string name="viz_flash_sensitivity">音乐闪烁灵敏度</string>
+    <string name="viz_refresh_rate">可视化变化速度</string>
+    <string name="low">低</string>
+    <string name="medium">中</string>
+    <string name="high">高</string>
+    <string name="slow">慢</string>
+    <string name="fast">快</string>
+    
+    <string name="security_warning_title">安全警告</string>
+    <string name="security_warning_message">请注意，这个安装包可能被污染！\n\n当前安装包可能已经过别人修改，\n为了安全考虑，请卸载该应用。\n（这是不可绕过的）</string>
+    <string name="security_warning_uninstall">确认卸载</string>
 </resources>

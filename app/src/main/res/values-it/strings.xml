@@ -103,6 +103,7 @@
     <string name="open_source_license">Licenza open source</string>
     <string name="sound_source_credit">Crediti fonte suoni</string>
     <string name="sound_source_hint">Tutti i suoni di rumore bianco provengono da Pixabay\nSeguendo la licenza Pixabay per uso commerciale</string>
+    <string name="sound_source_tip">Premi a lungo sull\'opzione rumore bianco per vedere i dettagli dell\'audio e dell\'autore. Il supporto è apprezzato.</string>
     
     <string name="audio_effect_order_title">Ordine elaborazione effetti audio</string>
     <string name="audio_effect_order_hint">Clicca le frecce per regolare l\'ordine di elaborazione (dall\'alto al basso)</string>
@@ -110,6 +111,7 @@
     <string name="spatial_reverb">Riverbero spaziale</string>
     <string name="equalizer">Equalizzatore</string>
     <string name="quality_effect">Effetto qualità</string>
+    <string name="pseudo_restoration_processing">Elaborazione pseudo-ripristino</string>
     
     <string name="create_scattered_group">Crea gruppo sparso</string>
     <string name="group_name">Nome gruppo</string>
@@ -183,4 +185,19 @@
     <string name="donate_author">Dona all\'autore</string>
     
     <string name="please_add_music_directory">Per prima cosa aggiungi una cartella musica</string>
+    
+    <string name="personalization">Personalizzazione</string>
+    <string name="viz_wn_sensitivity">Sensibilità visualizzazione rumore bianco</string>
+    <string name="viz_music_sensitivity">Sensibilità visualizzazione musica</string>
+    <string name="viz_flash_sensitivity">Sensibilità flash musica</string>
+    <string name="viz_refresh_rate">Velocità di cambiamento visualizzazione</string>
+    <string name="low">Basso</string>
+    <string name="medium">Medio</string>
+    <string name="high">Alto</string>
+    <string name="slow">Lento</string>
+    <string name="fast">Veloce</string>
+    
+    <string name="security_warning_title">Avviso di Sicurezza</string>
+    <string name="security_warning_message">Attenzione: Questo pacchetto di installazione potrebbe essere compromesso!\n\nIl pacchetto attuale potrebbe essere stato modificato da altri.\nPer motivi di sicurezza, si prega di disinstallare questa app.\n(Questo non può essere bypassato)</string>
+    <string name="security_warning_uninstall">Conferma Disinstallazione</string>
 </resources>

@@ -103,6 +103,7 @@
     <string name="open_source_license">Licencia de código abierto</string>
     <string name="sound_source_credit">Crédito de fuente de sonido</string>
     <string name="sound_source_hint">Todos los sonidos de ruido blanco son de Pixabay\nSiguiendo la licencia de Pixabay para uso comercial</string>
+    <string name="sound_source_tip">Mantén presionada la opción de ruido blanco para ver los detalles del audio y del autor. Se agradece el apoyo.</string>
     
     <string name="audio_effect_order_title">Orden de procesamiento de efectos de audio</string>
     <string name="audio_effect_order_hint">Haga clic en las flechas para ajustar el orden de procesamiento (de arriba a abajo)</string>
@@ -110,6 +111,7 @@
     <string name="spatial_reverb">Reverberación espacial</string>
     <string name="equalizer">Ecualizador</string>
     <string name="quality_effect">Efecto de calidad</string>
+    <string name="pseudo_restoration_processing">Procesamiento de pseudo-restauración</string>
     
     <string name="create_scattered_group">Crear grupo disperso</string>
     <string name="group_name">Nombre del grupo</string>
@@ -183,4 +185,19 @@
     <string name="donate_author">Donar al autor</string>
     
     <string name="please_add_music_directory">Por favor añada primero un directorio de música</string>
+    
+    <string name="personalization">Personalización</string>
+    <string name="viz_wn_sensitivity">Sensibilidad de visualización de ruido blanco</string>
+    <string name="viz_music_sensitivity">Sensibilidad de visualización de música</string>
+    <string name="viz_flash_sensitivity">Sensibilidad de flash de música</string>
+    <string name="viz_refresh_rate">Velocidad de cambio de visualización</string>
+    <string name="low">Bajo</string>
+    <string name="medium">Medio</string>
+    <string name="high">Alto</string>
+    <string name="slow">Lento</string>
+    <string name="fast">Rápido</string>
+    
+    <string name="security_warning_title">Advertencia de Seguridad</string>
+    <string name="security_warning_message">¡Advertencia: Este paquete de instalación puede estar comprometido!\n\nEl paquete actual puede haber sido modificado por otros.\nPor razones de seguridad, por favor desinstale esta aplicación.\n(Esto no se puede omitir)</string>
+    <string name="security_warning_uninstall">Confirmar Desinstalación</string>
 </resources>

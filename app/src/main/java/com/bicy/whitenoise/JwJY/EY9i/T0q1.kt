@@ -73,7 +73,6 @@ data class MusicSpatialConfig(
 
 data class EqualizerConfig(
     val enabled: Boolean = false,
-    val limiterEnabled: Boolean = true,
     val gains: FloatArray = FloatArray(12) { 0f }
 ) {
     override fun equals(other: Any?): Boolean {
@@ -81,25 +80,35 @@ data class EqualizerConfig(
         if (javaClass != other?.javaClass) return false
         other as EqualizerConfig
         if (enabled != other.enabled) return false
-        if (limiterEnabled != other.limiterEnabled) return false
         if (!gains.contentEquals(other.gains)) return false
         return true
     }
 
     override fun hashCode(): Int {
         var result = enabled.hashCode()
-        result = 31 * result + limiterEnabled.hashCode()
         result = 31 * result + gains.contentHashCode()
         return result
     }
 }
+
+data class LimiterConfig(
+    val enabled: Boolean = true,
+    val limitEqualizer: Boolean = true,
+    val limitEffects: Boolean = true,
+    val limitReverb: Boolean = true,
+    val limitSpatial: Boolean = true,
+    val threshold: Float = 0.9f,
+    val attack: Float = 5.0f,
+    val release: Float = 50.0f
+)
 
 data class MusicMixerConfig(
     val reverbConfig: ReverbConfig = ReverbConfig(),
     val volume: Float = 1f,
     val effectIntensities: EffectIntensities = EffectIntensities(),
     val spatialAudioConfig: MusicSpatialConfig = MusicSpatialConfig(),
-    val equalizerConfig: EqualizerConfig = EqualizerConfig()
+    val equalizerConfig: EqualizerConfig = EqualizerConfig(),
+    val limiterConfig: LimiterConfig = LimiterConfig()
 )
 
 object MusicStorage {
@@ -300,11 +309,26 @@ object MusicStorage {
                 }
                 EqualizerConfig(
                     enabled = eqJson.optBoolean("enabled", false),
-                    limiterEnabled = eqJson.optBoolean("limiterEnabled", true),
                     gains = gains
                 )
             } else {
                 EqualizerConfig()
+            }
+            
+            val limiterJson = json.optJSONObject("limiterConfig")
+            val limiterConfig = if (limiterJson != null) {
+                LimiterConfig(
+                    enabled = limiterJson.optBoolean("enabled", true),
+                    limitEqualizer = limiterJson.optBoolean("limitEqualizer", true),
+                    limitEffects = limiterJson.optBoolean("limitEffects", true),
+                    limitReverb = limiterJson.optBoolean("limitReverb", true),
+                    limitSpatial = limiterJson.optBoolean("limitSpatial", true),
+                    threshold = limiterJson.optDouble("threshold", 0.9).toFloat(),
+                    attack = limiterJson.optDouble("attack", 5.0).toFloat(),
+                    release = limiterJson.optDouble("release", 50.0).toFloat()
+                )
+            } else {
+                LimiterConfig()
             }
             
             _mixerConfig.value = MusicMixerConfig(
@@ -312,7 +336,8 @@ object MusicStorage {
                 volume = json.optDouble("volume", 1.0).toFloat(),
                 effectIntensities = effectIntensities,
                 spatialAudioConfig = spatialConfig,
-                equalizerConfig = equalizerConfig
+                equalizerConfig = equalizerConfig,
+                limiterConfig = limiterConfig
             )
         }
     }
@@ -366,10 +391,20 @@ object MusicStorage {
             
             put("equalizerConfig", JSONObject().apply {
                 put("enabled", config.equalizerConfig.enabled)
-                put("limiterEnabled", config.equalizerConfig.limiterEnabled)
                 val gainsArray = JSONArray()
                 config.equalizerConfig.gains.forEach { gainsArray.put(it) }
                 put("gains", gainsArray)
+            })
+            
+            put("limiterConfig", JSONObject().apply {
+                put("enabled", config.limiterConfig.enabled)
+                put("limitEqualizer", config.limiterConfig.limitEqualizer)
+                put("limitEffects", config.limiterConfig.limitEffects)
+                put("limitReverb", config.limiterConfig.limitReverb)
+                put("limitSpatial", config.limiterConfig.limitSpatial)
+                put("threshold", config.limiterConfig.threshold)
+                put("attack", config.limiterConfig.attack)
+                put("release", config.limiterConfig.release)
             })
         }
         
@@ -585,18 +620,43 @@ object MusicStorage {
         saveMixerConfig()
     }
     
-    fun updateEqualizerLimiterEnabled(enabled: Boolean) {
-        val current = _mixerConfig.value.equalizerConfig
-        _mixerConfig.value = _mixerConfig.value.copy(
-            equalizerConfig = current.copy(limiterEnabled = enabled)
-        )
-        saveMixerConfig()
-    }
-    
     fun updateEqualizerGains(gains: FloatArray) {
         val current = _mixerConfig.value.equalizerConfig
         _mixerConfig.value = _mixerConfig.value.copy(
             equalizerConfig = current.copy(gains = gains.copyOf())
+        )
+        saveMixerConfig()
+    }
+    
+    fun getLimiterConfig(): LimiterConfig = _mixerConfig.value.limiterConfig
+    
+    fun updateLimiterConfig(config: LimiterConfig) {
+        _mixerConfig.value = _mixerConfig.value.copy(limiterConfig = config)
+        saveMixerConfig()
+    }
+    
+    fun updateLimiterEnabled(enabled: Boolean) {
+        val current = _mixerConfig.value.limiterConfig
+        _mixerConfig.value = _mixerConfig.value.copy(
+            limiterConfig = current.copy(enabled = enabled)
+        )
+        saveMixerConfig()
+    }
+    
+    fun updateLimiterTargets(
+        limitEqualizer: Boolean? = null,
+        limitEffects: Boolean? = null,
+        limitReverb: Boolean? = null,
+        limitSpatial: Boolean? = null
+    ) {
+        val current = _mixerConfig.value.limiterConfig
+        _mixerConfig.value = _mixerConfig.value.copy(
+            limiterConfig = current.copy(
+                limitEqualizer = limitEqualizer ?: current.limitEqualizer,
+                limitEffects = limitEffects ?: current.limitEffects,
+                limitReverb = limitReverb ?: current.limitReverb,
+                limitSpatial = limitSpatial ?: current.limitSpatial
+            )
         )
         saveMixerConfig()
     }

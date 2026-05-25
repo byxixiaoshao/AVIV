@@ -7,28 +7,24 @@ object CreativeEffectManager {
     
     private const val TAG = "CreativeEffectManager"
     
-    private val soundCreativeConfigs = mutableMapOf<String, CreativeEffectConfig>()
-    
     fun getConfig(soundId: String): CreativeEffectConfig? {
-        return soundCreativeConfigs[soundId]
+        val soundConfig = PlaybackStateManager.getSoundConfig(soundId)
+        return soundConfig?.creativeEffectConfig
     }
     
     fun setConfig(soundId: String, config: CreativeEffectConfig) {
-        soundCreativeConfigs[soundId] = config
+        PlaybackStateManager.updateCreativeConfig(soundId, config)
         Log.d(TAG, "Set creative effect config for sound: $soundId, loFi=${config.loFi}, eightBit=${config.eightBit}, underwater=${config.underwater}, alienSignal=${config.alienSignal}, megaphone=${config.megaphone}")
     }
     
     fun removeConfig(soundId: String) {
-        soundCreativeConfigs.remove(soundId)
         Log.d(TAG, "Removed creative effect config for sound: $soundId")
     }
     
     fun clearConfig(soundId: String? = null) {
         if (soundId != null) {
-            soundCreativeConfigs.remove(soundId)
             Log.d(TAG, "Cleared creative effect config for sound: $soundId")
         } else {
-            soundCreativeConfigs.clear()
             Log.d(TAG, "Cleared all creative effect configs")
         }
     }
