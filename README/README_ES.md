@@ -45,7 +45,6 @@ Este proyecto actualmente solo publica código fuente parcial. Por favor, no des
   - Efecto megáfono
   - Distorsión
 - **Reverberación espacial**: Tamaño de habitación, tiempo de decaimiento, mezcla húmedo/seco
-- **Control de reproducción**: Ajuste de tono (±12 semitonos), Control de velocidad (0.3x - 3.0x)
 - **Gestión de listas de reproducción**: Crear y gestionar listas de reproducción
 
 ### 🌊 Ruido blanco

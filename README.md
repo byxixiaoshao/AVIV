@@ -45,7 +45,6 @@ This project currently only releases partial source code. Please do not decompil
   - Megaphone effect
   - Distortion
 - **Spatial Reverb**: Room size, decay time, wet/dry mix
-- **Playback Control**: Pitch adjustment (±12 semitones), Speed control (0.3x - 3.0x)
 - **Playlist Management**: Create and manage playlists
 
 ### 🌊 White Noise

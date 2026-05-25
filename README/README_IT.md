@@ -45,7 +45,6 @@ Questo progetto attualmente pubblica solo codice sorgente parziale. Si prega di 
   - Effetto megafono
   - Distorsione
 - **Riverbero spaziale**: Dimensione della stanza, tempo di decadimento, mix bagnato/secco
-- **Controllo riproduzione**: Regolazione del tono (±12 semitoni), Controllo velocità (0.3x - 3.0x)
 - **Gestione playlist**: Creare e gestire playlist
 
 ### 🌊 Rumore bianco

@@ -45,7 +45,6 @@ Dieses Projekt veröffentlicht derzeit nur teilweise den Quellcode. Bitte dekomp
   - Megafon-Effekt
   - Verzerrung
 - **Räumlicher Hall**: Raumgröße, Zerfallszeit, Nass/Trocken-Mix
-- **Wiedergabesteuerung**: Tonhöhenanpassung (±12 Halbtöne), Geschwindigkeitssteuerung (0.3x - 3.0x)
 - **Playlist-Verwaltung**: Playlists erstellen und verwalten
 
 ### 🌊 Weißes Rauschen

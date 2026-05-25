@@ -45,7 +45,6 @@ Este projeto atualmente publica apenas código-fonte parcial. Por favor, não de
   - Efeito megafone
   - Distorção
 - **Reverberação espacial**: Tamanho da sala, tempo de decaimento, mix molho/seco
-- **Controle de reprodução**: Ajuste de tom (±12 semitons), Controle de velocidade (0.3x - 3.0x)
 - **Gerenciamento de playlists**: Criar e gerenciar playlists
 
 ### 🌊 Ruído branco

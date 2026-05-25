@@ -45,7 +45,6 @@ Ce projet publie actuellement uniquement une partie du code source. Veuillez ne 
   - Effet mégaphone
   - Distorsion
 - **Réverbération spatiale**: Taille de pièce, temps de décroissance, mix humide/sec
-- **Contrôle de lecture**: Ajustement de hauteur (±12 demi-tons), Contrôle de vitesse (0.3x - 3.0x)
 - **Gestion des playlists**: Créer et gérer des playlists
 
 ### 🌊 Bruit blanc
