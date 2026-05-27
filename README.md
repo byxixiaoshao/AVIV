@@ -185,8 +185,10 @@ Thanks to all open-source projects contributing to audio processing technology.
 
 ## 📸 Demo Video
 
-<video src="https://github.com/byxixiaoshao/AVIV/raw/main/video/Demo_Video.mp4" controls="controls" width="100%"></video>
-
+<video width="640" height="360" controls>
+  <source src="https://github.com/byxixiaoshao/AVIV/blob/main/video/Demo_Video.mp4" type="video/mp4">
+  Your browser does not support the video tag.  
+</video>
 Or download from [video/Demo_Video.mp4](video/Demo_Video.mp4)
 
 ---
