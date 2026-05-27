@@ -185,7 +185,7 @@ Obrigado a todos os projetos de código aberto que contribuem para a tecnologia 
 
 ## 📸 Vídeo de demonstração
 
-https://github.com/user-attachments/assets/Demo_Video.mp4
+<video src="https://github.com/byxixiaoshao/AVIV/raw/main/video/Demo_Video.mp4" controls="controls" width="100%"></video>
 
 Ou baixe de [video/Demo_Video.mp4](../video/Demo_Video.mp4)
 

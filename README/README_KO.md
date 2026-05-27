@@ -45,7 +45,6 @@ AVIV는 백색 소음 재생과 음악 플레이어 기능을 결합한 Android 
   - 확성기 효과
   - 디스토션
 - **공간 리버브**: 룸 크기, 감쇠 시간, 웻/드라이 믹스
-- **재생 제어**: 피치 조정 (±12 반음), 속도 제어 (0.3x - 3.0x)
 - **플레이리스트 관리**: 플레이리스트 생성 및 관리
 
 ### 🌊 백색 소음
@@ -186,7 +185,7 @@ AVIV는 백색 소음 재생과 음악 플레이어 기능을 결합한 Android 
 
 ## 📸 데모 영상
 
-https://github.com/user-attachments/assets/Demo_Video.mp4
+<video src="https://github.com/byxixiaoshao/AVIV/raw/main/video/Demo_Video.mp4" controls="controls" width="100%"></video>
 
 또는 [video/Demo_Video.mp4](../video/Demo_Video.mp4)에서 다운로드
 
