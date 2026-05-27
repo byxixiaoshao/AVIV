@@ -187,8 +187,6 @@
 
 <video src="https://github.com/byxixiaoshao/AVIV/raw/main/video/Demo_Video.mp4" controls="controls" width="100%"></video>
 
-或从 [video/Demo_Video.mp4](../video/Demo_Video.mp4) 下载
-
 ---
 
 <div align="center">
