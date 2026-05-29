@@ -575,7 +575,7 @@ private fun SoundItem(
                 )
             } else if (!isDownloaded) {
                 Text(
-                    text = "点击下载",
+                    text = stringResource(R.string.click_to_download),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.align(Alignment.CenterEnd)
@@ -619,7 +619,7 @@ private fun SoundDetailDialog(
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "关闭",
+                            contentDescription = stringResource(R.string.close),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -629,13 +629,13 @@ private fun SoundDetailDialog(
                 
                 if (scatteredTracks.isEmpty()) {
                     Text(
-                        text = "暂无散点播放音轨\n请先在播放页创建散点音轨",
+                        text = stringResource(R.string.no_scattered_tracks_hint),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
                 } else {
                     Text(
-                        text = "选择要添加到的散点音轨：",
+                        text = stringResource(R.string.select_scattered_track_hint),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
@@ -668,7 +668,7 @@ private fun SoundDetailDialog(
                                 )
                                 
                                 Text(
-                                    text = "已添加 ${track.audioClipCount} 个音频",
+                                    text = stringResource(R.string.added_audio_count, track.audioClipCount),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                                 )
@@ -699,14 +699,14 @@ private fun CreateScatteredGroupDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "创建散点播放组",
+                text = stringResource(R.string.create_scattered_group),
                 style = MaterialTheme.typography.titleLarge
             )
         },
         text = {
             Column {
                 Text(
-                    text = "请输入散点播放组名称",
+                    text = stringResource(R.string.enter_scattered_group_name),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
@@ -716,8 +716,8 @@ private fun CreateScatteredGroupDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = onNameChange,
-                    label = { Text("名称") },
-                    placeholder = { Text("输入播放组名称") },
+                    label = { Text(stringResource(R.string.name)) },
+                    placeholder = { Text(stringResource(R.string.enter_group_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -728,12 +728,12 @@ private fun CreateScatteredGroupDialog(
                 onClick = onConfirm,
                 enabled = name.isNotBlank()
             ) {
-                Text("确定")
+                Text(stringResource(R.string.confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

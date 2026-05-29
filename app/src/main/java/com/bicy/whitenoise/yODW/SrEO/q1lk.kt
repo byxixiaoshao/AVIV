@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.ui.res.stringResource
+import com.bicy.whitenoise.R
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -57,7 +59,6 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.bicy.whitenoise.R
 import com.bicy.whitenoise.oJft.TimerManager
 import com.bicy.whitenoise.oJft.TimerState
 import com.bicy.whitenoise.yODW.SrEO.WIXN.CollapsedCornerRadius
@@ -521,7 +522,7 @@ private fun ExpandedNavBarContent(
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "定时器",
+                text = stringResource(R.string.timer),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = setupAlpha)
             )
@@ -639,7 +640,7 @@ private fun NavItem(
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = screen.title,
+            contentDescription = stringResource(screen.titleResId),
             tint = if (isSelected) selectedColor else NavItemUnselected,
             modifier = Modifier.size(NavIconSize)
         )

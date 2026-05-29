@@ -644,7 +644,7 @@ fun ScatteredConfigDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 EffectSliderItem(
-                    name = "8-bit游戏",
+                    name = stringResource(R.string.effect_8bit_game),
                     intensity = eightBitIntensity,
                     onIntensityChange = { 
                         eightBitIntensity = it
@@ -653,7 +653,7 @@ fun ScatteredConfigDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 EffectSliderItem(
-                    name = "水下",
+                    name = stringResource(R.string.effect_underwater),
                     intensity = underwaterIntensity,
                     onIntensityChange = { 
                         underwaterIntensity = it
@@ -662,7 +662,7 @@ fun ScatteredConfigDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 EffectSliderItem(
-                    name = "外星信号",
+                    name = stringResource(R.string.effect_alien_signal),
                     intensity = alienSignalIntensity,
                     onIntensityChange = { 
                         alienSignalIntensity = it
@@ -671,7 +671,7 @@ fun ScatteredConfigDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 EffectSliderItem(
-                    name = "扩音器",
+                    name = stringResource(R.string.effect_megaphone),
                     intensity = megaphoneIntensity,
                     onIntensityChange = { 
                         megaphoneIntensity = it
@@ -692,11 +692,11 @@ fun ScatteredConfigDialog(
             Spacer(modifier = Modifier.height(12.dp))
             
             CollapsibleSection(
-                title = "空间散点范围",
+                title = stringResource(R.string.spatial_scatter_range),
                 expanded = spatialScatterExpanded,
                 onToggle = { expandedSection = if (spatialScatterExpanded) null else "spatialScatter" },
-                subtitle = "(实验性)",
-                warningText = "作为声向偏移处理，使用途中可能会出现卡顿情况"
+                subtitle = stringResource(R.string.experimental),
+                warningText = stringResource(R.string.spatial_scatter_warning)
             ) {
                 Row(
                     modifier = Modifier
@@ -705,7 +705,7 @@ fun ScatteredConfigDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "启用",
+                        text = stringResource(R.string.enable),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f)
@@ -720,7 +720,7 @@ fun ScatteredConfigDialog(
                     Spacer(modifier = Modifier.height(12.dp))
                     
                     RangeSlider(
-                        label = "X轴 (左右)",
+                        label = stringResource(R.string.axis_x),
                         minValue = spatialRange.xMin,
                         maxValue = spatialRange.xMax,
                         onValueChange = { min, max ->
@@ -731,7 +731,7 @@ fun ScatteredConfigDialog(
                     Spacer(modifier = Modifier.height(12.dp))
                     
                     RangeSlider(
-                        label = "Y轴 (高度)",
+                        label = stringResource(R.string.axis_y),
                         minValue = spatialRange.yMin,
                         maxValue = spatialRange.yMax,
                         onValueChange = { min, max ->
@@ -742,7 +742,7 @@ fun ScatteredConfigDialog(
                     Spacer(modifier = Modifier.height(12.dp))
                     
                     RangeSlider(
-                        label = "Z轴 (前后)",
+                        label = stringResource(R.string.axis_z),
                         minValue = spatialRange.zMin,
                         maxValue = spatialRange.zMax,
                         onValueChange = { min, max ->
@@ -760,7 +760,7 @@ fun ScatteredConfigDialog(
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(onClick = onDismiss) {
-                    Text("取消")
+                    Text(stringResource(R.string.cancel))
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 TextButton(onClick = {
@@ -790,7 +790,7 @@ fun ScatteredConfigDialog(
                     onApply(spatialRange, minInterval.toLong(), maxInterval.toLong(), spatialScatterEnabled, overlayMode, reverbConfig, creativeConfig)
                     isApplied = true
                 }) {
-                    Text("确定")
+                    Text(stringResource(R.string.confirm))
                 }
             }
         }

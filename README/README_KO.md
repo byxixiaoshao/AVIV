@@ -187,8 +187,6 @@ AVIV는 백색 소음 재생과 음악 플레이어 기능을 결합한 Android 
 
 <video src="https://github.com/byxixiaoshao/AVIV/raw/main/video/Demo_Video.mp4" controls="controls" width="100%"></video>
 
-또는 [video/Demo_Video.mp4](../video/Demo_Video.mp4)에서 다운로드
-
 ---
 
 <div align="center">

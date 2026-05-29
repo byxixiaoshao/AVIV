@@ -25,7 +25,8 @@ object ConfigParser {
             maxIntervalMs = json.optLong("maxIntervalMs", 10000),
             spatialScatterRange = parseSpatialScatterRange(json.optJSONObject("spatialScatterRange")),
             spatialScatterEnabled = json.optBoolean("spatialScatterEnabled", false),
-            overlayMode = json.optBoolean("overlayMode", false)
+            overlayMode = json.optBoolean("overlayMode", false),
+            filePath = json.optString("filePath").takeIf { it.isNotEmpty() }
         )
     }
     
@@ -155,6 +156,7 @@ object ConfigParser {
             put("spatialScatterRange", toJson(config.spatialScatterRange))
             put("spatialScatterEnabled", config.spatialScatterEnabled)
             put("overlayMode", config.overlayMode)
+            config.filePath?.let { put("filePath", it) }
         }
     }
     

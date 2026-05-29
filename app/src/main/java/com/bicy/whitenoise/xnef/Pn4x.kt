@@ -289,6 +289,22 @@ object MusicPlayerController {
         OboeAudioEngine.setEqGains(soundId, eqConfig.gains)
         OboeAudioEngine.setEqEnabled(soundId, eqConfig.enabled)
         
+        val autoEqEnabled = ConfigStorage.isAutoEqEnabled()
+        if (autoEqEnabled) {
+            OboeAudioEngine.setEqEnabled(soundId, false)
+            val intensity = ConfigStorage.getAutoEqIntensity()
+            val targetCurve = ConfigStorage.getAutoEqTargetCurve()
+            OboeAudioEngine.setAutoEqIntensity(soundId, intensity)
+            OboeAudioEngine.setAutoEqTargetCurve(soundId, targetCurve)
+            OboeAudioEngine.setAutoEqBassBias(soundId, ConfigStorage.getAutoEqBassBias())
+            OboeAudioEngine.setAutoEqMidBias(soundId, ConfigStorage.getAutoEqMidBias())
+            OboeAudioEngine.setAutoEqTrebleBias(soundId, ConfigStorage.getAutoEqTrebleBias())
+            OboeAudioEngine.setAutoEqResponseSpeed(soundId, ConfigStorage.getAutoEqResponseSpeed())
+            val filePath = MusicCacheManager.getFilePath(soundId)
+            Log.d(TAG, "AutoEQ triggered on track load: $soundId, filePath=$filePath")
+            OboeAudioEngine.setAutoEqEnabled(soundId, true, filePath ?: "")
+        }
+        
         val limiterConfig = MusicStorage.getLimiterConfig()
         OboeAudioEngine.setEqLimiterEnabled(soundId, limiterConfig.limitEqualizer)
         OboeAudioEngine.setLimitEffectsEnabled(soundId, limiterConfig.limitEffects)

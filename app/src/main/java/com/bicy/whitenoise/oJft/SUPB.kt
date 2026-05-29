@@ -113,6 +113,18 @@ object TimerManager {
         updateState()
     }
     
+    fun setHours(h: Int) {
+        hours = h.coerceAtLeast(0)
+        totalMinutes = hours * 60 + minutes
+        updateState()
+    }
+    
+    fun setMinutes(m: Int) {
+        minutes = m.coerceIn(0, 59)
+        totalMinutes = hours * 60 + minutes
+        updateState()
+    }
+    
     private fun updateState() {
         _timerState.value = TimerState(
             isActive = isTimerRunning,

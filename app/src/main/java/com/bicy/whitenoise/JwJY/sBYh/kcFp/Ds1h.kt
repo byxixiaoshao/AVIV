@@ -48,7 +48,8 @@ data class SoundPlayConfig(
     val maxIntervalMs: Long = 10000,
     val spatialScatterRange: SpatialScatterRangeData = SpatialScatterRangeData(),
     val spatialScatterEnabled: Boolean = false,
-    val overlayMode: Boolean = false
+    val overlayMode: Boolean = false,
+    val filePath: String? = null
 )
 
 data class ScatteredAudioClipData(

@@ -28,6 +28,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.bicy.whitenoise.R
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.TransformOrigin
@@ -75,7 +77,7 @@ fun TimerFinishedContent(
         ) {
             Icon(
                 imageVector = Icons.Default.Alarm,
-                contentDescription = "定时结束",
+                contentDescription = stringResource(R.string.timer_finished),
                 tint = MaterialTheme.colorScheme.primary.copy(alpha = textAlpha),
                 modifier = Modifier.size(60.dp)
             )
@@ -97,7 +99,7 @@ fun TimerFinishedButtons(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "定时结束",
+            text = stringResource(R.string.timer_finished),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = textAlpha)
         )
@@ -114,7 +116,7 @@ fun TimerFinishedButtons(
                     .height(50.dp),
                 shape = RoundedCornerShape(25.dp)
             ) {
-                Text("结束定时")
+                Text(stringResource(R.string.end_timer))
             }
             
             Button(
@@ -128,12 +130,12 @@ fun TimerFinishedButtons(
                     containerColor = MaterialTheme.colorScheme.secondary
                 )
             ) {
-                Text("再贪一会儿")
+                Text(stringResource(R.string.snooze))
             }
         }
         
         Text(
-            text = "贪睡时间: $snoozeMinutes 分钟",
+            text = stringResource(R.string.snooze_time_minutes, snoozeMinutes),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = textAlpha)
         )

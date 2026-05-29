@@ -5,6 +5,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,6 +41,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import com.bicy.whitenoise.yODW.SrEO.InteractiveSlider
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -119,7 +122,7 @@ fun MixerPanel(
             .alpha(panelProgress)
     ) {
         Box(
-            modifier = Modifier
+            modifier = Modifier 
                 .fillMaxWidth()
                 .weight(1f)
         ) {
@@ -417,30 +420,88 @@ fun EqualizerPanel() {
     
     val savedEqConfig = MusicStorage.getEqualizerConfig()
     var gains by remember { mutableStateOf(savedEqConfig.gains.copyOf()) }
-    var selectedPreset by remember { mutableStateOf("平坦") }
+    val flatPreset = stringResource(R.string.eq_preset_flat)
+    var selectedPreset by remember { mutableStateOf(flatPreset) }
     var presetExpanded by remember { mutableStateOf(false) }
     
-    LaunchedEffect(soundId) {
+    val autoEqEnabled = ConfigStorage.isAutoEqEnabled()
+    val config by ConfigStorage.config.collectAsState()
+    val autoEqMode = config.autoEqMode
+    val autoEqIntensity = config.autoEqIntensity
+    val autoEqTargetCurve = config.autoEqTargetCurve
+    
+    LaunchedEffect(autoEqEnabled) {
+        Log.d("EqualizerPanel", "autoEqEnabled changed: $autoEqEnabled, soundId=$soundId")
         if (soundId != null) {
-            val eqConfig = MusicStorage.getEqualizerConfig()
-            OboeAudioEngine.setEqGains(soundId, eqConfig.gains)
-            OboeAudioEngine.setEqEnabled(soundId, eqConfig.enabled)
-            gains = eqConfig.gains.copyOf()
+            if (autoEqEnabled) {
+                OboeAudioEngine.setEqEnabled(soundId, false)
+                val intensity = autoEqIntensity
+                val targetCurve = autoEqTargetCurve
+                val englishCurve = targetCurveToEnglish(targetCurve)
+                OboeAudioEngine.setAutoEqIntensity(soundId, intensity)
+                OboeAudioEngine.setAutoEqTargetCurve(soundId, englishCurve)
+                OboeAudioEngine.setAutoEqBassBias(soundId, ConfigStorage.getAutoEqBassBias())
+                OboeAudioEngine.setAutoEqMidBias(soundId, ConfigStorage.getAutoEqMidBias())
+                OboeAudioEngine.setAutoEqTrebleBias(soundId, ConfigStorage.getAutoEqTrebleBias())
+                OboeAudioEngine.setAutoEqResponseSpeed(soundId, ConfigStorage.getAutoEqResponseSpeed())
+                OboeAudioEngine.setAutoEqModeEnabled(soundId, true)
+            } else {
+                OboeAudioEngine.setAutoEqModeEnabled(soundId, false)
+                val eqConfig = MusicStorage.getEqualizerConfig()
+                OboeAudioEngine.setEqGains(soundId, eqConfig.gains)
+                OboeAudioEngine.setEqEnabled(soundId, eqConfig.enabled)
+                gains = eqConfig.gains.copyOf()
+            }
         }
     }
     
+    LaunchedEffect(soundId, autoEqEnabled) {
+        if (soundId != null && autoEqEnabled) {
+            while (true) {
+                delay(500)
+                if (OboeAudioEngine.hasHybridEqCurve(soundId)) {
+                    val autoGains = OboeAudioEngine.getAutoEqGains(soundId)
+                    gains = autoGains
+                    
+                    if (ConfigStorage.isAutoEqSyncToManual()) {
+                        MusicStorage.updateEqualizerConfig(
+                            EqualizerConfig(
+                                enabled = true,
+                                gains = autoGains.copyOf()
+                            )
+                        )
+                    }
+                    
+                    delay(2000)
+                }
+            }
+        }
+    }
+    
+    val eqPresetFlat = stringResource(R.string.eq_preset_flat)
+    val eqPresetCustom = stringResource(R.string.eq_preset_custom)
+    val eqPresetBassBoost = stringResource(R.string.eq_preset_bass_boost)
+    val eqPresetTrebleBoost = stringResource(R.string.eq_preset_treble_boost)
+    val eqPresetVocal = stringResource(R.string.eq_preset_vocal)
+    val eqPresetRock = stringResource(R.string.eq_preset_rock)
+    val eqPresetPop = stringResource(R.string.eq_preset_pop)
+    val eqPresetClassical = stringResource(R.string.eq_preset_classical)
+    val eqPresetJazz = stringResource(R.string.eq_preset_jazz)
+    val eqPresetElectronic = stringResource(R.string.eq_preset_electronic)
+    val eqPresetVShape = stringResource(R.string.eq_preset_v_shape)
+    
     val eqPresets = remember {
         listOf(
-            EqPresetData("平坦", FloatArray(12) { 0f }),
-            EqPresetData("低音增强", floatArrayOf(6f, 5f, 4f, 2f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f)),
-            EqPresetData("高音增强", floatArrayOf(0f, 0f, 0f, 0f, 0f, 0f, 0f, 2f, 4f, 5f, 6f, 6f)),
-            EqPresetData("人声增强", floatArrayOf(-2f, -1f, 0f, 2f, 4f, 5f, 5f, 4f, 2f, 0f, -1f, -2f)),
-            EqPresetData("摇滚", floatArrayOf(4f, 3f, 1f, -1f, -2f, 0f, 2f, 3f, 4f, 4f, 3f, 2f)),
-            EqPresetData("流行", floatArrayOf(-1f, 0f, 2f, 4f, 5f, 4f, 2f, 0f, -1f, -1f, -1f, -1f)),
-            EqPresetData("古典", floatArrayOf(4f, 3f, 2f, 1f, -1f, -1f, 0f, 2f, 3f, 4f, 4f, 4f)),
-            EqPresetData("爵士", floatArrayOf(3f, 2f, 0f, 1f, 2f, 2f, 2f, 3f, 4f, 4f, 3f, 3f)),
-            EqPresetData("电子", floatArrayOf(5f, 4f, 2f, 0f, -1f, -1f, 0f, -1f, 1f, 3f, 4f, 5f)),
-            EqPresetData("V型", floatArrayOf(5f, 4f, 2f, 0f, -2f, -2f, -2f, 0f, 2f, 4f, 5f, 5f))
+            EqPresetData(eqPresetFlat, FloatArray(12) { 0f }),
+            EqPresetData(eqPresetBassBoost, floatArrayOf(6f, 5f, 4f, 2f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f)),
+            EqPresetData(eqPresetTrebleBoost, floatArrayOf(0f, 0f, 0f, 0f, 0f, 0f, 0f, 2f, 4f, 5f, 6f, 6f)),
+            EqPresetData(eqPresetVocal, floatArrayOf(-2f, -1f, 0f, 2f, 4f, 5f, 5f, 4f, 2f, 0f, -1f, -2f)),
+            EqPresetData(eqPresetRock, floatArrayOf(4f, 3f, 1f, -1f, -2f, 0f, 2f, 3f, 4f, 4f, 3f, 2f)),
+            EqPresetData(eqPresetPop, floatArrayOf(-1f, 0f, 2f, 4f, 5f, 4f, 2f, 0f, -1f, -1f, -1f, -1f)),
+            EqPresetData(eqPresetClassical, floatArrayOf(4f, 3f, 2f, 1f, -1f, -1f, 0f, 2f, 3f, 4f, 4f, 4f)),
+            EqPresetData(eqPresetJazz, floatArrayOf(3f, 2f, 0f, 1f, 2f, 2f, 2f, 3f, 4f, 4f, 3f, 3f)),
+            EqPresetData(eqPresetElectronic, floatArrayOf(5f, 4f, 2f, 0f, -1f, -1f, 0f, -1f, 1f, 3f, 4f, 5f)),
+            EqPresetData(eqPresetVShape, floatArrayOf(5f, 4f, 2f, 0f, -2f, -2f, -2f, 0f, 2f, 4f, 5f, 5f))
         )
     }
     
@@ -469,66 +530,459 @@ fun EqualizerPanel() {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(
-            text = stringResource(R.string.equalizer),
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.equalizer),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                    .padding(2.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val isAuto = ConfigStorage.isAutoEqEnabled()
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(if (!isAuto) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable {
+                            ConfigStorage.setAutoEqEnabled(false)
+                            if (soundId != null) OboeAudioEngine.setAutoEqEnabled(soundId, false)
+                        }
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.eq_mode_manual),
+                        fontSize = 12.sp,
+                        fontWeight = if (!isAuto) FontWeight.Bold else FontWeight.Normal,
+                        color = if (!isAuto) MaterialTheme.colorScheme.onPrimary
+                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(if (isAuto) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable {
+                            Log.d("EqualizerPanel", "Auto button clicked, soundId = $soundId")
+                            ConfigStorage.setAutoEqEnabled(true)
+                            if (soundId != null) {
+                                Log.d("EqualizerPanel", "Calling OboeAudioEngine.setAutoEqEnabled($soundId, true)")
+                                OboeAudioEngine.setAutoEqEnabled(soundId, true)
+                            } else {
+                                Log.w("EqualizerPanel", "soundId is null, cannot enable AutoEQ")
+                            }
+                        }
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.eq_mode_auto),
+                        fontSize = 12.sp,
+                        fontWeight = if (isAuto) FontWeight.Bold else FontWeight.Normal,
+                        color = if (isAuto) MaterialTheme.colorScheme.onPrimary
+                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                }
+            }
+        }
         
         Spacer(modifier = Modifier.height(12.dp))
         
+        if (ConfigStorage.isAutoEqEnabled()) {
+            val autoEqModeDisplay = config.autoEqMode
+            
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                    .padding(2.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(if (autoEqModeDisplay == "simple") MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface)
+                        .clickable {
+                            Log.d("EqualizerPanel", "Simple mode clicked, soundId = $soundId")
+                            ConfigStorage.setAutoEqMode("simple")
+                            if (soundId != null) {
+                                val intensity = ConfigStorage.getAutoEqIntensity()
+                                Log.d("EqualizerPanel", "Setting intensity to $intensity for simple mode")
+                                OboeAudioEngine.setAutoEqIntensity(soundId, intensity)
+                            }
+                        }
+                        .padding(vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.eq_mode_simple),
+                        fontSize = 12.sp,
+                        fontWeight = if (autoEqModeDisplay == "simple") FontWeight.Bold else FontWeight.Normal,
+                        color = if (autoEqModeDisplay == "simple") MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(if (autoEqModeDisplay == "pro") MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface)
+                        .clickable {
+                            Log.d("EqualizerPanel", "Pro mode clicked, soundId = $soundId")
+                            ConfigStorage.setAutoEqMode("pro")
+                            if (soundId != null) {
+                                Log.d("EqualizerPanel", "Setting intensity to 1.0 for pro mode")
+                                OboeAudioEngine.setAutoEqIntensity(soundId, 1.0f)
+                            } else {
+                                Log.w("EqualizerPanel", "soundId is null, cannot set intensity")
+                            }
+                        }
+                        .padding(vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.eq_mode_advanced),
+                        fontSize = 12.sp,
+                        fontWeight = if (autoEqModeDisplay == "pro") FontWeight.Bold else FontWeight.Normal,
+                        color = if (autoEqModeDisplay == "pro") MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            if (soundId != null) {
+                HybridEqStatusIndicator(soundId)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            
+            if (autoEqMode == "simple") {
+                AutoEqSimplePanel(soundId)
+            } else {
+                AutoEqProPanel(soundId)
+            }
+        } else {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                        .clickable { presetExpanded = true }
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${stringResource(R.string.preset)}: $selectedPreset",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = stringResource(R.string.expand),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                
+                DropdownMenu(
+                    expanded = presetExpanded,
+                    onDismissRequest = { presetExpanded = false },
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .background(MaterialTheme.colorScheme.surface)
+                ) {
+                    eqPresets.forEach { preset ->
+                        DropdownMenuItem(
+                            text = { 
+                                Text(
+                                    text = preset.name,
+                                    fontSize = 14.sp,
+                                    color = if (selectedPreset == preset.name)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                            },
+                            onClick = { applyPreset(preset) },
+                            modifier = Modifier.background(
+                                if (selectedPreset == preset.name)
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                else
+                                    MaterialTheme.colorScheme.surface
+                            )
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                val frequencies = listOf("31", "63", "125", "250", "500", "1K", "2K", "4K", "8K", "12K", "16K", "20K")
+                
+                frequencies.forEachIndexed { index, freq ->
+                    EqBandSliderHorizontal(
+                        frequency = freq,
+                        gain = gains[index],
+                        onGainChange = { newGain ->
+                            val newGains = gains.copyOf()
+                            newGains[index] = newGain
+                            gains = newGains
+                            selectedPreset = eqPresetCustom
+                            applyGains(newGains)
+                        }
+                    )
+                    
+                    if (index < frequencies.size - 1) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Button(
+                onClick = {
+                    gains = FloatArray(12) { 0f }
+                    selectedPreset = eqPresetFlat
+                    applyGains(gains)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Text(stringResource(R.string.reset), color = MaterialTheme.colorScheme.onSurface)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AutoEqSimplePanel(soundId: String?) {
+    var intensity by remember { mutableFloatStateOf(ConfigStorage.getAutoEqIntensity()) }
+    var bassBias by remember { mutableFloatStateOf(ConfigStorage.getAutoEqBassBias()) }
+    var midBias by remember { mutableFloatStateOf(ConfigStorage.getAutoEqMidBias()) }
+    var trebleBias by remember { mutableFloatStateOf(ConfigStorage.getAutoEqTrebleBias()) }
+    var targetCurve by remember { mutableStateOf(ConfigStorage.getAutoEqTargetCurve()) }
+    var responseSpeed by remember { mutableStateOf(ConfigStorage.getAutoEqResponseSpeed()) }
+    var targetMenuExpanded by remember { mutableStateOf(false) }
+    var speedMenuExpanded by remember { mutableStateOf(false) }
+    
+    val targetCurves = listOf(stringResource(R.string.auto_eq_curve_flat), stringResource(R.string.auto_eq_curve_warm), stringResource(R.string.auto_eq_curve_bright), stringResource(R.string.auto_eq_curve_vocal), stringResource(R.string.auto_eq_curve_loudness))
+    val speedOptions = listOf(stringResource(R.string.auto_eq_speed_fast), stringResource(R.string.auto_eq_speed_medium), stringResource(R.string.auto_eq_speed_slow))
+    
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        AutoEqSectionTitle(stringResource(R.string.auto_eq_global_intensity))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("${(intensity * 100).toInt()}%", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+            Spacer(modifier = Modifier.width(8.dp))
+            Slider(
+                value = intensity,
+                onValueChange = {
+                    intensity = it
+                    ConfigStorage.setAutoEqIntensity(it)
+                    if (soundId != null) OboeAudioEngine.setAutoEqIntensity(soundId, it)
+                    
+                    val mappedMaxGain = it * 24f
+                    ConfigStorage.setAutoEqProMaxBoost(mappedMaxGain)
+                    ConfigStorage.setAutoEqProMaxCut(mappedMaxGain)
+                    if (soundId != null) {
+                        OboeAudioEngine.setAutoEqMaxBoost(soundId, mappedMaxGain)
+                        OboeAudioEngine.setAutoEqMaxCut(soundId, mappedMaxGain)
+                    }
+                },
+                valueRange = 0f..1f,
+                modifier = Modifier.weight(1f),
+                colors = SliderDefaults.colors(
+                    thumbColor = MaterialTheme.colorScheme.primary,
+                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        AutoEqSectionTitle(stringResource(R.string.auto_eq_bias_offset))
+        
+        BiasSlider(stringResource(R.string.auto_eq_bass_bias), bassBias) {
+            bassBias = it
+            ConfigStorage.setAutoEqBassBias(it)
+            if (soundId != null) OboeAudioEngine.setAutoEqBassBias(soundId, it)
+        }
+        BiasSlider(stringResource(R.string.auto_eq_mid_bias), midBias) {
+            midBias = it
+            ConfigStorage.setAutoEqMidBias(it)
+            if (soundId != null) OboeAudioEngine.setAutoEqMidBias(soundId, it)
+        }
+        BiasSlider(stringResource(R.string.auto_eq_treble_bias), trebleBias) {
+            trebleBias = it
+            ConfigStorage.setAutoEqTrebleBias(it)
+            if (soundId != null) OboeAudioEngine.setAutoEqTrebleBias(soundId, it)
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        AutoEqSectionTitle(stringResource(R.string.auto_eq_target_curve))
         Box(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
-                    .clickable { presetExpanded = true }
+                    .clickable { targetMenuExpanded = true }
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${stringResource(R.string.preset)}: $selectedPreset",
+                    text = targetCurve,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = stringResource(R.string.expand),
+                    contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     modifier = Modifier.size(20.dp)
                 )
             }
             
             DropdownMenu(
-                expanded = presetExpanded,
-                onDismissRequest = { presetExpanded = false },
+                expanded = targetMenuExpanded,
+                onDismissRequest = { targetMenuExpanded = false },
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
                     .background(MaterialTheme.colorScheme.surface)
             ) {
-                eqPresets.forEach { preset ->
+                targetCurves.forEach { curve ->
                     DropdownMenuItem(
-                        text = { 
+                        text = {
                             Text(
-                                text = preset.name,
+                                text = curve,
                                 fontSize = 14.sp,
-                                color = if (selectedPreset == preset.name)
-                                    MaterialTheme.colorScheme.primary
-                                else
-                                    MaterialTheme.colorScheme.onSurface
+                                color = if (targetCurve == curve) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.onSurface
                             )
                         },
-                        onClick = { applyPreset(preset) },
-                        modifier = Modifier.background(
-                            if (selectedPreset == preset.name)
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                            else
-                                MaterialTheme.colorScheme.surface
-                        )
+                        onClick = {
+                            targetCurve = curve
+                            targetMenuExpanded = false
+                            ConfigStorage.setAutoEqTargetCurve(curve)
+                            val englishCurve = targetCurveToEnglish(curve)
+                            if (soundId != null) OboeAudioEngine.setAutoEqTargetCurve(soundId, englishCurve)
+                            
+                            val (brightness, loudness) = when (curve) {
+                                targetCurves[0] -> 0f to 0f
+                                targetCurves[1] -> -1.5f to 0f
+                                targetCurves[2] -> 1.5f to 0f
+                                targetCurves[3] -> 0.5f to 2f
+                                targetCurves[4] -> 0f to 4f
+                                else -> 0f to 0f
+                            }
+                            ConfigStorage.setAutoEqProBrightnessTarget(brightness)
+                            ConfigStorage.setAutoEqProLoudnessTarget(loudness)
+                            if (soundId != null) {
+                                OboeAudioEngine.setAutoEqBrightnessTarget(soundId, brightness)
+                                OboeAudioEngine.setAutoEqLoudnessTarget(soundId, loudness)
+                            }
+                        }
+                    )
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        AutoEqSectionTitle(stringResource(R.string.auto_eq_response_speed))
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                    .clickable { speedMenuExpanded = true }
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = responseSpeed,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            
+            DropdownMenu(
+                expanded = speedMenuExpanded,
+                onDismissRequest = { speedMenuExpanded = false },
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .background(MaterialTheme.colorScheme.surface)
+            ) {
+                speedOptions.forEach { speed ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = speed,
+                                fontSize = 14.sp,
+                                color = if (responseSpeed == speed) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.onSurface
+                            )
+                        },
+                        onClick = {
+                            responseSpeed = speed
+                            speedMenuExpanded = false
+                            ConfigStorage.setAutoEqResponseSpeed(speed)
+                            if (soundId != null) OboeAudioEngine.setAutoEqResponseSpeed(soundId, speed)
+                            
+                            val (attackMs, releaseMs) = when (speed) {
+                                speedOptions[0] -> 50f to 100f
+                                speedOptions[1] -> 150f to 300f
+                                speedOptions[2] -> 300f to 600f
+                                else -> 150f to 300f
+                            }
+                            ConfigStorage.setAutoEqProAttack(attackMs)
+                            ConfigStorage.setAutoEqProRelease(releaseMs)
+                        }
                     )
                 }
             }
@@ -536,51 +990,250 @@ fun EqualizerPanel() {
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                .padding(12.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            val frequencies = listOf("31", "63", "125", "250", "500", "1K", "2K", "4K", "8K", "12K", "16K", "20K")
-            
-            frequencies.forEachIndexed { index, freq ->
-                EqBandSliderHorizontal(
-                    frequency = freq,
-                    gain = gains[index],
-                    onGainChange = { newGain ->
-                        val newGains = gains.copyOf()
-                        newGains[index] = newGain
-                        gains = newGains
-                        selectedPreset = "自定义"
-                        applyGains(newGains)
-                    }
-                )
-                
-                if (index < frequencies.size - 1) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
+        Text(
+            text = stringResource(R.string.auto_eq_simple_desc),
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+            lineHeight = 16.sp
+        )
+    }
+}
+
+@Composable
+private fun AutoEqProPanel(soundId: String?) {
+    var attack by remember { mutableFloatStateOf(ConfigStorage.getAutoEqProAttack()) }
+    var release by remember { mutableFloatStateOf(ConfigStorage.getAutoEqProRelease()) }
+    var maxSlope by remember { mutableFloatStateOf(ConfigStorage.getAutoEqProMaxSlope()) }
+    var maxBoost by remember { mutableFloatStateOf(ConfigStorage.getAutoEqProMaxBoost()) }
+    var maxCut by remember { mutableFloatStateOf(ConfigStorage.getAutoEqProMaxCut()) }
+    var smoothing by remember { mutableFloatStateOf(ConfigStorage.getAutoEqProSmoothing()) }
+    var brightnessTarget by remember { mutableFloatStateOf(ConfigStorage.getAutoEqProBrightnessTarget()) }
+    var loudnessTarget by remember { mutableFloatStateOf(ConfigStorage.getAutoEqProLoudnessTarget()) }
+    var couplingCoeff by remember { mutableFloatStateOf(ConfigStorage.getAutoEqProCouplingCoeff()) }
+    var hysteresisDb by remember { mutableFloatStateOf(ConfigStorage.getAutoEqProHysteresisDb()) }
+    var dynamicQEnabled by remember { mutableStateOf(ConfigStorage.getAutoEqProDynamicQEnabled()) }
+    var bassBias by remember { mutableFloatStateOf(ConfigStorage.getAutoEqBassBias()) }
+    var midBias by remember { mutableFloatStateOf(ConfigStorage.getAutoEqMidBias()) }
+    var trebleBias by remember { mutableFloatStateOf(ConfigStorage.getAutoEqTrebleBias()) }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(930.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        AutoEqSectionTitle(stringResource(R.string.auto_eq_freq_bias))
+        BiasSlider(stringResource(R.string.auto_eq_bass_bias_freq), bassBias) {
+            bassBias = it
+            ConfigStorage.setAutoEqBassBias(it)
+            if (soundId != null) OboeAudioEngine.setAutoEqBassBias(soundId, it)
+        }
+        BiasSlider(stringResource(R.string.auto_eq_mid_bias_freq), midBias) {
+            midBias = it
+            ConfigStorage.setAutoEqMidBias(it)
+            if (soundId != null) OboeAudioEngine.setAutoEqMidBias(soundId, it)
+        }
+        BiasSlider(stringResource(R.string.auto_eq_treble_bias_freq), trebleBias) {
+            trebleBias = it
+            ConfigStorage.setAutoEqTrebleBias(it)
+            if (soundId != null) OboeAudioEngine.setAutoEqTrebleBias(soundId, it)
         }
         
         Spacer(modifier = Modifier.height(12.dp))
         
-        Button(
-            onClick = {
-                gains = FloatArray(12) { 0f }
-                selectedPreset = "平坦"
-                applyGains(gains)
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-        ) {
-            Text("重置", color = MaterialTheme.colorScheme.onSurface)
+        AutoEqSectionTitle(stringResource(R.string.auto_eq_dynamic_response))
+        ParaSlider("Attack", attack, "ms", 10f..500f) {
+            attack = it
+            ConfigStorage.setAutoEqProAttack(it)
         }
+        ParaSlider("Release", release, "ms", 20f..1000f) {
+            release = it
+            ConfigStorage.setAutoEqProRelease(it)
+        }
+        ParaSlider(stringResource(R.string.auto_eq_max_slope), maxSlope, "dB/s", 0.5f..50f) {
+            maxSlope = it
+            ConfigStorage.setAutoEqProMaxSlope(it)
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        AutoEqSectionTitle(stringResource(R.string.auto_eq_freq_limit))
+        ParaSlider(stringResource(R.string.auto_eq_max_boost), maxBoost, "dB", 0f..24f) {
+            maxBoost = it
+            ConfigStorage.setAutoEqProMaxBoost(it)
+            if (soundId != null) OboeAudioEngine.setAutoEqMaxBoost(soundId, it)
+        }
+        ParaSlider(stringResource(R.string.auto_eq_max_cut), maxCut, "dB", 0f..24f) {
+            maxCut = it
+            ConfigStorage.setAutoEqProMaxCut(it)
+            if (soundId != null) OboeAudioEngine.setAutoEqMaxCut(soundId, it)
+        }
+        ParaSlider(stringResource(R.string.auto_eq_hysteresis), hysteresisDb, "dB", 0.2f..3f) {
+            hysteresisDb = it
+            ConfigStorage.setAutoEqProHysteresisDb(it)
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        AutoEqSectionTitle(stringResource(R.string.auto_eq_spectrum_analysis))
+        ParaSlider(stringResource(R.string.auto_eq_smoothing), smoothing, "", 0f..0.99f) {
+            smoothing = it
+            ConfigStorage.setAutoEqProSmoothing(it)
+            if (soundId != null) OboeAudioEngine.setAutoEqSmoothing(soundId, it)
+        }
+        ParaSlider(stringResource(R.string.auto_eq_coupling), couplingCoeff, "", 0f..1f) {
+            couplingCoeff = it
+            ConfigStorage.setAutoEqProCouplingCoeff(it)
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        AutoEqSectionTitle(stringResource(R.string.auto_eq_curve_fine_tune))
+        ParaSlider(stringResource(R.string.auto_eq_brightness_target), brightnessTarget, "dB/oct", -4.5f..4.5f) {
+            brightnessTarget = it
+            ConfigStorage.setAutoEqProBrightnessTarget(it)
+            if (soundId != null) OboeAudioEngine.setAutoEqBrightnessTarget(soundId, it)
+        }
+        ParaSlider(stringResource(R.string.auto_eq_loudness_target), loudnessTarget, "dB", -6f..6f) {
+            loudnessTarget = it
+            ConfigStorage.setAutoEqProLoudnessTarget(it)
+            if (soundId != null) OboeAudioEngine.setAutoEqLoudnessTarget(soundId, it)
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                .clickable {
+                    dynamicQEnabled = !dynamicQEnabled
+                    ConfigStorage.setAutoEqProDynamicQEnabled(dynamicQEnabled)
+                    if (soundId != null) OboeAudioEngine.setAutoEqDynamicQEnabled(soundId, dynamicQEnabled)
+                }
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = stringResource(R.string.auto_eq_dynamic_q),
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Checkbox(
+                checked = dynamicQEnabled,
+                onCheckedChange = { 
+                    dynamicQEnabled = it
+                    ConfigStorage.setAutoEqProDynamicQEnabled(it)
+                }
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Text(
+            text = stringResource(R.string.auto_eq_advanced_desc),
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+            lineHeight = 16.sp
+        )
+    }
+}
+
+@Composable
+private fun AutoEqSectionTitle(title: String) {
+    Text(
+        text = title,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+        modifier = Modifier.padding(bottom = 4.dp)
+    )
+}
+
+private fun targetCurveToEnglish(curve: String): String {
+    return when {
+        curve.contains("flat", ignoreCase = true) || curve.contains("平坦") || curve.contains("フラット") -> "flat"
+        curve.contains("warm", ignoreCase = true) || curve.contains("温暖") || curve.contains("ウォーム") -> "warm"
+        curve.contains("bright", ignoreCase = true) || curve.contains("明亮") || curve.contains("ブライト") -> "bright"
+        curve.contains("vocal", ignoreCase = true) || curve.contains("人声") || curve.contains("ボーカル") -> "vocal"
+        curve.contains("loud", ignoreCase = true) || curve.contains("响度") || curve.contains("ラウドネス") -> "loudness"
+        else -> "flat"
+    }
+}
+
+@Composable
+private fun BiasSlider(label: String, value: Float, onValueChange: (Float) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            modifier = Modifier.width(72.dp)
+        )
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            valueRange = -6f..6f,
+            modifier = Modifier.weight(1f),
+            colors = SliderDefaults.colors(
+                thumbColor = MaterialTheme.colorScheme.primary,
+                activeTrackColor = MaterialTheme.colorScheme.primary,
+                inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        )
+        Text(
+            text = "${if (value >= 0) "+" else ""}${"%.1f".format(value)} dB",
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            modifier = Modifier.width(48.dp),
+            textAlign = TextAlign.End
+        )
+    }
+}
+
+@Composable
+private fun ParaSlider(
+    label: String,
+    value: Float,
+    unit: String,
+    range: ClosedFloatingPointRange<Float>,
+    onValueChange: (Float) -> Unit
+) {
+    Column(modifier = Modifier.padding(vertical = 2.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+            Text(
+                text = "${"%.1f".format(value)}$unit",
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            valueRange = range,
+            modifier = Modifier.fillMaxWidth(),
+            colors = SliderDefaults.colors(
+                thumbColor = MaterialTheme.colorScheme.primary,
+                activeTrackColor = MaterialTheme.colorScheme.primary,
+                inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        )
     }
 }
 
@@ -651,7 +1304,8 @@ fun ReverbPanel() {
     val spatialReverbExpanded = expandedSection == "spatialReverb"
     val creativeExpanded = expandedSection == "creative"
     
-    var selectedPreset by remember { mutableStateOf("无") }
+    val noneString = stringResource(R.string.none)
+    var selectedPreset by remember { mutableStateOf(noneString) }
     var reverbPresetExpanded by remember { mutableStateOf(false) }
     
     val savedEffects = MusicStorage.getEffectIntensities()
@@ -665,21 +1319,35 @@ fun ReverbPanel() {
     
     var musicVolume by remember { mutableFloatStateOf(MusicStorage.getVolume()) }
     
+    val reverbPresetStadium = stringResource(R.string.reverb_preset_stadium)
+    val reverbPresetCar = stringResource(R.string.reverb_preset_car)
+    val reverbPresetBathroom = stringResource(R.string.reverb_preset_bathroom)
+    val reverbPresetChurch = stringResource(R.string.reverb_preset_church)
+    val reverbPresetSmallClub = stringResource(R.string.reverb_preset_small_club)
+    val reverbPresetForest = stringResource(R.string.reverb_preset_forest)
+    val reverbPresetValley = stringResource(R.string.reverb_preset_valley)
+    val reverbPresetSeaside = stringResource(R.string.reverb_preset_seaside)
+    val reverbPresetDesert = stringResource(R.string.reverb_preset_desert)
+    val reverbPresetCave = stringResource(R.string.reverb_preset_cave)
+    val reverbPresetTunnel = stringResource(R.string.reverb_preset_tunnel)
+    
     val reverbPresets = remember {
         listOf(
-            ReverbPreset("体育场", 0.9f, 4.5f, 0.2f, 0.5f, 0.7f, 0.05f, 0.6f, 0.7f, 80f, 0.3f),
-            ReverbPreset("汽车内", 0.1f, 0.3f, 0.8f, 0.3f, 0.9f, 0.005f, 0.8f, 0.6f, 150f, 0.1f),
-            ReverbPreset("浴室", 0.2f, 1.0f, 0.1f, 0.6f, 0.8f, 0.01f, 0.7f, 0.5f, 120f, 0.2f),
-            ReverbPreset("教堂", 1.0f, 4.0f, 0.15f, 0.55f, 0.6f, 0.08f, 0.5f, 0.6f, 60f, 0.4f),
-            ReverbPreset("小俱乐部", 0.4f, 1.5f, 0.4f, 0.4f, 0.85f, 0.02f, 0.6f, 0.5f, 100f, 0.15f),
-            ReverbPreset("森林", 0.2f, 0.5f, 0.85f, 0.1f, 0.92f, 0.01f, 0.4f, 0.3f, 300f, 0.15f),
-            ReverbPreset("山谷", 0.7f, 1.8f, 0.6f, 0.25f, 0.8f, 0.12f, 0.3f, 0.4f, 250f, 0.4f),
-            ReverbPreset("海边", 0.1f, 0.15f, 0.95f, 0.05f, 0.96f, 0.0f, 0.8f, 0.7f, 350f, 0.08f),
-            ReverbPreset("沙漠", 0.05f, 0.08f, 0.98f, 0.02f, 0.98f, 0.0f, 0.9f, 0.8f, 400f, 0.0f),
-            ReverbPreset("洞穴", 0.85f, 5.0f, 0.05f, 0.45f, 0.65f, 0.1f, 0.5f, 0.4f, 50f, 0.35f),
-            ReverbPreset("隧道", 0.6f, 2.5f, 0.2f, 0.4f, 0.75f, 0.05f, 0.4f, 0.3f, 70f, 0.2f)
+            ReverbPreset(reverbPresetStadium, 0.9f, 4.5f, 0.2f, 0.5f, 0.7f, 0.05f, 0.6f, 0.7f, 80f, 0.3f),
+            ReverbPreset(reverbPresetCar, 0.1f, 0.3f, 0.8f, 0.3f, 0.9f, 0.005f, 0.8f, 0.6f, 150f, 0.1f),
+            ReverbPreset(reverbPresetBathroom, 0.2f, 1.0f, 0.1f, 0.6f, 0.8f, 0.01f, 0.7f, 0.5f, 120f, 0.2f),
+            ReverbPreset(reverbPresetChurch, 1.0f, 4.0f, 0.15f, 0.55f, 0.6f, 0.08f, 0.5f, 0.6f, 60f, 0.4f),
+            ReverbPreset(reverbPresetSmallClub, 0.4f, 1.5f, 0.4f, 0.4f, 0.85f, 0.02f, 0.6f, 0.5f, 100f, 0.15f),
+            ReverbPreset(reverbPresetForest, 0.2f, 0.5f, 0.85f, 0.1f, 0.92f, 0.01f, 0.4f, 0.3f, 300f, 0.15f),
+            ReverbPreset(reverbPresetValley, 0.7f, 1.8f, 0.6f, 0.25f, 0.8f, 0.12f, 0.3f, 0.4f, 250f, 0.4f),
+            ReverbPreset(reverbPresetSeaside, 0.1f, 0.15f, 0.95f, 0.05f, 0.96f, 0.0f, 0.8f, 0.7f, 350f, 0.08f),
+            ReverbPreset(reverbPresetDesert, 0.05f, 0.08f, 0.98f, 0.02f, 0.98f, 0.0f, 0.9f, 0.8f, 400f, 0.0f),
+            ReverbPreset(reverbPresetCave, 0.85f, 5.0f, 0.05f, 0.45f, 0.65f, 0.1f, 0.5f, 0.4f, 50f, 0.35f),
+            ReverbPreset(reverbPresetTunnel, 0.6f, 2.5f, 0.2f, 0.4f, 0.75f, 0.05f, 0.4f, 0.3f, 70f, 0.2f)
         )
     }
+    
+    val customString = stringResource(R.string.custom)
     
     val applyAndSave: () -> Unit = {
         val config = ReverbConfig(
@@ -727,7 +1395,7 @@ fun ReverbPanel() {
             earlyReflectionLevel = preset.earlyReflectionLevel
             selectedPreset = preset.name
         } else {
-            selectedPreset = "无"
+            selectedPreset = noneString
         }
         reverbPresetExpanded = false
         applyAndSave()
@@ -740,7 +1408,7 @@ fun ReverbPanel() {
             .padding(16.dp)
     ) {
         Text(
-            text = "音频调整",
+            text = stringResource(R.string.audio_adjust),
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -749,7 +1417,7 @@ fun ReverbPanel() {
         Spacer(modifier = Modifier.height(16.dp))
         
         CollapsibleSection(
-            title = "空间混响",
+            title = stringResource(R.string.spatial_reverb_title),
             expanded = spatialReverbExpanded,
             onToggle = { 
                 expandedSection = if (spatialReverbExpanded) null else "spatialReverb"
@@ -767,14 +1435,14 @@ fun ReverbPanel() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "预设: $selectedPreset",
+                        text = stringResource(R.string.preset_label, selectedPreset),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "展开",
+                        contentDescription = stringResource(R.string.expand),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.size(20.dp)
                     )
@@ -790,9 +1458,9 @@ fun ReverbPanel() {
                     DropdownMenuItem(
                         text = { 
                             Text(
-                                text = "无",
+                                text = noneString,
                                 fontSize = 14.sp,
-                                color = if (selectedPreset == "无")
+                                color = if (selectedPreset == noneString)
                                     MaterialTheme.colorScheme.primary
                                 else
                                     MaterialTheme.colorScheme.onSurface
@@ -800,7 +1468,7 @@ fun ReverbPanel() {
                         },
                         onClick = { applyPreset(null) },
                         modifier = Modifier.background(
-                            if (selectedPreset == "无")
+                            if (selectedPreset == noneString)
                                 MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                             else
                                 MaterialTheme.colorScheme.surface
@@ -833,13 +1501,14 @@ fun ReverbPanel() {
             Spacer(modifier = Modifier.height(16.dp))
             
             ReverbSliderComponent(
-                label = "房间大小",
+                label = stringResource(R.string.reverb_room_size),
                 value = roomSize,
                 valueRange = 0f..1f,
                 valueText = String.format("%.2f", roomSize),
                 onValueChange = { 
                     roomSize = it
-                    selectedPreset = "自定义"
+                    selectedPreset =
+                        customString
                     applyAndSave()
                 }
             )
@@ -847,13 +1516,13 @@ fun ReverbPanel() {
             Spacer(modifier = Modifier.height(12.dp))
             
             ReverbSliderComponent(
-                label = "衰减时间",
+                label = stringResource(R.string.reverb_decay_time),
                 value = (decayTime - 0.1f) / 9.9f,
                 valueRange = 0f..1f,
-                valueText = String.format("%.2f秒", decayTime),
+                valueText = stringResource(R.string.format_seconds, decayTime),
                 onValueChange = { 
                     decayTime = 0.1f + it * 9.9f
-                    selectedPreset = "自定义"
+                    selectedPreset = customString
                     applyAndSave()
                 }
             )
@@ -861,13 +1530,13 @@ fun ReverbPanel() {
             Spacer(modifier = Modifier.height(12.dp))
             
             ReverbSliderComponent(
-                label = "阻尼",
+                label = stringResource(R.string.reverb_damping),
                 value = damping,
                 valueRange = 0f..1f,
                 valueText = String.format("%.2f", damping),
                 onValueChange = { 
                     damping = it
-                    selectedPreset = "自定义"
+                    selectedPreset = customString
                     applyAndSave()
                 }
             )
@@ -875,13 +1544,13 @@ fun ReverbPanel() {
             Spacer(modifier = Modifier.height(12.dp))
             
             ReverbSliderComponent(
-                label = "湿声电平",
+                label = stringResource(R.string.reverb_wet_level),
                 value = wetLevel,
                 valueRange = 0f..1f,
                 valueText = String.format("%.2f", wetLevel),
                 onValueChange = { 
                     wetLevel = it
-                    selectedPreset = "自定义"
+                    selectedPreset = customString
                     applyAndSave()
                 }
             )
@@ -889,13 +1558,13 @@ fun ReverbPanel() {
             Spacer(modifier = Modifier.height(12.dp))
             
             ReverbSliderComponent(
-                label = "干声电平",
+                label = stringResource(R.string.reverb_dry_level),
                 value = dryLevel,
                 valueRange = 0f..1f,
                 valueText = String.format("%.2f", dryLevel),
                 onValueChange = { 
                     dryLevel = it
-                    selectedPreset = "自定义"
+                    selectedPreset = customString
                     applyAndSave()
                 }
             )
@@ -903,13 +1572,13 @@ fun ReverbPanel() {
             Spacer(modifier = Modifier.height(12.dp))
             
             ReverbSliderComponent(
-                label = "预延迟",
+                label = stringResource(R.string.reverb_pre_delay),
                 value = preDelay * 1000f,
                 valueRange = 0f..100f,
                 valueText = String.format("%.0fms", preDelay * 1000f),
                 onValueChange = { 
                     preDelay = it / 1000f
-                    selectedPreset = "自定义"
+                    selectedPreset = customString
                     applyAndSave()
                 }
             )
@@ -917,13 +1586,13 @@ fun ReverbPanel() {
             Spacer(modifier = Modifier.height(12.dp))
             
             ReverbSliderComponent(
-                label = "反射密度",
+                label = stringResource(R.string.reverb_reflection_density),
                 value = reflectionDensity,
                 valueRange = 0f..1f,
                 valueText = String.format("%.2f", reflectionDensity),
                 onValueChange = { 
                     reflectionDensity = it
-                    selectedPreset = "自定义"
+                    selectedPreset = customString
                     applyAndSave()
                 }
             )
@@ -931,13 +1600,13 @@ fun ReverbPanel() {
             Spacer(modifier = Modifier.height(12.dp))
             
             ReverbSliderComponent(
-                label = "反射扩散",
+                label = stringResource(R.string.reverb_reflection_spread),
                 value = reflectionSpread,
                 valueRange = 0f..1f,
                 valueText = String.format("%.2f", reflectionSpread),
                 onValueChange = { 
                     reflectionSpread = it
-                    selectedPreset = "自定义"
+                    selectedPreset = customString
                     applyAndSave()
                 }
             )
@@ -945,13 +1614,13 @@ fun ReverbPanel() {
             Spacer(modifier = Modifier.height(12.dp))
             
             ReverbSliderComponent(
-                label = "高通滤波",
+                label = stringResource(R.string.reverb_highpass),
                 value = highpassCutoff,
                 valueRange = 20f..500f,
                 valueText = String.format("%.0fHz", highpassCutoff),
                 onValueChange = { 
                     highpassCutoff = it
-                    selectedPreset = "自定义"
+                    selectedPreset = customString
                     applyAndSave()
                 }
             )
@@ -959,13 +1628,13 @@ fun ReverbPanel() {
             Spacer(modifier = Modifier.height(12.dp))
             
             ReverbSliderComponent(
-                label = "早期反射",
+                label = stringResource(R.string.reverb_early_reflection),
                 value = earlyReflectionLevel,
                 valueRange = 0f..1f,
                 valueText = String.format("%.2f", earlyReflectionLevel),
                 onValueChange = { 
                     earlyReflectionLevel = it
-                    selectedPreset = "自定义"
+                    selectedPreset = customString
                     applyAndSave()
                 }
             )
@@ -974,14 +1643,14 @@ fun ReverbPanel() {
         Spacer(modifier = Modifier.height(12.dp))
         
         CollapsibleSection(
-            title = "音质效果",
+            title = stringResource(R.string.sound_quality_effects),
             expanded = creativeExpanded,
             onToggle = { 
                 expandedSection = if (creativeExpanded) null else "creative"
             }
         ) {
             ReverbSliderComponent(
-                label = "隔音系数",
+                label = stringResource(R.string.insulation_coefficient),
                 value = insulation,
                 valueRange = 0f..1f,
                 valueText = String.format("%.2f", insulation),
@@ -1006,7 +1675,7 @@ fun ReverbPanel() {
             )
             Spacer(modifier = Modifier.height(8.dp))
             EffectSliderItem(
-                name = "8-bit游戏",
+                name = stringResource(R.string.effect_8bit_game),
                 intensity = eightBitIntensity,
                 onIntensityChange = { 
                     eightBitIntensity = it
@@ -1020,7 +1689,7 @@ fun ReverbPanel() {
             )
             Spacer(modifier = Modifier.height(8.dp))
             EffectSliderItem(
-                name = "水下",
+                name = stringResource(R.string.effect_underwater),
                 intensity = underwaterIntensity,
                 onIntensityChange = { 
                     underwaterIntensity = it
@@ -1034,7 +1703,7 @@ fun ReverbPanel() {
             )
             Spacer(modifier = Modifier.height(8.dp))
             EffectSliderItem(
-                name = "外星信号",
+                name = stringResource(R.string.effect_alien_signal),
                 intensity = alienSignalIntensity,
                 onIntensityChange = { 
                     alienSignalIntensity = it
@@ -1048,7 +1717,7 @@ fun ReverbPanel() {
             )
             Spacer(modifier = Modifier.height(8.dp))
             EffectSliderItem(
-                name = "扩音器",
+                name = stringResource(R.string.effect_megaphone),
                 intensity = megaphoneIntensity,
                 onIntensityChange = { 
                     megaphoneIntensity = it
@@ -1096,14 +1765,19 @@ fun ReverbPanel() {
         var obrOffsetTypeExpanded by remember { mutableStateOf(false) }
         var obrSurroundModeExpanded by remember { mutableStateOf(false) }
         
+        val offsetTypeFixed = stringResource(R.string.offset_type_fixed)
+        val offsetTypeSurround = stringResource(R.string.offset_type_surround)
+        val offsetTypeRandom = stringResource(R.string.offset_type_random)
+        val offsetTypes = listOf(offsetTypeFixed, offsetTypeSurround, offsetTypeRandom)
+        
         CollapsibleSection(
-            title = "声向偏移",
+            title = stringResource(R.string.sound_offset),
             expanded = obrExpanded,
             onToggle = { 
                 expandedSection = if (obrExpanded) null else "obr"
             },
-            subtitle = "(实验性)",
-            warningText = "使用途中可能会出现卡顿情况"
+            subtitle = stringResource(R.string.experimental),
+            warningText = stringResource(R.string.stutter_warning)
         ) {
             Row(
                 modifier = Modifier
@@ -1112,7 +1786,7 @@ fun ReverbPanel() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "启用",
+                    text = stringResource(R.string.enable),
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
@@ -1145,14 +1819,14 @@ fun ReverbPanel() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "偏移类型: ${when(obrOffsetType) { 0 -> "固定偏移"; 1 -> "3D环绕"; else -> "随机游动" }}",
+                        text = stringResource(R.string.offset_type_label, offsetTypes[obrOffsetType]),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "展开",
+                        contentDescription = stringResource(R.string.expand),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.size(20.dp)
                     )
@@ -1165,7 +1839,7 @@ fun ReverbPanel() {
                         .fillMaxWidth(0.9f)
                         .background(MaterialTheme.colorScheme.surface)
                 ) {
-                    listOf("固定偏移", "3D环绕", "随机游动").forEachIndexed { index, name ->
+                    offsetTypes.forEachIndexed { index, name ->
                         DropdownMenuItem(
                             text = { 
                                 Text(
@@ -1890,5 +2564,119 @@ fun SpeedSliderItem(
                 inactiveTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
             )
         )
+    }
+}
+
+@Composable
+private fun HybridEqStatusIndicator(soundId: String) {
+    var isAnalyzing by remember { mutableStateOf(false) }
+    var hasCurve by remember { mutableStateOf(false) }
+    var progress by remember { mutableStateOf(0) }
+    
+    LaunchedEffect(soundId) {
+        var lastStatus = ""
+        while (true) {
+            isAnalyzing = OboeAudioEngine.isHybridEqAnalyzing(soundId)
+            hasCurve = OboeAudioEngine.hasHybridEqCurve(soundId)
+            progress = OboeAudioEngine.getHybridEqProgress(soundId)
+            val currentStatus = "$isAnalyzing,$hasCurve,$progress"
+            if (currentStatus != lastStatus) {
+                Log.d("HybridEqStatus", "soundId=$soundId, isAnalyzing=$isAnalyzing, hasCurve=$hasCurve, progress=$progress")
+                lastStatus = currentStatus
+            }
+            kotlinx.coroutines.delay(200)
+        }
+    }
+    
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(
+                when {
+                    isAnalyzing -> MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    hasCurve -> MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                    else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                }
+            )
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+            .then(
+                if (hasCurve && !isAnalyzing) {
+                    Modifier.clickable {
+                        Log.d("HybridEqStatus", "Re-analyze clicked for soundId=$soundId")
+                        val filePath = MusicCacheManager.getFilePath(soundId)
+                        if (!filePath.isNullOrEmpty()) {
+                            OboeAudioEngine.setAutoEqEnabled(soundId, true, filePath)
+                        }
+                    }
+                } else {
+                    Modifier
+                }
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(
+                        when {
+                            isAnalyzing -> MaterialTheme.colorScheme.primary
+                            hasCurve -> MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                            else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                        }
+                    )
+            )
+            
+            Spacer(modifier = Modifier.width(8.dp))
+            
+            Text(
+                text = when {
+                    isAnalyzing -> "正在分析音频..."
+                    hasCurve -> "EQ 曲线已就绪"
+                    else -> "等待分析"
+                },
+                fontSize = 13.sp,
+                color = when {
+                    isAnalyzing -> MaterialTheme.colorScheme.primary
+                    hasCurve -> MaterialTheme.colorScheme.onSurface
+                    else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                }
+            )
+        }
+        
+        if (isAnalyzing) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "$progress%",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .width(60.dp)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width((progress / 100f * 60).dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(MaterialTheme.colorScheme.primary)
+                    )
+                }
+            }
+        } else if (hasCurve) {
+            Text(
+                text = "混合模式",
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            )
+        }
     }
 }

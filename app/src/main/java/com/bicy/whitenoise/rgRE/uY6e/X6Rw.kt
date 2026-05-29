@@ -8,6 +8,7 @@ import android.app.Service
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.media.app.NotificationCompat.MediaStyle
 import com.bicy.whitenoise.MainActivity
 import com.bicy.whitenoise.R
 
@@ -19,6 +20,8 @@ object MusicNotificationManager {
     
     const val ACTION_PLAY_PAUSE = "com.bicy.whitenoise.ACTION_PLAY_PAUSE"
     const val ACTION_STOP = "com.bicy.whitenoise.ACTION_STOP"
+    const val ACTION_NEXT = "com.bicy.whitenoise.ACTION_NEXT"
+    const val ACTION_PREVIOUS = "com.bicy.whitenoise.ACTION_PREVIOUS"
     
     fun createNotificationChannel(service: Service) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -66,6 +69,22 @@ object MusicNotificationManager {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         
+        val nextIntent = Intent(service, service.javaClass).apply {
+            action = ACTION_NEXT
+        }
+        val nextPendingIntent = PendingIntent.getService(
+            service, 2, nextIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
+        val previousIntent = Intent(service, service.javaClass).apply {
+            action = ACTION_PREVIOUS
+        }
+        val previousPendingIntent = PendingIntent.getService(
+            service, 3, previousIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
         val title = "添空"
         val content = if (isPlaying) {
             "正在播放 · $playingCount 个音频"
@@ -80,7 +99,9 @@ object MusicNotificationManager {
         }
         val playPauseText = if (isPlaying) "暂停" else "播放"
         
-        return NotificationCompat.Builder(service, CHANNEL_ID)
+        val sessionToken = mS7k.getSessionToken()
+        
+        val builder = NotificationCompat.Builder(service, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(content)
             .setSmallIcon(R.drawable.ic_notification)
@@ -90,9 +111,20 @@ object MusicNotificationManager {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .addAction(android.R.drawable.ic_media_previous, "上一首", previousPendingIntent)
             .addAction(playPauseIcon, playPauseText, playPausePendingIntent)
+            .addAction(android.R.drawable.ic_media_next, "下一首", nextPendingIntent)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "停止", stopPendingIntent)
-            .build()
+        
+        if (sessionToken != null) {
+            builder.setStyle(
+                MediaStyle()
+                    .setMediaSession(sessionToken)
+                    .setShowActionsInCompactView(0, 1, 2)
+            )
+        }
+        
+        return builder.build()
     }
     
     fun updateNotification(service: Service, notification: Notification) {

@@ -187,8 +187,6 @@ Gracias a todos los proyectos de código abierto que contribuyen a la tecnologí
 
 <video src="https://github.com/byxixiaoshao/AVIV/raw/main/video/Demo_Video.mp4" controls="controls" width="100%"></video>
 
-O descargue desde [video/Demo_Video.mp4](../video/Demo_Video.mp4)
-
 ---
 
 <div align="center">

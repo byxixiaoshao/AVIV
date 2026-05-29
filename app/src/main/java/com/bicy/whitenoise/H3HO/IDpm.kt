@@ -24,8 +24,8 @@ object OboeAudioEngine {
         return nativeLoadSound(soundId, filePath)
     }
     
-    fun loadSoundFromFd(soundId: String, fd: Int, offset: Long = 0, length: Long = -1): Int {
-        return nativeLoadSoundFromFd(soundId, fd, offset, length)
+    fun loadSoundFromFd(soundId: String, fd: Int, offset: Long = 0, length: Long = -1, filePath: String = ""): Int {
+        return nativeLoadSoundFromFd(soundId, fd, offset, length, filePath)
     }
     
     fun unloadSound(soundId: String) {
@@ -176,6 +176,87 @@ object OboeAudioEngine {
         return nativeGetEqGains(soundId)
     }
     
+    fun setAutoEqEnabled(soundId: String, enabled: Boolean, filePath: String = "") {
+        if (filePath.isNotEmpty()) {
+            nativeSetTrackFilePath(soundId, filePath)
+        }
+        nativeSetAutoEqEnabled(soundId, enabled, true)
+    }
+    
+    fun setAutoEqModeEnabled(soundId: String, enabled: Boolean) {
+        nativeSetAutoEqEnabled(soundId, enabled, false)
+    }
+    
+    private external fun nativeSetTrackFilePath(soundId: String, filePath: String)
+    
+    fun isAutoEqEnabled(soundId: String): Boolean {
+        return nativeIsAutoEqEnabled(soundId)
+    }
+    
+    fun setAutoEqTargetCurve(soundId: String, targetType: String) {
+        nativeSetAutoEqTargetCurve(soundId, targetType)
+    }
+    
+    fun setAutoEqIntensity(soundId: String, intensity: Float) {
+        nativeSetAutoEqIntensity(soundId, intensity)
+    }
+    
+    fun setAutoEqBassBias(soundId: String, bias: Float) {
+        nativeSetAutoEqBassBias(soundId, bias)
+    }
+    
+    fun setAutoEqMidBias(soundId: String, bias: Float) {
+        nativeSetAutoEqMidBias(soundId, bias)
+    }
+    
+    fun setAutoEqTrebleBias(soundId: String, bias: Float) {
+        nativeSetAutoEqTrebleBias(soundId, bias)
+    }
+    
+    fun setAutoEqResponseSpeed(soundId: String, speed: String) {
+        nativeSetAutoEqResponseSpeed(soundId, speed)
+    }
+    
+    fun setAutoEqMaxBoost(soundId: String, db: Float) {
+        nativeSetAutoEqMaxBoost(soundId, db)
+    }
+    
+    fun setAutoEqMaxCut(soundId: String, db: Float) {
+        nativeSetAutoEqMaxCut(soundId, db)
+    }
+    
+    fun setAutoEqSmoothing(soundId: String, s: Float) {
+        nativeSetAutoEqSmoothing(soundId, s)
+    }
+    
+    fun setAutoEqBrightnessTarget(soundId: String, db: Float) {
+        nativeSetAutoEqBrightnessTarget(soundId, db)
+    }
+    
+    fun setAutoEqLoudnessTarget(soundId: String, db: Float) {
+        nativeSetAutoEqLoudnessTarget(soundId, db)
+    }
+    
+    fun setAutoEqDynamicQEnabled(soundId: String, enabled: Boolean) {
+        nativeSetAutoEqDynamicQEnabled(soundId, enabled)
+    }
+    
+    fun getHybridEqProgress(soundId: String): Int {
+        return nativeGetHybridEqProgress(soundId)
+    }
+    
+    fun isHybridEqAnalyzing(soundId: String): Boolean {
+        return nativeIsHybridEqAnalyzing(soundId)
+    }
+    
+    fun hasHybridEqCurve(soundId: String): Boolean {
+        return nativeHasHybridEqCurve(soundId)
+    }
+    
+    fun getAutoEqGains(soundId: String): FloatArray {
+        return nativeGetAutoEqGains(soundId)
+    }
+    
     fun setSpatialEnabled(soundId: String, enabled: Boolean) {
         nativeSetSpatialEnabled(soundId, enabled)
     }
@@ -277,7 +358,7 @@ object OboeAudioEngine {
     private external fun nativeWarmup()
     private external fun nativeRelease()
     private external fun nativeLoadSound(soundId: String, filePath: String): Int
-    private external fun nativeLoadSoundFromFd(soundId: String, fd: Int, offset: Long, length: Long): Int
+    private external fun nativeLoadSoundFromFd(soundId: String, fd: Int, offset: Long, length: Long, filePath: String): Int
     private external fun nativeUnloadSound(soundId: String)
     private external fun nativePlaySound(soundId: String)
     private external fun nativeStopSound(soundId: String)
@@ -315,6 +396,24 @@ object OboeAudioEngine {
     private external fun nativeSetEqLimiterEnabled(soundId: String, enabled: Boolean)
     private external fun nativeSetEqGains(soundId: String, gains: FloatArray)
     private external fun nativeGetEqGains(soundId: String): FloatArray
+    private external fun nativeSetAutoEqEnabled(soundId: String, enabled: Boolean, startAnalysis: Boolean)
+    private external fun nativeIsAutoEqEnabled(soundId: String): Boolean
+    private external fun nativeSetAutoEqTargetCurve(soundId: String, targetType: String)
+    private external fun nativeSetAutoEqIntensity(soundId: String, intensity: Float)
+    private external fun nativeSetAutoEqBassBias(soundId: String, bias: Float)
+    private external fun nativeSetAutoEqMidBias(soundId: String, bias: Float)
+    private external fun nativeSetAutoEqTrebleBias(soundId: String, bias: Float)
+    private external fun nativeSetAutoEqResponseSpeed(soundId: String, speed: String)
+    private external fun nativeSetAutoEqMaxBoost(soundId: String, db: Float)
+    private external fun nativeSetAutoEqMaxCut(soundId: String, db: Float)
+    private external fun nativeSetAutoEqSmoothing(soundId: String, s: Float)
+    private external fun nativeSetAutoEqBrightnessTarget(soundId: String, db: Float)
+    private external fun nativeSetAutoEqLoudnessTarget(soundId: String, db: Float)
+    private external fun nativeSetAutoEqDynamicQEnabled(soundId: String, enabled: Boolean)
+    private external fun nativeGetHybridEqProgress(soundId: String): Int
+    private external fun nativeIsHybridEqAnalyzing(soundId: String): Boolean
+    private external fun nativeHasHybridEqCurve(soundId: String): Boolean
+    private external fun nativeGetAutoEqGains(soundId: String): FloatArray
     private external fun nativeSetSpatialEnabled(soundId: String, enabled: Boolean)
     private external fun nativeSetSpatialIntensity(soundId: String, intensity: Float)
     private external fun nativeSetSpatialOffsetType(soundId: String, type: Int)

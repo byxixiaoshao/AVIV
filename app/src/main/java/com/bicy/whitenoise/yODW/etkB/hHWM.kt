@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.bicy.whitenoise.R
@@ -91,7 +92,7 @@ private fun NavItem(
     ) {
         Icon(
             imageVector = ImageVector.vectorResource(id = iconRes),
-            contentDescription = screen.title,
+            contentDescription = stringResource(screen.titleResId),
             tint = color,
             modifier = Modifier.size(24.dp)
         )

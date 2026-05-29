@@ -70,6 +70,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -345,7 +346,7 @@ fun PlaylistPanel(
                     }
                     selectedCategory == MusicCategory.CurrentList -> {
                         Text(
-                            text = "当前播放 (${playlist.size}首)",
+                            text = stringResource(R.string.current_playing_count, playlist.size),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -359,7 +360,7 @@ fun PlaylistPanel(
                             ) {
                                 Icon(
                                 imageVector = Icons.AutoMirrored.Filled.PlaylistPlay,
-                                contentDescription = "保存为歌单"
+                                contentDescription = stringResource(R.string.save_as_playlist)
                             )
                             }
                         }
@@ -447,7 +448,7 @@ fun PlaylistPanel(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = "暂无播放中的音乐",
+                                        text = stringResource(R.string.no_music_playing),
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                     )
                                 }
@@ -979,7 +980,7 @@ fun PlaylistItem(
                 color = if (isPlaying) primaryColor else onSurfaceColor
             )
             Text(
-                text = track.artist ?: "未知艺术家",
+                text = track.artist ?: stringResource(R.string.unknown_artist),
                 fontSize = 12.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -1020,14 +1021,19 @@ fun PlaylistSelectionList(
         })
     }
     
-    val items = remember(favorites, userPlaylists) {
+    val favoritesTitle = stringResource(R.string.favorites)
+    val favoritesSubtitle = stringResource(R.string.track_count, favorites?.trackIds?.size ?: 0)
+    val createPlaylistTitle = stringResource(R.string.create_playlist)
+    val context = LocalContext.current
+    
+    val items = remember(favorites, userPlaylists, favoritesTitle, favoritesSubtitle, createPlaylistTitle) {
         val list = mutableListOf<CategoryItem>()
         
         list.add(
             CategoryItem(
                 id = "favorites",
-                title = "收藏",
-                subtitle = "${favorites?.trackIds?.size ?: 0}首",
+                title = favoritesTitle,
+                subtitle = favoritesSubtitle,
                 iconRes = R.drawable.ic_favorite,
                 showArrow = true
             )
@@ -1038,7 +1044,7 @@ fun PlaylistSelectionList(
                 CategoryItem(
                     id = playlist.id,
                     title = playlist.name,
-                    subtitle = "${playlist.trackIds.size}首",
+                    subtitle = context.getString(R.string.track_count, playlist.trackIds.size),
                     iconRes = R.drawable.ic_playlist,
                     showArrow = true
                 )
@@ -1048,7 +1054,7 @@ fun PlaylistSelectionList(
         list.add(
             CategoryItem(
                 id = "create",
-                title = "新建歌单",
+                title = createPlaylistTitle,
                 iconRes = R.drawable.ic_add
             )
         )
@@ -1116,12 +1122,12 @@ fun CreatePlaylistDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("新建歌单") },
+        title = { Text(stringResource(R.string.create_playlist)) },
         text = {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("歌单名称") },
+                label = { Text(stringResource(R.string.playlist_name)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -1135,12 +1141,12 @@ fun CreatePlaylistDialog(
                 },
                 enabled = name.isNotBlank()
             ) {
-                Text("创建")
+                Text(stringResource(R.string.create))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
@@ -1156,11 +1162,11 @@ fun SaveCurrentListDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("保存为歌单") },
+        title = { Text(stringResource(R.string.save_as_playlist)) },
         text = {
             Column {
                 Text(
-                    text = "将当前播放列表 (${currentPlaylist.size}首) 保存为新歌单",
+                    text = stringResource(R.string.save_current_playlist_hint, currentPlaylist.size),
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
@@ -1168,7 +1174,7 @@ fun SaveCurrentListDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("歌单名称") },
+                    label = { Text(stringResource(R.string.playlist_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -1183,12 +1189,12 @@ fun SaveCurrentListDialog(
                 },
                 enabled = name.isNotBlank()
             ) {
-                Text("保存")
+                Text(stringResource(R.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

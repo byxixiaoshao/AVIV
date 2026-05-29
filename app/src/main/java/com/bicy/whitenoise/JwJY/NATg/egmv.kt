@@ -30,7 +30,28 @@ data class AppConfig(
     val vizWnSensitivity: Int = 1,
     val vizMusicSensitivity: Int = 1,
     val vizFlashSensitivity: Int = 1,
-    val vizRefreshRate: Int = 1
+    val vizRefreshRate: Int = 1,
+    val mediaControlPriority: String = "smart",
+    val autoEqEnabled: Boolean = false,
+    val autoEqMode: String = "simple",
+    val autoEqIntensity: Float = 0.5f,
+    val autoEqBassBias: Float = 0f,
+    val autoEqMidBias: Float = 0f,
+    val autoEqTrebleBias: Float = 0f,
+    val autoEqTargetCurve: String = "flat",
+    val autoEqResponseSpeed: String = "medium",
+    val autoEqProAttack: Float = 100f,
+    val autoEqProRelease: Float = 200f,
+    val autoEqProMaxSlope: Float = 10f,
+    val autoEqProMaxBoost: Float = 12f,
+    val autoEqProMaxCut: Float = 12f,
+    val autoEqProSmoothing: Float = 0.7f,
+    val autoEqProBrightnessTarget: Float = 0f,
+    val autoEqProLoudnessTarget: Float = 0f,
+    val autoEqProCouplingCoeff: Float = 0.3f,
+    val autoEqProHysteresisDb: Float = 1f,
+    val autoEqProDynamicQEnabled: Boolean = true,
+    val autoEqSyncToManual: Boolean = false
 )
 
 data class CustomColors(
@@ -87,7 +108,17 @@ object ConfigStorage {
                 vizWnSensitivity = json.optInt("vizWnSensitivity", 1),
                 vizMusicSensitivity = json.optInt("vizMusicSensitivity", 1),
                 vizFlashSensitivity = json.optInt("vizFlashSensitivity", 1),
-                vizRefreshRate = json.optInt("vizRefreshRate", 1)
+                vizRefreshRate = json.optInt("vizRefreshRate", 1),
+                mediaControlPriority = json.optString("mediaControlPriority", "smart"),
+                autoEqEnabled = json.optBoolean("autoEqEnabled", false),
+                autoEqMode = json.optString("autoEqMode", "simple"),
+                autoEqIntensity = json.optDouble("autoEqIntensity", 0.5).toFloat(),
+                autoEqBassBias = json.optDouble("autoEqBassBias", 0.0).toFloat(),
+                autoEqMidBias = json.optDouble("autoEqMidBias", 0.0).toFloat(),
+                autoEqTrebleBias = json.optDouble("autoEqTrebleBias", 0.0).toFloat(),
+                autoEqTargetCurve = json.optString("autoEqTargetCurve", "flat"),
+                autoEqResponseSpeed = json.optString("autoEqResponseSpeed", "medium"),
+                autoEqSyncToManual = json.optBoolean("autoEqSyncToManual", false)
             )
             Log.d(TAG, "Config loaded: isPremium=${_config.value.isPremium}")
         }
@@ -118,6 +149,16 @@ object ConfigStorage {
             put("vizMusicSensitivity", config.vizMusicSensitivity)
             put("vizFlashSensitivity", config.vizFlashSensitivity)
             put("vizRefreshRate", config.vizRefreshRate)
+            put("mediaControlPriority", config.mediaControlPriority)
+            put("autoEqEnabled", config.autoEqEnabled)
+            put("autoEqMode", config.autoEqMode)
+            put("autoEqIntensity", config.autoEqIntensity.toDouble())
+            put("autoEqBassBias", config.autoEqBassBias.toDouble())
+            put("autoEqMidBias", config.autoEqMidBias.toDouble())
+            put("autoEqTrebleBias", config.autoEqTrebleBias.toDouble())
+            put("autoEqTargetCurve", config.autoEqTargetCurve)
+            put("autoEqResponseSpeed", config.autoEqResponseSpeed)
+            put("autoEqSyncToManual", config.autoEqSyncToManual)
         }
         
         StorageManager.saveJsonSync(file, json)
@@ -251,6 +292,120 @@ object ConfigStorage {
     
     fun setVizRefreshRate(value: Int) {
         updateConfig { it.copy(vizRefreshRate = value) }
+    }
+    
+    fun getMediaControlPriority(): String = _config.value.mediaControlPriority
+    
+    fun setMediaControlPriority(priority: String) {
+        updateConfig { it.copy(mediaControlPriority = priority) }
+    }
+    
+    fun isAutoEqEnabled(): Boolean = _config.value.autoEqEnabled
+    
+    fun setAutoEqEnabled(enabled: Boolean) {
+        updateConfig { it.copy(autoEqEnabled = enabled) }
+    }
+    
+    fun getAutoEqMode(): String = _config.value.autoEqMode
+    
+    fun setAutoEqMode(mode: String) {
+        updateConfig { it.copy(autoEqMode = mode) }
+    }
+    
+    fun getAutoEqIntensity(): Float = _config.value.autoEqIntensity
+    
+    fun setAutoEqIntensity(intensity: Float) {
+        updateConfig { it.copy(autoEqIntensity = intensity) }
+    }
+    
+    fun getAutoEqBassBias(): Float = _config.value.autoEqBassBias
+    
+    fun setAutoEqBassBias(bias: Float) {
+        updateConfig { it.copy(autoEqBassBias = bias) }
+    }
+    
+    fun getAutoEqMidBias(): Float = _config.value.autoEqMidBias
+    
+    fun setAutoEqMidBias(bias: Float) {
+        updateConfig { it.copy(autoEqMidBias = bias) }
+    }
+    
+    fun getAutoEqTrebleBias(): Float = _config.value.autoEqTrebleBias
+    
+    fun setAutoEqTrebleBias(bias: Float) {
+        updateConfig { it.copy(autoEqTrebleBias = bias) }
+    }
+    
+    fun getAutoEqTargetCurve(): String = _config.value.autoEqTargetCurve
+    
+    fun setAutoEqTargetCurve(curve: String) {
+        updateConfig { it.copy(autoEqTargetCurve = curve) }
+    }
+    
+    fun getAutoEqResponseSpeed(): String = _config.value.autoEqResponseSpeed
+    
+    fun setAutoEqResponseSpeed(speed: String) {
+        updateConfig { it.copy(autoEqResponseSpeed = speed) }
+    }
+    
+    fun getAutoEqProAttack(): Float = _config.value.autoEqProAttack
+    fun setAutoEqProAttack(value: Float) {
+        updateConfig { it.copy(autoEqProAttack = value) }
+    }
+    
+    fun getAutoEqProRelease(): Float = _config.value.autoEqProRelease
+    fun setAutoEqProRelease(value: Float) {
+        updateConfig { it.copy(autoEqProRelease = value) }
+    }
+    
+    fun getAutoEqProMaxSlope(): Float = _config.value.autoEqProMaxSlope
+    fun setAutoEqProMaxSlope(value: Float) {
+        updateConfig { it.copy(autoEqProMaxSlope = value) }
+    }
+    
+    fun getAutoEqProMaxBoost(): Float = _config.value.autoEqProMaxBoost
+    fun setAutoEqProMaxBoost(value: Float) {
+        updateConfig { it.copy(autoEqProMaxBoost = value) }
+    }
+    
+    fun getAutoEqProMaxCut(): Float = _config.value.autoEqProMaxCut
+    fun setAutoEqProMaxCut(value: Float) {
+        updateConfig { it.copy(autoEqProMaxCut = value) }
+    }
+    
+    fun getAutoEqProSmoothing(): Float = _config.value.autoEqProSmoothing
+    fun setAutoEqProSmoothing(value: Float) {
+        updateConfig { it.copy(autoEqProSmoothing = value) }
+    }
+    
+    fun getAutoEqProBrightnessTarget(): Float = _config.value.autoEqProBrightnessTarget
+    fun setAutoEqProBrightnessTarget(value: Float) {
+        updateConfig { it.copy(autoEqProBrightnessTarget = value) }
+    }
+    
+    fun getAutoEqProLoudnessTarget(): Float = _config.value.autoEqProLoudnessTarget
+    fun setAutoEqProLoudnessTarget(value: Float) {
+        updateConfig { it.copy(autoEqProLoudnessTarget = value) }
+    }
+    
+    fun getAutoEqProCouplingCoeff(): Float = _config.value.autoEqProCouplingCoeff
+    fun setAutoEqProCouplingCoeff(value: Float) {
+        updateConfig { it.copy(autoEqProCouplingCoeff = value) }
+    }
+    
+    fun getAutoEqProHysteresisDb(): Float = _config.value.autoEqProHysteresisDb
+    fun setAutoEqProHysteresisDb(value: Float) {
+        updateConfig { it.copy(autoEqProHysteresisDb = value) }
+    }
+    
+    fun getAutoEqProDynamicQEnabled(): Boolean = _config.value.autoEqProDynamicQEnabled
+    fun setAutoEqProDynamicQEnabled(enabled: Boolean) {
+        updateConfig { it.copy(autoEqProDynamicQEnabled = enabled) }
+    }
+    
+    fun isAutoEqSyncToManual(): Boolean = _config.value.autoEqSyncToManual
+    fun setAutoEqSyncToManual(enabled: Boolean) {
+        updateConfig { it.copy(autoEqSyncToManual = enabled) }
     }
     
     fun clearAllData() {

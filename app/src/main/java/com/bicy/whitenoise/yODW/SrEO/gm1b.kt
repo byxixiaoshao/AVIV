@@ -1085,7 +1085,7 @@ private fun TransitioningMainContent(
                     }
                 } else {
                     Text(
-                        text = if (isScanning) "正在扫描音乐..." else "依旧添空",
+                        text = if (isScanning) stringResource(R.string.scanning_music) else stringResource(R.string.still_empty),
                         fontSize = effectiveTitleFontSize.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
@@ -1302,7 +1302,7 @@ private fun TransitioningMainContent(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "调音台",
+                            contentDescription = stringResource(R.string.mixer),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -1321,7 +1321,7 @@ private fun TransitioningMainContent(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.List,
-                            contentDescription = "播放列表",
+                            contentDescription = stringResource(R.string.playlist),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }

@@ -38,6 +38,9 @@
     <string name="music_directory">音乐目录</string>
     <string name="directories_count">个目录</string>
     <string name="general">通用</string>
+    <string name="initialize_white_noise_list">初始化白噪音列表</string>
+    <string name="initialize_white_noise_list_desc">重新初始化白噪音列表（不会删除原有音频）</string>
+    <string name="initialize_success">初始化成功</string>
     <string name="auto_play_on_startup">启动时自动播放</string>
     <string name="audio_effect_order">音频效果处理顺序</string>
     <string name="customize">自定义</string>
@@ -49,6 +52,14 @@
     <string name="text_color">文本色</string>
     <string name="log_recording">日志记录</string>
     <string name="about_app">关于添空</string>
+    
+    <string name="media_control_priority">音频优先控制</string>
+    <string name="media_control_priority_title">选择优先控制的播放项</string>
+    <string name="media_control_white_noise">白噪音</string>
+    <string name="media_control_music">音乐</string>
+    <string name="media_control_all">全部</string>
+    <string name="media_control_smart">智能</string>
+    <string name="media_control_smart_desc">根据当前播放状态自动选择</string>
     
     <string name="scattered_sound_library">散点声音库</string>
     <string name="select_random_sound_group">选择随机播放的声音组</string>
@@ -115,7 +126,6 @@
     <string name="quality_effect">音质效果</string>
     <string name="pseudo_restoration_processing">伪还原二次处理</string>
     
-    <string name="create_scattered_group">创建散点组</string>
     <string name="group_name">组名称</string>
     <string name="create">创建</string>
     
@@ -207,4 +217,237 @@
     <string name="security_warning_title">安全警告</string>
     <string name="security_warning_message">请注意，这个安装包可能被污染！\n\n当前安装包可能已经过别人修改，\n为了安全考虑，请卸载该应用。\n（这是不可绕过的）</string>
     <string name="security_warning_uninstall">确认卸载</string>
+    
+    <string name="eq_preset_flat">平坦</string>
+    <string name="eq_preset_bass_boost">低音增强</string>
+    <string name="eq_preset_treble_boost">高音增强</string>
+    <string name="eq_preset_vocal">人声增强</string>
+    <string name="eq_preset_rock">摇滚</string>
+    <string name="eq_preset_pop">流行</string>
+    <string name="eq_preset_classical">古典</string>
+    <string name="eq_preset_jazz">爵士</string>
+    <string name="eq_preset_electronic">电子</string>
+    <string name="eq_preset_v_shape">V型</string>
+    <string name="eq_preset_custom">自定义</string>
+    
+    <string name="eq_mode_manual">手动</string>
+    <string name="eq_mode_auto">自动</string>
+    <string name="eq_mode_simple">简易模式</string>
+    <string name="eq_mode_advanced">专业模式</string>
+    
+    <string name="auto_eq_global_intensity">全局调整强度</string>
+    <string name="auto_eq_bias_offset">偏好偏移</string>
+    <string name="auto_eq_bass_bias">低频偏好</string>
+    <string name="auto_eq_mid_bias">中频偏好</string>
+    <string name="auto_eq_treble_bias">高频偏好</string>
+    <string name="auto_eq_bass_bias_freq">低频偏好 (&lt;250Hz)</string>
+    <string name="auto_eq_mid_bias_freq">中频偏好 (250-4kHz)</string>
+    <string name="auto_eq_treble_bias_freq">高频偏好 (&gt;4kHz)</string>
+    <string name="auto_eq_target_curve">目标音色预设</string>
+    <string name="auto_eq_response_speed">动态响应速度</string>
+    <string name="auto_eq_freq_bias">频段偏好</string>
+    <string name="auto_eq_dynamic_response">动态响应</string>
+    <string name="auto_eq_freq_limit">频段限制</string>
+    <string name="auto_eq_spectrum_analysis">频谱分析</string>
+    <string name="auto_eq_curve_fine_tune">目标曲线微调</string>
+    
+    <string name="auto_eq_curve_flat">平坦</string>
+    <string name="auto_eq_curve_warm">温暖</string>
+    <string name="auto_eq_curve_bright">明亮</string>
+    <string name="auto_eq_curve_vocal">人声增强</string>
+    <string name="auto_eq_curve_loudness">响度优先</string>
+    
+    <string name="auto_eq_speed_fast">快速</string>
+    <string name="auto_eq_speed_medium">中等</string>
+    <string name="auto_eq_speed_slow">缓慢</string>
+    
+    <string name="auto_eq_max_slope">增益变化最大斜率</string>
+    <string name="auto_eq_max_boost">最大提升</string>
+    <string name="auto_eq_max_cut">最大衰减</string>
+    <string name="auto_eq_hysteresis">滞后效应</string>
+    <string name="auto_eq_smoothing">频谱平滑系数</string>
+    <string name="auto_eq_coupling">相邻频段耦合</string>
+    <string name="auto_eq_brightness_target">明亮度目标</string>
+    <string name="auto_eq_loudness_target">响度目标</string>
+    <string name="auto_eq_dynamic_q">动态 Q 值</string>
+    
+    <string name="auto_eq_simple_desc">自动均衡器将根据音频内容实时分析，动态调整各频段增益以达到最佳听感。</string>
+    <string name="auto_eq_advanced_desc">专业模式提供完整的频率分析、决策引擎与动态执行参数。调整将直接影响自动均衡器的行为特征。</string>
+    
+    <string name="reverb_preset_stadium">体育场</string>
+    <string name="reverb_preset_car">汽车内</string>
+    <string name="reverb_preset_bathroom">浴室</string>
+    <string name="reverb_preset_church">教堂</string>
+    <string name="reverb_preset_small_club">小俱乐部</string>
+    <string name="reverb_preset_forest">森林</string>
+    <string name="reverb_preset_valley">山谷</string>
+    <string name="reverb_preset_seaside">海边</string>
+    <string name="reverb_preset_desert">沙漠</string>
+    <string name="reverb_preset_cave">洞穴</string>
+    <string name="reverb_preset_tunnel">隧道</string>
+    
+    <string name="spatial_offset_distance">偏移距离</string>
+    <string name="spatial_surround_radius">环绕半径</string>
+    <string name="spatial_surround_speed">环绕速度</string>
+    <string name="spatial_max_distance">最大距离</string>
+    <string name="spatial_min_distance">最小距离</string>
+    <string name="spatial_wander_random">游动随机值</string>
+    <string name="spatial_wander_speed">游动速度</string>
+    
+    <string name="offset_type_fixed">固定偏移</string>
+    <string name="offset_type_3d_surround">3D环绕</string>
+    <string name="offset_type_random_wander">随机游动</string>
+    
+    <string name="surround_mode_horizontal">水平环绕</string>
+    <string name="surround_mode_vertical">纵切环绕</string>
+    <string name="surround_mode_transverse">横切环绕</string>
+    
+    <string name="audio_adjust">音频调整</string>
+    <string name="spatial_reverb_title">空间混响</string>
+    <string name="quality_effect_title">音质效果</string>
+    <string name="spatial_offset_title">声向偏移</string>
+    <string name="preset_label">预设: %1$s</string>
+    <string name="enable">启用</string>
+    <string name="reset">重置</string>
+    <string name="developing">开发中</string>
+    <string name="tone">声调</string>
+    <string name="speed">速度</string>
+    <string name="mix_mode">混合模式</string>
+    <string name="volume">音量</string>
+    
+    <string name="current_playing">当前播放 (%1$d首)</string>
+    <string name="no_music_playing">暂无播放中的音乐</string>
+    <string name="save_as_playlist">将当前播放列表 (%1$d首) 保存为新歌单</string>
+    <string name="favorite">收藏</string>
+    <string name="new_playlist">新建歌单</string>
+    
+    <string name="click_to_download">点击下载</string>
+    <string name="no_scattered_track">暂无散点播放音轨\n请先在播放页创建散点音轨</string>
+    <string name="select_scattered_track">选择要添加到的散点音轨：</string>
+    <string name="added_audio_count">已添加 %1$d 个音频</string>
+    <string name="create_scattered_group">创建散点播放组</string>
+    <string name="input_scattered_name">请输入散点播放组名称</string>
+    
+    <string name="no_music_directory">尚未添加任何音乐目录\n点击下方按钮添加</string>
+    
+    <string name="audio_effect_config">音频效果配置</string>
+    <string name="auto_eq_assist">自动EQ协助调整</string>
+    <string name="test">测试</string>
+    <string name="network">网络</string>
+    <string name="local">本地</string>
+    <string name="category">分类</string>
+    <string name="audio">音频</string>
+    
+    <string name="timer_end">定时结束</string>
+    <string name="snooze_time_minutes">贪睡时间: %1$d 分钟</string>
+    <string name="timer">定时器</string>
+    <string name="spatial_scatter_range">空间散点范围</string>
+    
+    <string name="mixer">混音器</string>
+    <string name="playlist">播放列表</string>
+    
+    <string name="no_scattered_tracks_hint">暂无散点播放音轨\n请先在播放页创建散点音轨</string>
+    <string name="select_scattered_track_hint">选择要添加到的散点音轨：</string>
+    <string name="enter_scattered_group_name">请输入散点播放组名称</string>
+    <string name="name">名称</string>
+    <string name="enter_group_name">输入播放组名称</string>
+    
+    <string name="effect_8bit_game">8-bit游戏</string>
+    <string name="effect_underwater">水下</string>
+    <string name="effect_alien_signal">外星信号</string>
+    <string name="effect_megaphone">扩音器</string>
+    <string name="experimental">(实验性)</string>
+    <string name="spatial_scatter_warning">作为声向偏移处理，使用途中可能会出现卡顿情况</string>
+    <string name="axis_x">X轴 (左右)</string>
+    <string name="axis_y">Y轴 (高度)</string>
+    <string name="axis_z">Z轴 (前后)</string>
+    
+    <string name="current_playing_count">当前播放 (%1$d首)</string>
+    <string name="unknown_artist">未知艺术家</string>
+    <string name="favorites">收藏</string>
+    <string name="track_count">%1$d首</string>
+    <string name="create_playlist">新建歌单</string>
+    <string name="playlist_name">歌单名称</string>
+    <string name="save">保存</string>
+    <string name="save_current_playlist_hint">将当前播放列表 (%1$d首) 保存为新歌单</string>
+    
+    <string name="current_list">当前列表</string>
+    
+    <string name="preload_completed">已完成预加载</string>
+    <string name="preload_initializing">初始化预加载...</string>
+    <string name="preload_loading_music_config">加载音乐目录配置...</string>
+    <string name="preload_scanning_music">扫描音乐库...</string>
+    <string name="preload_loading_sound_categories">加载声音分类...</string>
+    <string name="preload_warming_animation">预热动画系统...</string>
+    <string name="preload_prerendering_ui">预渲染UI组件...</string>
+    <string name="preload_complete">预加载完成</string>
+    
+    <string name="seconds_format">%.2f秒</string>
+    <string name="x_axis_rotation">X轴旋转</string>
+    <string name="y_axis_rotation">Y轴旋转</string>
+    <string name="z_axis_rotation">Z轴旋转</string>
+    <string name="offset_distance">偏移距离</string>
+    
+    <string name="home">主页</string>
+    <string name="setting">设置</string>
+    
+    <string name="end_timer">结束定时</string>
+    <string name="snooze">再贪一会儿</string>
+    
+    <string name="theme_default">默认</string>
+    <string name="theme_default_night">默认·夜</string>
+    <string name="theme_ocean_blue">海洋蓝</string>
+    <string name="theme_ocean_blue_night">海洋蓝·夜</string>
+    <string name="theme_forest_green">森林绿</string>
+    <string name="theme_forest_green_night">森林绿·夜</string>
+    <string name="theme_sunset_orange">日落橙</string>
+    <string name="theme_sunset_orange_night">日落橙·夜</string>
+    <string name="theme_purple_dream">紫梦</string>
+    <string name="theme_purple_dream_night">紫梦·夜</string>
+    <string name="theme_rose_pink">玫瑰粉</string>
+    <string name="theme_rose_pink_night">玫瑰粉·夜</string>
+    <string name="theme_coffee_brown">咖啡棕</string>
+    <string name="theme_coffee_brown_night">咖啡棕·夜</string>
+    <string name="theme_pure_white">纯白</string>
+    <string name="theme_pure_black">纯黑</string>
+    <string name="theme_custom">自定义</string>
+    
+    <string name="move_up">上移</string>
+    <string name="move_down">下移</string>
+    
+    <string name="category_name">分类名称</string>
+    <string name="audio_name">音频名称</string>
+    <string name="download_link">下载链接</string>
+    <string name="file_selected">已选择文件</string>
+    <string name="select_audio_file">选择音频文件</string>
+    <string name="uncategorized">未分类</string>
+    
+    <string name="in_development">开发中</string>
+    
+    <string name="surround_mode">环绕方式: %1$s</string>
+    <string name="surround_horizontal">水平环绕</string>
+    <string name="surround_vertical">纵切环绕</string>
+    <string name="surround_cross">横切环绕</string>
+    
+    <string name="timer_finished">定时结束</string>
+    
+    <string name="reverb_wet_level">湿信号电平</string>
+    <string name="reverb_dry_level">干信号电平</string>
+    <string name="reverb_pre_delay">预延迟</string>
+    <string name="sound_quality_effects">音质效果</string>
+    <string name="insulation_coefficient">隔音系数</string>
+    <string name="offset_type_surround">环绕</string>
+    <string name="offset_type_random">随机</string>
+    <string name="sound_offset">声音偏移</string>
+    <string name="stutter_warning">可能导致卡顿</string>
+    <string name="offset_type_label">偏移类型</string>
+    <string name="reverb_room_size">房间大小</string>
+    <string name="custom">自定义</string>
+    <string name="reverb_decay_time">衰减时间</string>
+    <string name="format_seconds">%1$.2f 秒</string>
+    <string name="reverb_damping">阻尼</string>
+    <string name="reverb_reflection_density">反射密度</string>
+    <string name="reverb_reflection_spread">反射扩散</string>
+    <string name="reverb_highpass">高通滤波</string>
+    <string name="reverb_early_reflection">早期反射</string>
 </resources>

@@ -39,6 +39,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import com.bicy.whitenoise.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -89,7 +91,7 @@ fun AddSoundDialog(
                 .verticalScroll(rememberScrollState())
         ) {
             Text(
-                text = "添加",
+                text = stringResource(R.string.add),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -101,12 +103,12 @@ fun AddSoundDialog(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 AddTypeButton(
-                    text = "分类",
+                    text = stringResource(R.string.category),
                     selected = addType == 0,
                     onClick = { addType = 0 }
                 )
                 AddTypeButton(
-                    text = "音频",
+                    text = stringResource(R.string.audio),
                     selected = addType == 1,
                     onClick = { addType = 1 }
                 )
@@ -118,7 +120,7 @@ fun AddSoundDialog(
                 OutlinedTextField(
                     value = categoryName,
                     onValueChange = { categoryName = it },
-                    label = { Text("分类名称") },
+                    label = { Text(stringResource(R.string.category_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -176,7 +178,7 @@ fun AddSoundDialog(
                 OutlinedTextField(
                     value = soundName,
                     onValueChange = { soundName = it },
-                    label = { Text("音频名称") },
+                    label = { Text(stringResource(R.string.audio_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -192,12 +194,12 @@ fun AddSoundDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     SoundTypeButton(
-                        text = "网络",
+                        text = stringResource(R.string.network),
                         selected = soundType == 0,
                         onClick = { soundType = 0 }
                     )
                     SoundTypeButton(
-                        text = "本地",
+                        text = stringResource(R.string.local),
                         selected = soundType == 1,
                         onClick = { soundType = 1 }
                     )
@@ -209,7 +211,7 @@ fun AddSoundDialog(
                     OutlinedTextField(
                         value = downloadUrl,
                         onValueChange = { downloadUrl = it },
-                        label = { Text("下载链接") },
+                        label = { Text(stringResource(R.string.download_link)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
@@ -234,7 +236,7 @@ fun AddSoundDialog(
                         )
                     ) {
                         Text(
-                            text = selectedFileUri?.let { "已选择文件" } ?: "选择音频文件"
+                            text = selectedFileUri?.let { stringResource(R.string.file_selected) } ?: stringResource(R.string.select_audio_file)
                         )
                     }
                 }

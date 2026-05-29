@@ -229,7 +229,7 @@ fun ReverbConfigDialog(
                 .padding(20.dp)
         ) {
             Text(
-                text = "音频效果配置",
+                text = stringResource(R.string.audio_effect_config),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -251,12 +251,12 @@ fun ReverbConfigDialog(
                     .verticalScroll(rememberScrollState())
             ) {
             CollapsibleSection(
-                title = "空间混响",
+                title = stringResource(R.string.spatial_reverb),
                 expanded = spatialReverbExpanded,
                 onToggle = { expandedSection = if (spatialReverbExpanded) null else "spatialReverb" }
             ) {
                 Text(
-                    text = "预设",
+                    text = stringResource(R.string.preset),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
@@ -268,7 +268,7 @@ fun ReverbConfigDialog(
                 ) {
                     item {
                         PresetChip(
-                            label = "无",
+                            label = stringResource(R.string.none),
                             selected = selectedPreset == "",
                             onClick = {
                                 selectedPreset = ""
@@ -290,7 +290,7 @@ fun ReverbConfigDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 ReverbSlider(
-                    label = "房间大小",
+                    label = stringResource(R.string.room_size),
                     value = roomSize,
                     valueRange = 0f..1f,
                     valueText = String.format("%.2f", roomSize),
@@ -304,10 +304,10 @@ fun ReverbConfigDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 ReverbSlider(
-                    label = "衰减时间",
+                    label = stringResource(R.string.decay_time),
                     value = (decayTime - 0.1f) / 9.9f,
                     valueRange = 0f..1f,
-                    valueText = String.format("%.2f秒", decayTime),
+                    valueText = stringResource(R.string.seconds_format, decayTime),
                     onValueChange = { 
                         decayTime = 0.1f + it * 9.9f
                         selectedPreset = ""
@@ -318,7 +318,7 @@ fun ReverbConfigDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 ReverbSlider(
-                    label = "阻尼",
+                    label = stringResource(R.string.damping),
                     value = damping,
                     valueRange = 0f..1f,
                     valueText = String.format("%.2f", damping),
@@ -332,7 +332,7 @@ fun ReverbConfigDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 ReverbSlider(
-                    label = "湿声电平",
+                    label = stringResource(R.string.reverb_wet_level),
                     value = wetLevel,
                     valueRange = 0f..1f,
                     valueText = String.format("%.2f", wetLevel),
@@ -346,7 +346,7 @@ fun ReverbConfigDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 ReverbSlider(
-                    label = "干声电平",
+                    label = stringResource(R.string.reverb_dry_level),
                     value = dryLevel,
                     valueRange = 0f..1f,
                     valueText = String.format("%.2f", dryLevel),
@@ -360,7 +360,7 @@ fun ReverbConfigDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 ReverbSlider(
-                    label = "预延迟",
+                    label = stringResource(R.string.reverb_pre_delay),
                     value = preDelay * 1000f,
                     valueRange = 0f..100f,
                     valueText = String.format("%.0fms", preDelay * 1000f),
@@ -431,12 +431,12 @@ fun ReverbConfigDialog(
             Spacer(modifier = Modifier.height(12.dp))
             
             CollapsibleSection(
-                title = "音质效果",
+                title = stringResource(R.string.sound_quality_effects),
                 expanded = creativeExpanded,
                 onToggle = { expandedSection = if (creativeExpanded) null else "creative" }
             ) {
                 ReverbSlider(
-                    label = "隔音系数",
+                    label = stringResource(R.string.insulation_coefficient),
                     value = insulation,
                     valueRange = 0f..1f,
                     valueText = String.format("%.2f", insulation),
@@ -457,7 +457,7 @@ fun ReverbConfigDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 EffectSliderItem(
-                    name = "8-bit游戏",
+                    name = stringResource(R.string.effect_8bit_game),
                     intensity = eightBitIntensity,
                     onIntensityChange = { 
                         eightBitIntensity = it
@@ -467,7 +467,7 @@ fun ReverbConfigDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 EffectSliderItem(
-                    name = "水下",
+                    name = stringResource(R.string.effect_underwater),
                     intensity = underwaterIntensity,
                     onIntensityChange = { 
                         underwaterIntensity = it
@@ -477,7 +477,7 @@ fun ReverbConfigDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 EffectSliderItem(
-                    name = "外星信号",
+                    name = stringResource(R.string.effect_alien_signal),
                     intensity = alienSignalIntensity,
                     onIntensityChange = { 
                         alienSignalIntensity = it
@@ -487,7 +487,7 @@ fun ReverbConfigDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 EffectSliderItem(
-                    name = "扩音器",
+                    name = stringResource(R.string.effect_megaphone),
                     intensity = megaphoneIntensity,
                     onIntensityChange = { 
                         megaphoneIntensity = it
@@ -510,12 +510,15 @@ fun ReverbConfigDialog(
             Spacer(modifier = Modifier.height(12.dp))
             
             val obrExpanded = expandedSection == "obr"
+            val offsetFixed = stringResource(R.string.offset_type_fixed)
+            val offsetSurround = stringResource(R.string.offset_type_surround)
+            val offsetRandom = stringResource(R.string.offset_type_random)
             CollapsibleSection(
-                title = "声向偏移",
+                title = stringResource(R.string.sound_offset),
                 expanded = obrExpanded,
                 onToggle = { expandedSection = if (obrExpanded) null else "obr" },
-                subtitle = "(实验性)",
-                warningText = "使用途中可能会出现卡顿情况"
+                subtitle = stringResource(R.string.experimental),
+                warningText = stringResource(R.string.stutter_warning)
             ) {
                 Row(
                     modifier = Modifier
@@ -524,7 +527,7 @@ fun ReverbConfigDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "启用",
+                        text = stringResource(R.string.enable),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f)
@@ -553,14 +556,14 @@ fun ReverbConfigDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "偏移类型: ${when(obrOffsetType) { 0 -> "固定偏移"; 1 -> "3D环绕"; else -> "随机游动" }}",
+                            text = stringResource(R.string.offset_type_label, when(obrOffsetType) { 0 -> offsetFixed; 1 -> offsetSurround; else -> offsetRandom }),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         
                         Icon(
                             imageVector = Icons.Filled.ArrowDropDown,
-                            contentDescription = "展开",
+                            contentDescription = stringResource(R.string.expand),
                             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                             modifier = Modifier.size(20.dp)
                         )
@@ -573,7 +576,7 @@ fun ReverbConfigDialog(
                             .fillMaxWidth(0.8f)
                     ) {
                         DropdownMenuItem(
-                            text = { Text("固定偏移") },
+                            text = { Text(offsetFixed) },
                             onClick = {
                                 obrOffsetType = 0
                                 obrOffsetTypeExpanded = false
@@ -581,7 +584,7 @@ fun ReverbConfigDialog(
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("3D环绕") },
+                            text = { Text(offsetSurround) },
                             onClick = {
                                 obrOffsetType = 1
                                 obrOffsetTypeExpanded = false
@@ -589,7 +592,7 @@ fun ReverbConfigDialog(
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("随机游动") },
+                            text = { Text(offsetRandom) },
                             onClick = {
                                 obrOffsetType = 2
                                 obrOffsetTypeExpanded = false
@@ -602,7 +605,7 @@ fun ReverbConfigDialog(
                 if (obrOffsetType == 0) {
                     Spacer(modifier = Modifier.height(12.dp))
                     ReverbSlider(
-                        label = "X轴旋转",
+                        label = stringResource(R.string.x_axis_rotation),
                         value = obrFixedLeftRight,
                         valueRange = -180f..180f,
                         valueText = String.format("%.0f°", obrFixedLeftRight),
@@ -615,7 +618,7 @@ fun ReverbConfigDialog(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     ReverbSlider(
-                        label = "Y轴旋转",
+                        label = stringResource(R.string.y_axis_rotation),
                         value = obrFixedUpDown,
                         valueRange = -180f..180f,
                         valueText = String.format("%.0f°", obrFixedUpDown),
@@ -628,7 +631,7 @@ fun ReverbConfigDialog(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     ReverbSlider(
-                        label = "Z轴旋转",
+                        label = stringResource(R.string.z_axis_rotation),
                         value = obrFixedFrontBack,
                         valueRange = -180f..180f,
                         valueText = String.format("%.0f°", obrFixedFrontBack),
@@ -641,7 +644,7 @@ fun ReverbConfigDialog(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     ReverbSlider(
-                        label = "偏移距离",
+                        label = stringResource(R.string.offset_distance),
                         value = obrFixedMultiplier,
                         valueRange = 0f..5f,
                         valueText = String.format("%.1fm", obrFixedMultiplier),

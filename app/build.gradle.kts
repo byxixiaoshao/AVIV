@@ -97,6 +97,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.airbnb.android:lottie:6.1.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("androidx.media:media:1.6.0")
     
 //    implementation("io.github.jamaismagic.ffmpeg:ffmpeg-kit-main-full-gpl-16kb:6.1.4")
     

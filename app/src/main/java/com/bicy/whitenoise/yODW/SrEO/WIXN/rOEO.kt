@@ -40,6 +40,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -70,7 +71,6 @@ fun PresetButtonsContent(
     val scope = rememberCoroutineScope()
     
     var animatingToTarget by remember { mutableIntStateOf(-1) }
-    var currentAnimMinutes by remember { mutableIntStateOf(hours * 60 + minutes) }
     
     val minutePresets = listOf(
         15 to stringResource(R.string.timer_15_min),
@@ -84,226 +84,96 @@ fun PresetButtonsContent(
         3 to stringResource(R.string.timer_3_hour)
     )
     
+    fun easeOutCubic(t: Float): Float {
+        val x = 1f - t
+        return 1f - x * x * x
+    }
+    
+    fun performVibrate() {
+        vibrator?.let {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val effect = VibrationEffect.createOneShot(10, 60)
+                it.vibrate(effect)
+            } else {
+                @Suppress("DEPRECATION")
+                it.vibrate(10)
+            }
+        }
+    }
+    
     fun animateToPreset(targetMinutes: Int) {
-        val currentTotalMinutes = hours * 60 + minutes
-        if (currentTotalMinutes == targetMinutes) return
-        
         val targetHours = targetMinutes / 60
         val targetMins = targetMinutes % 60
         
+        if (hours == targetHours && minutes == targetMins) return
+        
         animatingToTarget = targetMinutes
-        currentAnimMinutes = currentTotalMinutes
         
-        val totalAnimDuration = 300L
-        val minStepDelay = 16L
-        val maxSteps = (totalAnimDuration / minStepDelay).toInt()
-        
-        if (hours > 0 && targetHours == 0) {
-            val hourSteps = kotlin.math.min(hours, maxSteps / 2)
-            val minuteSteps = kotlin.math.min(kotlin.math.abs(targetMins - minutes), maxSteps / 2)
-            val totalSteps = hourSteps + minuteSteps
+        scope.launch {
+            val totalAnimDuration = 400L
+            val frameDelay = 16L
+            val startTime = System.currentTimeMillis()
+            var lastVibrateTime = 0L
             
-            if (totalSteps == 0) {
-                TimerManager.setTime(targetMinutes)
-                animatingToTarget = -1
-                return
-            }
-            
-            val stepDelay = totalAnimDuration / totalSteps.coerceAtLeast(1)
-            
-            scope.launch {
-                var currentH = hours
-                var currentM = minutes
-                
-                for (i in 1..hourSteps) {
-                    currentH -= 1
-                    TimerManager.setTime(currentH, currentM)
-                    
-                    vibrator?.let {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            val effect = VibrationEffect.createOneShot(10, 60)
-                            it.vibrate(effect)
-                        } else {
-                            @Suppress("DEPRECATION")
-                            it.vibrate(10)
-                        }
-                    }
-                    
-                    delay(stepDelay)
+            while (true) {
+                val elapsed = System.currentTimeMillis() - startTime
+                if (elapsed >= totalAnimDuration) {
+                    TimerManager.setTime(targetHours, targetMins)
+                    animatingToTarget = -1
+                    break
                 }
                 
-                if (minuteSteps > 0) {
-                    val minuteStep = if (targetMins > currentM) 1 else -1
-                    for (i in 1..minuteSteps) {
-                        currentM += minuteStep
-                        TimerManager.setTime(0, currentM)
-                        
-                        vibrator?.let {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                val effect = VibrationEffect.createOneShot(10, 60)
-                                it.vibrate(effect)
-                            } else {
-                                @Suppress("DEPRECATION")
-                                it.vibrate(10)
-                            }
-                        }
-                        
-                        delay(stepDelay)
-                    }
+                val rawProgress = elapsed.toFloat() / totalAnimDuration
+                val easedProgress = easeOutCubic(rawProgress)
+                
+                val currentH = (hours + (targetHours - hours) * easedProgress).toInt()
+                val currentM = (minutes + (targetMins - minutes) * easedProgress).toInt()
+                TimerManager.setTime(currentH, currentM)
+                
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastVibrateTime > 30) {
+                    performVibrate()
+                    lastVibrateTime = currentTime
                 }
                 
-                TimerManager.setTime(targetMinutes)
-                animatingToTarget = -1
-            }
-        } else {
-            val steps = kotlin.math.min(kotlin.math.abs(targetMinutes - currentTotalMinutes), maxSteps)
-            
-            if (steps == 0) {
-                TimerManager.setTime(targetMinutes)
-                animatingToTarget = -1
-                return
-            }
-            
-            val stepDelay = totalAnimDuration / steps
-            val stepSize = (targetMinutes - currentTotalMinutes) / steps
-            val remainder = (targetMinutes - currentTotalMinutes) % steps
-            
-            scope.launch {
-                var accumulatedRemainder = 0
-                for (i in 1..steps) {
-                    var step = stepSize
-                    accumulatedRemainder += remainder
-                    if (kotlin.math.abs(accumulatedRemainder) >= steps) {
-                        step += if (accumulatedRemainder > 0) 1 else -1
-                        accumulatedRemainder -= if (accumulatedRemainder > 0) steps else -steps
-                    }
-                    
-                    currentAnimMinutes += step
-                    TimerManager.setTime(currentAnimMinutes)
-                    
-                    vibrator?.let {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            val effect = VibrationEffect.createOneShot(10, 60)
-                            it.vibrate(effect)
-                        } else {
-                            @Suppress("DEPRECATION")
-                            it.vibrate(10)
-                        }
-                    }
-                    
-                    delay(stepDelay)
-                }
-                
-                TimerManager.setTime(targetMinutes)
-                animatingToTarget = -1
+                delay(frameDelay)
             }
         }
     }
     
     fun animateToHourPreset(targetHours: Int) {
-        val currentHours = hours
-        if (currentHours == targetHours && minutes == 0) return
+        if (hours == targetHours && minutes == 0) return
         
-        val targetTotalMinutes = targetHours * 60
-        val currentTotalMinutes = hours * 60 + minutes
+        animatingToTarget = targetHours * 60
         
-        animatingToTarget = targetTotalMinutes
-        currentAnimMinutes = currentTotalMinutes
-        
-        val totalAnimDuration = 300L
-        val minStepDelay = 16L
-        val maxSteps = (totalAnimDuration / minStepDelay).toInt()
-        
-        if (minutes > 0) {
-            val hourSteps = kotlin.math.min(kotlin.math.abs(targetHours - hours), maxSteps / 2)
-            val minuteSteps = kotlin.math.min(minutes, maxSteps / 2)
-            val totalSteps = hourSteps + minuteSteps
+        scope.launch {
+            val totalAnimDuration = 400L
+            val frameDelay = 16L
+            val startTime = System.currentTimeMillis()
+            var lastVibrateTime = 0L
             
-            if (totalSteps == 0) {
-                TimerManager.setTime(targetHours, 0)
-                animatingToTarget = -1
-                return
-            }
-            
-            val stepDelay = totalAnimDuration / totalSteps.coerceAtLeast(1)
-            
-            scope.launch {
-                var currentH = hours
-                var currentM = minutes
-                
-                for (i in 1..hourSteps) {
-                    currentH += if (targetHours > hours) 1 else -1
-                    TimerManager.setTime(currentH, currentM)
-                    
-                    vibrator?.let {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            val effect = VibrationEffect.createOneShot(10, 60)
-                            it.vibrate(effect)
-                        } else {
-                            @Suppress("DEPRECATION")
-                            it.vibrate(10)
-                        }
-                    }
-                    
-                    delay(stepDelay)
+            while (true) {
+                val elapsed = System.currentTimeMillis() - startTime
+                if (elapsed >= totalAnimDuration) {
+                    TimerManager.setTime(targetHours, 0)
+                    animatingToTarget = -1
+                    break
                 }
                 
-                if (minuteSteps > 0) {
-                    for (i in 1..minuteSteps) {
-                        currentM -= 1
-                        TimerManager.setTime(currentH, currentM)
-                        
-                        vibrator?.let {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                val effect = VibrationEffect.createOneShot(10, 60)
-                                it.vibrate(effect)
-                            } else {
-                                @Suppress("DEPRECATION")
-                                it.vibrate(10)
-                            }
-                        }
-                        
-                        delay(stepDelay)
-                    }
+                val rawProgress = elapsed.toFloat() / totalAnimDuration
+                val easedProgress = easeOutCubic(rawProgress)
+                
+                val currentH = (hours + (targetHours - hours) * easedProgress).toInt()
+                val currentM = (minutes + (0 - minutes) * easedProgress).toInt()
+                TimerManager.setTime(currentH, currentM)
+                
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastVibrateTime > 30) {
+                    performVibrate()
+                    lastVibrateTime = currentTime
                 }
                 
-                TimerManager.setTime(targetHours, 0)
-                animatingToTarget = -1
-            }
-        } else {
-            val steps = kotlin.math.min(kotlin.math.abs(targetHours - currentHours), maxSteps)
-            
-            if (steps == 0) {
-                TimerManager.setTime(targetHours, 0)
-                animatingToTarget = -1
-                return
-            }
-            
-            val stepDelay = totalAnimDuration / steps
-            
-            scope.launch {
-                var currentH = currentHours
-                val hourStep = if (targetHours > currentHours) 1 else -1
-                
-                for (i in 1..steps) {
-                    currentH += hourStep
-                    TimerManager.setTime(currentH, 0)
-                    
-                    vibrator?.let {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            val effect = VibrationEffect.createOneShot(10, 60)
-                            it.vibrate(effect)
-                        } else {
-                            @Suppress("DEPRECATION")
-                            it.vibrate(10)
-                        }
-                    }
-                    
-                    delay(stepDelay)
-                }
-                
-                TimerManager.setTime(targetHours, 0)
-                animatingToTarget = -1
+                delay(frameDelay)
             }
         }
     }
@@ -356,9 +226,11 @@ fun TimeSlidersContent(
     @Suppress("DEPRECATION")
     val vibrator = remember { context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator }
     
-    var lastHours by remember { mutableIntStateOf(hours) }
-    var lastMinutes by remember { mutableIntStateOf(minutes) }
     var lastVibrateTime by remember { mutableLongStateOf(0L) }
+    
+    val timerState by TimerManager.timerState.collectAsState()
+    val currentHours = timerState.hours
+    val currentMinutes = timerState.minutes
     
     fun performSliderVibrate() {
         val currentTime = System.currentTimeMillis()
@@ -391,20 +263,17 @@ fun TimeSlidersContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "$hours",
+                text = "$currentHours",
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = textAlpha),
                 modifier = Modifier.width(40.dp)
             )
             InteractiveSlider(
-                value = hours.toFloat(),
+                value = currentHours.toFloat(),
                 onValueChange = { h -> 
                     val newHours = h.toInt()
-                    if (newHours != lastHours) {
-                        performSliderVibrate()
-                        lastHours = newHours
-                    }
-                    TimerManager.setTime(newHours, minutes) 
+                    performSliderVibrate()
+                    TimerManager.setHours(newHours) 
                 },
                 valueRange = 0f..23f,
                 steps = 23,
@@ -425,20 +294,17 @@ fun TimeSlidersContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "$minutes",
+                text = "$currentMinutes",
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = textAlpha),
                 modifier = Modifier.width(40.dp)
             )
             InteractiveSlider(
-                value = minutes.toFloat(),
+                value = currentMinutes.toFloat(),
                 onValueChange = { m -> 
                     val newMinutes = m.toInt()
-                    if (newMinutes != lastMinutes) {
-                        performSliderVibrate()
-                        lastMinutes = newMinutes
-                    }
-                    TimerManager.setTime(hours, newMinutes) 
+                    performSliderVibrate()
+                    TimerManager.setMinutes(newMinutes) 
                 },
                 valueRange = 0f..59f,
                 steps = 59,

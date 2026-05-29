@@ -63,27 +63,30 @@ object PlaybackStateManager {
         val playbackState = WhiteNoiseStorage.getPlaybackState()
         soundConfigs.clear()
         playingStates.clear()
+        loadedSounds.clear()
         
         Log.i(TAG, "loadState: Loading ${playbackState.sounds.size} sounds from WhiteNoiseStorage")
         playbackState.sounds.forEach { config ->
-            Log.i(TAG, "loadState: Loading config for ${config.id}, volume=${config.volume}, reverbEnabled=${config.reverbConfig.enabled}")
+            Log.i(TAG, "loadState: Loading config for ${config.id}, volume=${config.volume}, reverbEnabled=${config.reverbConfig.enabled}, filePath=${config.filePath}")
             soundConfigs[config.id] = config
             playingStates[config.id] = true
             volumeSettings[config.id] = config.volume
+            config.filePath?.let { loadedSounds[config.id] = it }
         }
         
         updateState()
-        Log.i(TAG, "Loaded state: ${soundConfigs.size} sounds")
+        Log.i(TAG, "Loaded state: ${soundConfigs.size} sounds, ${loadedSounds.size} file paths")
     }
     
     fun playSound(soundId: String, filePath: String, config: SoundPlayConfig) {
-        soundConfigs[soundId] = config
+        val configWithFilePath = config.copy(filePath = filePath)
+        soundConfigs[soundId] = configWithFilePath
         playingStates[soundId] = true
         loadedSounds[soundId] = filePath
         volumeSettings[soundId] = config.volume
-        WhiteNoiseStorage.addPlayingSound(config)
+        WhiteNoiseStorage.addPlayingSound(configWithFilePath)
         notifyListeners()
-        Log.i(TAG, "Playing sound: $soundId")
+        Log.i(TAG, "Playing sound: $soundId, filePath=$filePath")
     }
     
     fun stopSound(soundId: String) {
@@ -135,6 +138,14 @@ object PlaybackStateManager {
         }
         notifyListeners()
         Log.i(TAG, "Updated volume for $soundId: $volume")
+    }
+    
+    fun updateSoundConfig(soundId: String, config: SoundPlayConfig) {
+        soundConfigs[soundId] = config
+        config.filePath?.let { loadedSounds[soundId] = it }
+        WhiteNoiseStorage.addPlayingSound(config)
+        notifyListeners()
+        Log.i(TAG, "Updated sound config for $soundId")
     }
     
     fun updateReverbConfig(soundId: String, reverbConfig: ReverbConfig) {

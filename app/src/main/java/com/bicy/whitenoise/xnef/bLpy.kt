@@ -55,6 +55,10 @@ object MusicCacheManager {
         return "music_$trackId"
     }
     
+    fun getFilePath(soundId: String): String? {
+        return loadedTracks[soundId]
+    }
+    
     fun isTrackLoaded(trackId: String): Boolean {
         val soundId = getSoundId(trackId)
         return OboeAudioEngine.isLoaded(soundId)
@@ -75,7 +79,7 @@ object MusicCacheManager {
             val length = pfd.statSize
             val fd = pfd.detachFd()
             
-            val result = OboeAudioEngine.loadSoundFromFd(soundId, fd, 0, length)
+            val result = OboeAudioEngine.loadSoundFromFd(soundId, fd, 0, length, track.path)
             
             if (result != 0) {
                 Log.e(TAG, "Failed to load track from fd: ${track.title}, result=$result")

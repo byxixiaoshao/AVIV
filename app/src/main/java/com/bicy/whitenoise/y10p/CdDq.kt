@@ -2,6 +2,7 @@ package com.bicy.whitenoise.y10p
 
 import android.content.Context
 import android.util.Log
+import com.bicy.whitenoise.R
 import com.bicy.whitenoise.xnef.MusicScanner
 import com.bicy.whitenoise.xnef.MusicLibrary
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +44,7 @@ object RenderPreloadManager {
     
     suspend fun preloadAll(context: Context, onProgress: (Float, String) -> Unit = { _, _ -> }): Boolean {
         if (isPreloaded) {
-            onProgress(1f, "已完成预加载")
+            onProgress(1f, context.getString(R.string.preload_completed))
             return true
         }
         
@@ -60,30 +61,30 @@ object RenderPreloadManager {
                     notifyProgress(progress, step)
                 }
                 
-                updateProgress("初始化预加载...")
+                updateProgress(context.getString(R.string.preload_initializing))
                 
-                updateProgress("加载音乐目录配置...")
+                updateProgress(context.getString(R.string.preload_loading_music_config))
                 MusicScanner.init(context)
                 
-                updateProgress("扫描音乐库...")
+                updateProgress(context.getString(R.string.preload_scanning_music))
                 MusicLibrary.scanLibrary(context)
                 musicPreloaded = true
                 _preloadState = _preloadState.copy(musicLoaded = true)
                 
-                updateProgress("加载声音分类...")
+                updateProgress(context.getString(R.string.preload_loading_sound_categories))
                 preloadSoundsData(context)
                 soundsPreloaded = true
                 _preloadState = _preloadState.copy(soundsLoaded = true)
                 
-                updateProgress("预热动画系统...")
+                updateProgress(context.getString(R.string.preload_warming_animation))
                 preloadAnimationSystem()
                 
-                updateProgress("预渲染UI组件...")
+                updateProgress(context.getString(R.string.preload_prerendering_ui))
                 preloadUIComponents(context)
                 uiPreloaded = true
                 _preloadState = _preloadState.copy(uiRendered = true)
                 
-                updateProgress("预加载完成")
+                updateProgress(context.getString(R.string.preload_complete))
                 isPreloaded = true
                 _preloadState = _preloadState.copy(progress = 1f)
                 true

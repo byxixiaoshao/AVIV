@@ -20,6 +20,10 @@
     {
       "id": "urban",
       "name": "category_urban"
+    },
+    {
+      "id": "asmr",
+      "name": "category_asmr"
     }
   ],
   "sounds": [
@@ -27,9 +31,9 @@
       "id": "rain",
       "name": "sound_rain",
       "category": "nature",
-      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/07/23/audio_63d9f37e74.mp3?filename=feedthestraycats-real-rain-sound-379215.mp3",
-      "author": "FeedTheStrayCats",
-      "authorUrl": "https://pixabay.com/zh/users/feedthestraycats-50622168/"
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/11/15/audio_1075ad47aa.mp3?filename=dragon-studio-gentle-rain-05-437316.mp3",
+      "author": "DRAGON-STUDIO",
+      "authorUrl": "https://pixabay.com/zh/users/dragon-studio-38165424/"
     },
     {
       "id": "wind",
@@ -294,6 +298,86 @@
       "remoteUrl": "https://cdn.pixabay.com/download/audio/2021/08/09/audio_75eeef56e4.mp3?filename=freesound_community-crowd_talking-6762.mp3",
       "author": "freesound_community",
       "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "asmr-nintendo-switch",
+      "name": "sound_asmr_nintendo_switch",
+      "category": "asmr",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/04/24/audio_76964b9e94.mp3?filename=babydolldaydreams-nintendo-switch-fidgeting-asmr-binaural-331578.mp3",
+      "author": "babydolldaydreams",
+      "authorUrl": "https://pixabay.com/zh/users/babydolldaydreams-48518093/"
+    },
+    {
+      "id": "asmr-sensory-foam",
+      "name": "sound_asmr_sensory_foam",
+      "category": "asmr",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/04/24/audio_02059cb953.mp3?filename=babydolldaydreams-sensory-foam-asmr-331574.mp3",
+      "author": "babydolldaydreams",
+      "authorUrl": "https://pixabay.com/zh/users/babydolldaydreams-48518093/"
+    },
+    {
+      "id": "asmr-sticky-marshmallow",
+      "name": "sound_asmr_sticky_marshmallow",
+      "category": "asmr",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/01/31/audio_cc76973f7a.mp3?filename=babydolldaydreams-sticky-marshmallow-mouth-sounds-asmr-2-295422.mp3",
+      "author": "babydolldaydreams",
+      "authorUrl": "https://pixabay.com/zh/users/babydolldaydreams-48518093/"
+    },
+    {
+      "id": "asmr-wet-mouth",
+      "name": "sound_asmr_wet_mouth",
+      "category": "asmr",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/01/31/audio_59c45943dd.mp3?filename=babydolldaydreams-wet-mouth-sounds-asmr-2-295416.mp3",
+      "author": "babydolldaydreams",
+      "authorUrl": "https://pixabay.com/zh/users/babydolldaydreams-48518093/"
+    },
+    {
+      "id": "asmr-crumpling-paper",
+      "name": "sound_asmr_crumpling_paper",
+      "category": "asmr",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/01/31/audio_b8b4a1e6c1.mp3?filename=babydolldaydreams-crumpling-paper-asmr-295412.mp3",
+      "author": "babydolldaydreams",
+      "authorUrl": "https://pixabay.com/zh/users/babydolldaydreams-48518093/"
+    },
+    {
+      "id": "asmr-crumpled-plastic",
+      "name": "sound_asmr_crumpled_plastic",
+      "category": "asmr",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/02/04/audio_361c673add.mp3?filename=babydolldaydreams-crumpled-plastic-asmr-296604.mp3",
+      "author": "babydolldaydreams",
+      "authorUrl": "https://pixabay.com/zh/users/babydolldaydreams-48518093/"
+    },
+    {
+      "id": "asmr-water-flow",
+      "name": "sound_asmr_water_flow",
+      "category": "asmr",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2022/03/14/audio_246523bbb4.mp3?filename=freesound_community-water-fall-60671.mp3",
+      "author": "freesound_community",
+      "authorUrl": "https://pixabay.com/zh/users/freesound_community-46691455/"
+    },
+    {
+      "id": "asmr-pencil-writing",
+      "name": "sound_asmr_pencil_writing",
+      "category": "asmr",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2025/09/08/audio_3a9c4f893d.mp3?filename=dragon-studio-pencil-writing-asmr-401726.mp3",
+      "author": "DRAGON-STUDIO",
+      "authorUrl": "https://pixabay.com/zh/users/dragon-studio-38165424/"
+    },
+    {
+      "id": "asmr-paper-rustling",
+      "name": "sound_asmr_paper_rustling",
+      "category": "asmr",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2024/08/31/audio_2a8d615f33.mp3?filename=soul_serenity_sounds-paper-rustling-236733.mp3",
+      "author": "Soul_Serenity_Sounds",
+      "authorUrl": "https://pixabay.com/zh/users/soul_serenity_sounds-6817262/"
+    },
+    {
+      "id": "asmr-water-drops",
+      "name": "sound_asmr_water_drops",
+      "category": "asmr",
+      "remoteUrl": "https://cdn.pixabay.com/download/audio/2024/09/15/audio_2b84b58922.mp3?filename=soul_serenity_sounds-water-noises-241049.mp3",
+      "author": "Soul_Serenity_Sounds",
+      "authorUrl": "https://pixabay.com/zh/users/soul_serenity_sounds-6817262/"
     }
   ],
   "Language": {
@@ -303,6 +387,7 @@
       "category_things": "物品",
       "category_animals": "动物",
       "category_urban": "城市",
+      "category_asmr": "ASMR",
       "category_uncategorized": "未分类",
       "sound_rain": "雨",
       "sound_wind": "风",
@@ -337,7 +422,17 @@
       "sound_cat_purr": "猫呼噜",
       "sound_heartbeat": "心跳",
       "sound_city_traffic": "城市交通",
-      "sound_crowd": "人群"
+      "sound_crowd": "人群",
+      "sound_asmr_nintendo_switch": "任天堂开关按键",
+      "sound_asmr_sensory_foam": "感官泡沫",
+      "sound_asmr_sticky_marshmallow": "粘性棉花糖嘴声",
+      "sound_asmr_wet_mouth": "湿润嘴声",
+      "sound_asmr_crumpling_paper": "揉纸声",
+      "sound_asmr_crumpled_plastic": "揉塑料声",
+      "sound_asmr_water_flow": "水流声",
+      "sound_asmr_pencil_writing": "铅笔书写",
+      "sound_asmr_paper_rustling": "纸张沙沙声",
+      "sound_asmr_water_drops": "水滴声"
     },
     "en": {
       "category_nature": "Nature",
@@ -345,6 +440,7 @@
       "category_things": "Things",
       "category_animals": "Animals",
       "category_urban": "Urban",
+      "category_asmr": "ASMR",
       "category_uncategorized": "Uncategorized",
       "sound_rain": "Rain",
       "sound_wind": "Wind",
@@ -379,7 +475,17 @@
       "sound_cat_purr": "Cat Purr",
       "sound_heartbeat": "Heartbeat",
       "sound_city_traffic": "City Traffic",
-      "sound_crowd": "Crowd"
+      "sound_crowd": "Crowd",
+      "sound_asmr_nintendo_switch": "Nintendo Switch Buttons",
+      "sound_asmr_sensory_foam": "Sensory Foam",
+      "sound_asmr_sticky_marshmallow": "Sticky Marshmallow Mouth",
+      "sound_asmr_wet_mouth": "Wet Mouth Sounds",
+      "sound_asmr_crumpling_paper": "Crumpling Paper",
+      "sound_asmr_crumpled_plastic": "Crumpled Plastic",
+      "sound_asmr_water_flow": "Water Flow",
+      "sound_asmr_pencil_writing": "Pencil Writing",
+      "sound_asmr_paper_rustling": "Paper Rustling",
+      "sound_asmr_water_drops": "Water Drops"
     },
     "jp": {
       "category_nature": "自然",
@@ -387,6 +493,7 @@
       "category_things": "物",
       "category_animals": "動物",
       "category_urban": "都市",
+      "category_asmr": "ASMR",
       "category_uncategorized": "未分類",
       "sound_rain": "雨",
       "sound_wind": "風",
@@ -421,7 +528,17 @@
       "sound_cat_purr": "猫の喉鳴らし",
       "sound_heartbeat": "心臓の鼓動",
       "sound_city_traffic": "都市の交通",
-      "sound_crowd": "人混み"
+      "sound_crowd": "人混み",
+      "sound_asmr_nintendo_switch": "ニンテンドースイッチボタン",
+      "sound_asmr_sensory_foam": "感覚フォーム",
+      "sound_asmr_sticky_marshmallow": "粘着マシュマロ口音",
+      "sound_asmr_wet_mouth": "濡れた口音",
+      "sound_asmr_crumpling_paper": "紙を丸める音",
+      "sound_asmr_crumpled_plastic": "プラスチックを丸める音",
+      "sound_asmr_water_flow": "水流音",
+      "sound_asmr_pencil_writing": "鉛筆で書く音",
+      "sound_asmr_paper_rustling": "紙のさらさら音",
+      "sound_asmr_water_drops": "水滴音"
     }
   }
 }

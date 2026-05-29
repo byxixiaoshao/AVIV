@@ -1152,3 +1152,108 @@ fun EffectOrderDialog(
         }
     )
 }
+
+@Composable
+fun MediaControlPriorityDialog(
+    currentPriority: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    val options = listOf(
+        "white_noise" to stringResource(R.string.media_control_white_noise),
+        "music" to stringResource(R.string.media_control_music),
+        "all" to stringResource(R.string.media_control_all),
+        "smart" to stringResource(R.string.media_control_smart)
+    )
+    
+    var selectedPriority by remember { mutableStateOf(currentPriority) }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.media_control_priority_title),
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column {
+                options.forEach { (value, label) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { selectedPriority = value }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .border(
+                                    width = 2.dp,
+                                    color = if (selectedPriority == value) 
+                                        MaterialTheme.colorScheme.primary 
+                                    else 
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (selectedPriority == value) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(12.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary)
+                                )
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.width(16.dp))
+                        
+                        Column {
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = if (selectedPriority == value)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.onSurface
+                            )
+                            
+                            if (value == "smart") {
+                                Text(
+                                    text = stringResource(R.string.media_control_smart_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = stringResource(R.string.cancel),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onConfirm(selectedPriority)
+                    onDismiss()
+                }
+            ) {
+                Text(
+                    text = stringResource(R.string.confirm),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    )
+}

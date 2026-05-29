@@ -187,8 +187,6 @@ Merci à tous les projets open source contribuant aux technologies de traitement
 
 <video src="https://github.com/byxixiaoshao/AVIV/raw/main/video/Demo_Video.mp4" controls="controls" width="100%"></video>
 
-Ou téléchargez depuis [video/Demo_Video.mp4](../video/Demo_Video.mp4)
-
 ---
 
 <div align="center">

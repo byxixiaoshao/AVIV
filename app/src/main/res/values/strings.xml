@@ -38,6 +38,9 @@
     <string name="music_directory">Music Directory</string>
     <string name="directories_count">directories</string>
     <string name="general">General</string>
+    <string name="initialize_white_noise_list">Initialize White Noise List</string>
+    <string name="initialize_white_noise_list_desc">Reinitialize the white noise list (will not delete existing audio)</string>
+    <string name="initialize_success">Initialization successful</string>
     <string name="auto_play_on_startup">Auto play on startup</string>
     <string name="audio_effect_order">Audio Effect Order</string>
     <string name="customize">Customize</string>
@@ -49,6 +52,14 @@
     <string name="text_color">Text Color</string>
     <string name="log_recording">Log Recording</string>
     <string name="about_app">About</string>
+    
+    <string name="media_control_priority">Media Control Priority</string>
+    <string name="media_control_priority_title">Select priority control target</string>
+    <string name="media_control_white_noise">White Noise</string>
+    <string name="media_control_music">Music</string>
+    <string name="media_control_all">All</string>
+    <string name="media_control_smart">Smart</string>
+    <string name="media_control_smart_desc">Auto select based on playback state</string>
     
     <string name="scattered_sound_library">Scattered Sound Library</string>
     <string name="select_random_sound_group">Select random sound group to play</string>
@@ -207,4 +218,236 @@
     <string name="security_warning_title">Security Warning</string>
     <string name="security_warning_message">Warning: This installation package may be compromised!\n\nThe current package may have been modified by others.\nFor security reasons, please uninstall this app.\n(This cannot be bypassed)</string>
     <string name="security_warning_uninstall">Confirm Uninstall</string>
+    
+    <string name="eq_preset_flat">Flat</string>
+    <string name="eq_preset_bass_boost">Bass Boost</string>
+    <string name="eq_preset_treble_boost">Treble Boost</string>
+    <string name="eq_preset_vocal">Vocal</string>
+    <string name="eq_preset_rock">Rock</string>
+    <string name="eq_preset_pop">Pop</string>
+    <string name="eq_preset_classical">Classical</string>
+    <string name="eq_preset_jazz">Jazz</string>
+    <string name="eq_preset_electronic">Electronic</string>
+    <string name="eq_preset_v_shape">V Shape</string>
+    <string name="eq_preset_custom">Custom</string>
+    
+    <string name="eq_mode_manual">Manual</string>
+    <string name="eq_mode_auto">Auto</string>
+    <string name="eq_mode_simple">Simple Mode</string>
+    <string name="eq_mode_advanced">Advanced Mode</string>
+    
+    <string name="auto_eq_global_intensity">Global Intensity</string>
+    <string name="auto_eq_bias_offset">Bias Offset</string>
+    <string name="auto_eq_bass_bias">Bass Bias</string>
+    <string name="auto_eq_mid_bias">Mid Bias</string>
+    <string name="auto_eq_treble_bias">Treble Bias</string>
+    <string name="auto_eq_bass_bias_freq">Bass Bias (&lt;250Hz)</string>
+    <string name="auto_eq_mid_bias_freq">Mid Bias (250-4kHz)</string>
+    <string name="auto_eq_treble_bias_freq">Treble Bias (&gt;4kHz)</string>
+    <string name="auto_eq_target_curve">Target Curve Preset</string>
+    <string name="auto_eq_response_speed">Dynamic Response Speed</string>
+    <string name="auto_eq_freq_bias">Frequency Bias</string>
+    <string name="auto_eq_dynamic_response">Dynamic Response</string>
+    <string name="auto_eq_freq_limit">Frequency Limit</string>
+    <string name="auto_eq_spectrum_analysis">Spectrum Analysis</string>
+    <string name="auto_eq_curve_fine_tune">Target Curve Fine Tune</string>
+    
+    <string name="auto_eq_curve_flat">Flat</string>
+    <string name="auto_eq_curve_warm">Warm</string>
+    <string name="auto_eq_curve_bright">Bright</string>
+    <string name="auto_eq_curve_vocal">Vocal Boost</string>
+    <string name="auto_eq_curve_loudness">Loudness Priority</string>
+    
+    <string name="auto_eq_speed_fast">Fast</string>
+    <string name="auto_eq_speed_medium">Medium</string>
+    <string name="auto_eq_speed_slow">Slow</string>
+    
+    <string name="auto_eq_max_slope">Max Gain Slope</string>
+    <string name="auto_eq_max_boost">Max Boost</string>
+    <string name="auto_eq_max_cut">Max Cut</string>
+    <string name="auto_eq_hysteresis">Hysteresis</string>
+    <string name="auto_eq_smoothing">Spectrum Smoothing</string>
+    <string name="auto_eq_coupling">Band Coupling</string>
+    <string name="auto_eq_brightness_target">Brightness Target</string>
+    <string name="auto_eq_loudness_target">Loudness Target</string>
+    <string name="auto_eq_dynamic_q">Dynamic Q</string>
+    
+    <string name="auto_eq_simple_desc">Auto EQ analyzes audio content in real-time and dynamically adjusts frequency bands for optimal listening experience.</string>
+    <string name="auto_eq_advanced_desc">Advanced mode provides full frequency analysis, decision engine and dynamic execution parameters. Adjustments directly affect the auto EQ behavior.</string>
+    
+    <string name="reverb_preset_stadium">Stadium</string>
+    <string name="reverb_preset_car">Car Interior</string>
+    <string name="reverb_preset_bathroom">Bathroom</string>
+    <string name="reverb_preset_church">Church</string>
+    <string name="reverb_preset_small_club">Small Club</string>
+    <string name="reverb_preset_forest">Forest</string>
+    <string name="reverb_preset_valley">Valley</string>
+    <string name="reverb_preset_seaside">Seaside</string>
+    <string name="reverb_preset_desert">Desert</string>
+    <string name="reverb_preset_cave">Cave</string>
+    <string name="reverb_preset_tunnel">Tunnel</string>
+    
+    <string name="spatial_offset_distance">Offset Distance</string>
+    <string name="spatial_surround_radius">Surround Radius</string>
+    <string name="spatial_surround_speed">Surround Speed</string>
+    <string name="spatial_max_distance">Max Distance</string>
+    <string name="spatial_min_distance">Min Distance</string>
+    <string name="spatial_wander_random">Wander Randomness</string>
+    <string name="spatial_wander_speed">Wander Speed</string>
+    
+    <string name="offset_type_fixed">Fixed Offset</string>
+    <string name="offset_type_3d_surround">3D Surround</string>
+    <string name="offset_type_random_wander">Random Wander</string>
+    
+    <string name="surround_mode_horizontal">Horizontal Surround</string>
+    <string name="surround_mode_vertical">Vertical Surround</string>
+    <string name="surround_mode_transverse">Transverse Surround</string>
+    
+    <string name="audio_adjust">Audio Adjust</string>
+    <string name="spatial_reverb_title">Spatial Reverb</string>
+    <string name="quality_effect_title">Quality Effect</string>
+    <string name="spatial_offset_title">Spatial Offset</string>
+    <string name="preset_label">Preset: %1$s</string>
+    <string name="enable">Enable</string>
+    <string name="reset">Reset</string>
+    <string name="developing">Developing</string>
+    <string name="tone">Tone</string>
+    <string name="speed">Speed</string>
+    <string name="mix_mode">Mix Mode</string>
+    <string name="volume">Volume</string>
+    
+    <string name="current_playing">Current Playing (%1$d)</string>
+    <string name="no_music_playing">No music playing</string>
+    <string name="save_as_playlist">Save current playlist (%1$d) as new playlist</string>
+    <string name="favorite">Favorite</string>
+    <string name="new_playlist">New Playlist</string>
+    
+    <string name="click_to_download">Click to Download</string>
+    <string name="no_scattered_track">No scattered tracks\nPlease create a scattered track first</string>
+    <string name="select_scattered_track">Select scattered track:</string>
+    <string name="added_audio_count">Added %1$d audio</string>
+    <string name="input_scattered_name">Please enter scattered group name</string>
+    
+    <string name="no_music_directory">No music directory added\nClick the button below to add</string>
+    
+    <string name="audio_effect_config">Audio Effect Config</string>
+    <string name="auto_eq_assist">Auto EQ Assist</string>
+    <string name="test">Test</string>
+    <string name="network">Network</string>
+    <string name="local">Local</string>
+    <string name="category">Category</string>
+    <string name="audio">Audio</string>
+    
+    <string name="timer_end">Timer End</string>
+    <string name="snooze_time_minutes">Snooze Time: %1$d min</string>
+    <string name="timer">Timer</string>
+    <string name="spatial_scatter_range">Spatial Scatter Range</string>
+    
+    <string name="mixer">Mixer</string>
+    <string name="playlist">Playlist</string>
+    
+    <string name="no_scattered_tracks_hint">No scattered tracks\nPlease create a scattered track in the player first</string>
+    <string name="select_scattered_track_hint">Select scattered track to add to:</string>
+    <string name="enter_scattered_group_name">Please enter scattered group name</string>
+    <string name="name">Name</string>
+    <string name="enter_group_name">Enter group name</string>
+    
+    <string name="effect_8bit_game">8-bit Game</string>
+    <string name="effect_underwater">Underwater</string>
+    <string name="effect_alien_signal">Alien Signal</string>
+    <string name="effect_megaphone">Megaphone</string>
+    <string name="experimental">(Experimental)</string>
+    <string name="spatial_scatter_warning">As sound offset processing, stuttering may occur during use</string>
+    <string name="axis_x">X Axis (Left/Right)</string>
+    <string name="axis_y">Y Axis (Height)</string>
+    <string name="axis_z">Z Axis (Front/Back)</string>
+    
+    <string name="current_playing_count">Currently Playing (%1$d tracks)</string>
+    <string name="unknown_artist">Unknown Artist</string>
+    <string name="favorites">Favorites</string>
+    <string name="track_count">%1$d tracks</string>
+    <string name="create_playlist">Create Playlist</string>
+    <string name="playlist_name">Playlist Name</string>
+    <string name="save">Save</string>
+    <string name="save_current_playlist_hint">Save current playlist (%1$d tracks) as new playlist</string>
+    
+    <string name="current_list">Current List</string>
+    
+    <string name="preload_completed">Preload completed</string>
+    <string name="preload_initializing">Initializing preload...</string>
+    <string name="preload_loading_music_config">Loading music directory config...</string>
+    <string name="preload_scanning_music">Scanning music library...</string>
+    <string name="preload_loading_sound_categories">Loading sound categories...</string>
+    <string name="preload_warming_animation">Warming animation system...</string>
+    <string name="preload_prerendering_ui">Pre-rendering UI components...</string>
+    <string name="preload_complete">Preload complete</string>
+    
+    <string name="seconds_format">%.2fs</string>
+    <string name="x_axis_rotation">X Axis Rotation</string>
+    <string name="y_axis_rotation">Y Axis Rotation</string>
+    <string name="z_axis_rotation">Z Axis Rotation</string>
+    <string name="offset_distance">Offset Distance</string>
+    
+    <string name="home">Home</string>
+    <string name="setting">Settings</string>
+    
+    <string name="end_timer">End Timer</string>
+    <string name="snooze">Snooze</string>
+    
+    <string name="theme_default">Default</string>
+    <string name="theme_default_night">Default Night</string>
+    <string name="theme_ocean_blue">Ocean Blue</string>
+    <string name="theme_ocean_blue_night">Ocean Blue Night</string>
+    <string name="theme_forest_green">Forest Green</string>
+    <string name="theme_forest_green_night">Forest Green Night</string>
+    <string name="theme_sunset_orange">Sunset Orange</string>
+    <string name="theme_sunset_orange_night">Sunset Orange Night</string>
+    <string name="theme_purple_dream">Purple Dream</string>
+    <string name="theme_purple_dream_night">Purple Dream Night</string>
+    <string name="theme_rose_pink">Rose Pink</string>
+    <string name="theme_rose_pink_night">Rose Pink Night</string>
+    <string name="theme_coffee_brown">Coffee Brown</string>
+    <string name="theme_coffee_brown_night">Coffee Brown Night</string>
+    <string name="theme_pure_white">Pure White</string>
+    <string name="theme_pure_black">Pure Black</string>
+    <string name="theme_custom">Custom</string>
+    
+    <string name="move_up">Move Up</string>
+    <string name="move_down">Move Down</string>
+    
+    <string name="category_name">Category Name</string>
+    <string name="audio_name">Audio Name</string>
+    <string name="download_link">Download Link</string>
+    <string name="file_selected">File selected</string>
+    <string name="select_audio_file">Select audio file</string>
+    <string name="uncategorized">Uncategorized</string>
+    
+    <string name="in_development">In Development</string>
+    
+    <string name="surround_mode">Surround Mode: %1$s</string>
+    <string name="surround_horizontal">Horizontal Surround</string>
+    <string name="surround_vertical">Vertical Surround</string>
+    <string name="surround_cross">Cross Surround</string>
+    
+    <string name="timer_finished">Timer Finished</string>
+    
+    <string name="reverb_wet_level">Wet Level</string>
+    <string name="reverb_dry_level">Dry Level</string>
+    <string name="reverb_pre_delay">Pre Delay</string>
+    <string name="sound_quality_effects">Sound Quality Effects</string>
+    <string name="insulation_coefficient">Insulation Coefficient</string>
+    <string name="offset_type_surround">Surround</string>
+    <string name="offset_type_random">Random</string>
+    <string name="sound_offset">Sound Offset</string>
+    <string name="stutter_warning">May cause stuttering</string>
+    <string name="offset_type_label">Offset Type</string>
+    <string name="reverb_room_size">Room Size</string>
+    <string name="custom">Custom</string>
+    <string name="reverb_decay_time">Decay Time</string>
+    <string name="format_seconds">%1$.2f s</string>
+    <string name="reverb_damping">Damping</string>
+    <string name="reverb_reflection_density">Reflection Density</string>
+    <string name="reverb_reflection_spread">Reflection Spread</string>
+    <string name="reverb_highpass">Highpass Filter</string>
+    <string name="reverb_early_reflection">Early Reflection</string>
 </resources>

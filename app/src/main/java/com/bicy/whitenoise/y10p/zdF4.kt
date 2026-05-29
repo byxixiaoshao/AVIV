@@ -212,6 +212,11 @@ object SoundStorageManager {
         }
     }
     
+    fun reinitializeFromRemoteManifest(context: Context) {
+        initializeFromRemoteManifest(context)
+        Log.d(TAG, "重新初始化白噪音列表完成")
+    }
+    
     private fun createDefaultSoundsClass(context: Context) {
         val defaultClasses = listOf(
             SoundClass(

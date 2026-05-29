@@ -50,6 +50,7 @@ import com.bicy.whitenoise.JwJY.NATg.ConfigStorage
 import com.bicy.whitenoise.yODW.NvYq.BxAd.AboutDialog
 import com.bicy.whitenoise.yODW.NvYq.BxAd.ContentPaddingTop
 import com.bicy.whitenoise.yODW.NvYq.BxAd.EffectOrderDialog
+import com.bicy.whitenoise.yODW.NvYq.BxAd.MediaControlPriorityDialog
 import com.bicy.whitenoise.yODW.NvYq.BxAd.MusicDirectoryDialog
 import com.bicy.whitenoise.yODW.NvYq.BxAd.SettingClickItem
 import com.bicy.whitenoise.yODW.NvYq.BxAd.SettingSliderItem
@@ -84,6 +85,7 @@ fun SettingScreen(
     var showThankDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
     var showEffectOrderDialog by remember { mutableStateOf(false) }
+    var showMediaControlPriorityDialog by remember { mutableStateOf(false) }
     var editingColorType by remember { mutableStateOf<String?>(null) }
     
     val context = LocalContext.current
@@ -199,6 +201,14 @@ fun SettingScreen(
                         title = stringResource(R.string.music_directory),
                         value = "${musicDirectories.size} ${stringResource(R.string.directories_count)}",
                         onClick = { showMusicDirDialog = true }
+                    )
+                }
+                
+                item {
+                    SettingSwitchItem(
+                        title = "自动EQ协助调整",
+                        checked = globalState.autoEqSyncToManual,
+                        onCheckedChange = { enabled -> ConfigStorage.setAutoEqSyncToManual(enabled) }
                     )
                 }
                 
@@ -359,9 +369,63 @@ fun SettingScreen(
             
             item {
                 SettingClickItem(
+                    title = stringResource(R.string.initialize_white_noise_list),
+                    value = stringResource(R.string.initialize_white_noise_list_desc),
+                    onClick = {
+                        scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                            try {
+                                com.bicy.whitenoise.y10p.SoundStorageManager.reinitializeFromRemoteManifest(context)
+                                com.bicy.whitenoise.JwJY.sBYh.WhiteNoiseStorage.init()
+                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        context.getString(R.string.initialize_success),
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            } catch (e: Exception) {
+                                android.util.Log.e("Settings", "初始化白噪音列表失败", e)
+                                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        "初始化失败: ${e.message}",
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                        }
+                    }
+                )
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            
+            item {
+                SettingClickItem(
                     title = stringResource(R.string.audio_effect_order),
                     value = stringResource(R.string.customize),
                     onClick = { showEffectOrderDialog = true }
+                )
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            
+            item {
+                val mediaControlPriority = ConfigStorage.getMediaControlPriority()
+                val priorityLabel = when (mediaControlPriority) {
+                    "white_noise" -> stringResource(R.string.media_control_white_noise)
+                    "music" -> stringResource(R.string.media_control_music)
+                    "all" -> stringResource(R.string.media_control_all)
+                    else -> stringResource(R.string.media_control_smart)
+                }
+                SettingClickItem(
+                    title = stringResource(R.string.media_control_priority),
+                    value = priorityLabel,
+                    onClick = { showMediaControlPriorityDialog = true }
                 )
             }
             
@@ -502,6 +566,16 @@ fun SettingScreen(
                 ConfigStorage.setAudioEffectOrder(newOrder)
                 MusicService.getInstance()?.reloadAllTracksWithNewEffectOrder()
                 MusicPlayerController.reloadCurrentTrackWithNewEffectOrder()
+            }
+        )
+    }
+    
+    if (showMediaControlPriorityDialog) {
+        MediaControlPriorityDialog(
+            currentPriority = ConfigStorage.getMediaControlPriority(),
+            onDismiss = { showMediaControlPriorityDialog = false },
+            onConfirm = { priority ->
+                ConfigStorage.setMediaControlPriority(priority)
             }
         )
     }

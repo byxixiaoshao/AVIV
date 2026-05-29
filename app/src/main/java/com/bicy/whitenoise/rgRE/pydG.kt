@@ -16,6 +16,7 @@ import com.bicy.whitenoise.H3HO.ReverbManager
 import com.bicy.whitenoise.H3HO.ScatteredPlayerManager
 import com.bicy.whitenoise.rgRE.uY6e.AudioFocusManager
 import com.bicy.whitenoise.rgRE.uY6e.MusicNotificationManager
+import com.bicy.whitenoise.rgRE.uY6e.mS7k
 import com.bicy.whitenoise.JwJY.sBYh.kcFp.ScatteredAudioClipData
 import com.bicy.whitenoise.JwJY.sBYh.kcFp.SpatialScatterRangeData
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -81,6 +82,7 @@ class MusicService : Service() {
     
     private val pendingPlayRequests = ConcurrentHashMap<String, Boolean>()
     private val loadRetryCount = ConcurrentHashMap<String, Int>()
+    private val hasBeenPlayed = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
     
     private val mainHandler = Handler(Looper.getMainLooper())
     
@@ -124,7 +126,7 @@ class MusicService : Service() {
                 
                 OboeAudioEngine.clearAllEffectBuffers()
                 
-                val wasPlaying = PlaybackStateManager.getPlayingSounds()
+                val wasPlaying = PlaybackStateManager.getAllSoundIds().filter { OboeAudioEngine.isPlaying(it) }
                 Log.w(TAG, "audioStreamCheckRunnable: wasPlaying=$wasPlaying")
                 
                 OboeAudioEngine.release()
@@ -183,7 +185,7 @@ class MusicService : Service() {
                                 }
                             }
                             
-                            if (PlaybackStateManager.getPlayingSounds().isNotEmpty()) {
+                            if (PlaybackStateManager.getAllSoundIds().any { OboeAudioEngine.isPlaying(it) }) {
                                 Log.w(TAG, "audioStreamCheckRunnable: Updating service state")
                                 isServicePlaying = true
                                 updatePlayingAudioIds()
@@ -208,6 +210,13 @@ class MusicService : Service() {
     
     private var isServicePlaying = false
     private var wasPlayingBeforePause = false
+    
+    private fun syncPlayingState() {
+        val allSoundIds = PlaybackStateManager.getAllSoundIds()
+        isServicePlaying = allSoundIds.any { 
+            OboeAudioEngine.isPlaying(it) && !OboeAudioEngine.isFadingOut(it) 
+        }
+    }
     
     inner class MusicServiceBinder : Binder() {
         fun getService(): MusicService = this@MusicService
@@ -252,6 +261,8 @@ class MusicService : Service() {
         MusicNotificationManager.startForeground(this, notification)
         audioFocusManager.requestAudioFocus()
         
+        mS7k.initialize(this)
+        
         val initialized = OboeAudioEngine.init()
         Log.d(TAG, "服务创建，Oboe引擎初始化: $initialized")
         
@@ -260,7 +271,36 @@ class MusicService : Service() {
         
         mainHandler.post(audioStreamCheckRunnable)
         
+        restoreSavedSounds()
+        
         onServiceReadyListener?.invoke()
+    }
+    
+    private fun restoreSavedSounds() {
+        val savedSoundIds = PlaybackStateManager.getAllSoundIds()
+        Log.d(TAG, "restoreSavedSounds: Found ${savedSoundIds.size} saved sounds")
+        
+        if (savedSoundIds.isEmpty()) {
+            Log.d(TAG, "restoreSavedSounds: No saved sounds to restore")
+            return
+        }
+        
+        savedSoundIds.forEach { soundId ->
+            val filePath = PlaybackStateManager.getLoadedSoundPath(soundId)
+            if (filePath != null) {
+                val audioFile = File(filePath)
+                if (audioFile.exists()) {
+                    Log.d(TAG, "restoreSavedSounds: Pre-loading sound $soundId from $filePath")
+                    pendingPlayRequests[soundId] = false
+                    loadRetryCount[soundId] = 0
+                    OboeAudioEngine.loadSound(soundId, filePath)
+                } else {
+                    Log.w(TAG, "restoreSavedSounds: File not found for $soundId: $filePath")
+                }
+            } else {
+                Log.w(TAG, "restoreSavedSounds: No file path for $soundId")
+            }
+        }
     }
     
     override fun onBind(intent: Intent?): IBinder = binder
@@ -269,6 +309,8 @@ class MusicService : Service() {
         when (intent?.action) {
             MusicNotificationManager.ACTION_PLAY_PAUSE -> handlePlayPause()
             MusicNotificationManager.ACTION_STOP -> handleStop()
+            MusicNotificationManager.ACTION_NEXT -> handleNext()
+            MusicNotificationManager.ACTION_PREVIOUS -> handlePrevious()
             ACTION_PLAY_SOUND -> {
                 val soundId = intent.getStringExtra(EXTRA_SOUND_ID)
                 val filePath = intent.getStringExtra(EXTRA_FILE_PATH)
@@ -277,7 +319,15 @@ class MusicService : Service() {
                     playSound(soundId, File(filePath), soundName)
                 }
             }
+            "android.intent.action.MEDIA_BUTTON" -> {
+                val keyEvent = intent.getParcelableExtra<android.view.KeyEvent>(android.content.Intent.EXTRA_KEY_EVENT)
+                if (keyEvent?.action == android.view.KeyEvent.ACTION_DOWN) {
+                    Log.d(TAG, "MEDIA_BUTTON routed to mS7k: keyCode=${keyEvent.keyCode}")
+                    mS7k.handleMediaButton(keyEvent)
+                }
+            }
         }
+        
         return START_STICKY
     }
     
@@ -290,6 +340,7 @@ class MusicService : Service() {
         ScatteredPlayerManager.release()
         audioFocusManager.abandonAudioFocus()
         releaseWakeLock()
+        mS7k.release()
         instance = null
         Log.d(TAG, "服务销毁")
     }
@@ -303,7 +354,7 @@ class MusicService : Service() {
             
             OboeAudioEngine.clearAllEffectBuffers()
             
-            val wasPlaying = PlaybackStateManager.getPlayingSounds()
+            val wasPlaying = PlaybackStateManager.getAllSoundIds().filter { OboeAudioEngine.isPlaying(it) }
             
             OboeAudioEngine.release()
             val reinitialized = OboeAudioEngine.init()
@@ -345,7 +396,7 @@ class MusicService : Service() {
                             }
                         }
                         
-                        if (PlaybackStateManager.getPlayingSounds().isNotEmpty()) {
+                        if (PlaybackStateManager.getAllSoundIds().any { OboeAudioEngine.isPlaying(it) }) {
                             isServicePlaying = true
                             updatePlayingAudioIds()
                             updateWakeLockState()
@@ -370,18 +421,27 @@ class MusicService : Service() {
     
     fun onAppPause() {
         Log.d(TAG, "应用进入后台")
-        wasPlayingBeforePause = PlaybackStateManager.getPlayingSounds().isNotEmpty()
+        wasPlayingBeforePause = PlaybackStateManager.getAllSoundIds().any { OboeAudioEngine.isPlaying(it) }
     }
     
-    private fun getPlayingCount(): Int = PlaybackStateManager.getPlayingSounds().size
+    private fun getPlayingCount(): Int {
+        return PlaybackStateManager.getAllSoundIds().count { OboeAudioEngine.isPlaying(it) }
+    }
     
     private fun updateNotification() {
+        syncPlayingState()
         val notification = MusicNotificationManager.buildNotification(this, isServicePlaying, getPlayingCount())
         MusicNotificationManager.updateNotification(this, notification)
+        mS7k.updatePlaybackState(isServicePlaying, getPlayingCount())
+    }
+    
+    fun refreshNotification() {
+        updateNotification()
     }
     
     private fun updatePlayingAudioIds() {
-        val playingIds = PlaybackStateManager.getPlayingSounds().toSet()
+        val allSoundIds = PlaybackStateManager.getAllSoundIds()
+        val playingIds = allSoundIds.filter { OboeAudioEngine.isPlaying(it) }.toSet()
         _playingAudioIds.value = playingIds
     }
     
@@ -433,7 +493,7 @@ class MusicService : Service() {
                 return
             }
             
-            if (PlaybackStateManager.isPlaying(soundId)) {
+            if (OboeAudioEngine.isPlaying(soundId)) {
                 Log.d(TAG, "声音已在播放，停止: $soundId")
                 stopSound(soundId)
                 return
@@ -444,7 +504,18 @@ class MusicService : Service() {
                 if (savedConfig != null) {
                     PlaybackStateManager.playSound(soundId, audioFile.absolutePath, savedConfig)
                 } else {
-                    PlaybackStateManager.setLoadedSoundPath(soundId, audioFile.absolutePath)
+                    val newConfig = com.bicy.whitenoise.JwJY.sBYh.kcFp.SoundPlayConfig(
+                        id = soundId,
+                        name = soundName,
+                        filePath = audioFile.absolutePath
+                    )
+                    PlaybackStateManager.playSound(soundId, audioFile.absolutePath, newConfig)
+                }
+            } else {
+                PlaybackStateManager.setLoadedSoundPath(soundId, audioFile.absolutePath)
+                val existingConfig = PlaybackStateManager.getSoundConfig(soundId)
+                if (existingConfig != null && existingConfig.filePath != audioFile.absolutePath) {
+                    PlaybackStateManager.updateSoundConfig(soundId, existingConfig.copy(filePath = audioFile.absolutePath))
                 }
             }
             
@@ -471,25 +542,32 @@ class MusicService : Service() {
         }
     }
     
-    private fun startPlayback(soundId: String) {
+    private fun applySoundConfigs(soundId: String) {
         val volume = PlaybackStateManager.getVolume(soundId)
         OboeAudioEngine.setVolume(soundId, volume)
+        Log.d(TAG, "applySoundConfigs: Set volume for $soundId: $volume")
         
-        val config = ReverbManager.getConfig(soundId)
-        if (config != null && config.enabled) {
-            Log.d(TAG, "startPlayback: Applying reverb config for $soundId, roomSize=${config.roomSize}, damping=${config.damping}, wetLevel=${config.wetLevel}")
+        val reverbConfig = ReverbManager.getConfig(soundId)
+        if (reverbConfig != null && reverbConfig.enabled) {
             OboeAudioEngine.setEffectEnabled(soundId, true)
-            OboeAudioEngine.setReverbParams(soundId, config.roomSize, config.damping, config.wetLevel)
+            ReverbManager.applyReverbConfig(soundId)
+            Log.d(TAG, "applySoundConfigs: Applied reverb config for $soundId")
         } else {
-            Log.w(TAG, "startPlayback: No reverb config or disabled for $soundId")
+            OboeAudioEngine.setEffectEnabled(soundId, false)
+            Log.d(TAG, "applySoundConfigs: No reverb config or disabled for $soundId")
         }
         
         com.bicy.whitenoise.H3HO.SpatialAudioManager.applySpatialConfig(soundId)
         com.bicy.whitenoise.H3HO.CreativeEffectManager.applyCreativeEffectConfig(soundId)
+    }
+    
+    private fun startPlayback(soundId: String) {
+        applySoundConfigs(soundId)
         
         OboeAudioEngine.setFadeDuration(soundId, 0.5f)
-        OboeAudioEngine.resumeAll()
         OboeAudioEngine.playSound(soundId)
+        
+        hasBeenPlayed.add(soundId)
         
         PlaybackStateManager.resumeSound(soundId)
         isServicePlaying = true
@@ -506,6 +584,8 @@ class MusicService : Service() {
             OboeAudioEngine.stopSound(soundId)
             OboeAudioEngine.unloadSound(soundId)
             
+            hasBeenPlayed.remove(soundId)
+            
             PlaybackStateManager.stopSound(soundId)
             
             ReverbManager.removeReverbEffect(soundId)
@@ -516,7 +596,7 @@ class MusicService : Service() {
             updateWakeLockState()
             onPlaybackStateChangeListener?.invoke(soundId, false)
             
-            if (PlaybackStateManager.getPlayingSounds().isEmpty()) {
+            if (!PlaybackStateManager.getAllSoundIds().any { OboeAudioEngine.isPlaying(it) }) {
                 isServicePlaying = false
             }
             
@@ -537,7 +617,7 @@ class MusicService : Service() {
             
             updatePlayingAudioIds()
             
-            if (PlaybackStateManager.getPlayingSounds().isEmpty()) {
+            if (!PlaybackStateManager.getAllSoundIds().any { OboeAudioEngine.isPlaying(it) }) {
                 isServicePlaying = false
             }
             
@@ -553,10 +633,17 @@ class MusicService : Service() {
         try {
             if (OboeAudioEngine.isFadingOut(soundId)) {
                 OboeAudioEngine.cancelFadeOut(soundId)
-                Log.d(TAG, "取消淡出并恢复播放: $soundId")
-            } else {
+                Log.d(TAG, "取消淡出: $soundId")
+            } else if (hasBeenPlayed.contains(soundId)) {
                 OboeAudioEngine.setFadeDuration(soundId, 0.5f)
                 OboeAudioEngine.resumeSound(soundId)
+                Log.d(TAG, "恢复播放(淡入): $soundId")
+            } else {
+                applySoundConfigs(soundId)
+                OboeAudioEngine.setFadeDuration(soundId, 0.5f)
+                OboeAudioEngine.playSound(soundId)
+                hasBeenPlayed.add(soundId)
+                Log.d(TAG, "首次播放(淡入): $soundId")
             }
             
             PlaybackStateManager.resumeSound(soundId)
@@ -576,6 +663,8 @@ class MusicService : Service() {
     fun stopAllSounds() {
         OboeAudioEngine.stopAllSounds()
         
+        hasBeenPlayed.clear()
+        
         PlaybackStateManager.clearAll()
         
         ScatteredPlayerManager.stopAll()
@@ -587,10 +676,19 @@ class MusicService : Service() {
     }
     
     fun pauseAllSounds() {
-        val playingSoundIds = PlaybackStateManager.getPlayingSounds()
+        val allSoundIds = PlaybackStateManager.getAllSoundIds()
+        Log.d(TAG, "pauseAllSounds: allSoundIds=$allSoundIds")
         
-        playingSoundIds.forEach { soundId ->
-            pauseSound(soundId)
+        allSoundIds.forEach { soundId ->
+            if (OboeAudioEngine.isFadingOut(soundId)) {
+                Log.d(TAG, "pauseAllSounds: soundId=$soundId already fading out, skip")
+                return@forEach
+            }
+            val isPlaying = OboeAudioEngine.isPlaying(soundId)
+            Log.d(TAG, "pauseAllSounds: soundId=$soundId, isPlaying=$isPlaying")
+            if (isPlaying) {
+                pauseSound(soundId)
+            }
         }
         
         ScatteredPlayerManager.pauseAll()
@@ -601,17 +699,55 @@ class MusicService : Service() {
     }
     
     fun resumeAllSounds() {
-        val pausedSoundIds = PlaybackStateManager.getAllSoundIds().filter { !PlaybackStateManager.isPlaying(it) }
+        val allSoundIds = PlaybackStateManager.getAllSoundIds()
+        Log.d(TAG, "resumeAllSounds: allSoundIds=$allSoundIds, count=${allSoundIds.size}")
         
-        pausedSoundIds.forEach { soundId ->
-            resumeSound(soundId)
+        if (allSoundIds.isEmpty()) {
+            Log.w(TAG, "resumeAllSounds: No sounds in PlaybackStateManager!")
+            return
         }
         
+        var resumedCount = 0
+        allSoundIds.forEach { soundId ->
+            val isLoaded = OboeAudioEngine.isLoaded(soundId)
+            val isPlaying = OboeAudioEngine.isPlaying(soundId)
+            val isFadingOut = OboeAudioEngine.isFadingOut(soundId)
+            Log.d(TAG, "resumeAllSounds: soundId=$soundId, isLoaded=$isLoaded, isPlaying=$isPlaying, isFadingOut=$isFadingOut")
+            if (isFadingOut) {
+                Log.d(TAG, "resumeAllSounds: Cancelling fade-out for $soundId")
+                resumeSound(soundId)
+                resumedCount++
+            } else if (isLoaded && !isPlaying) {
+                resumeSound(soundId)
+                resumedCount++
+            } else if (!isLoaded) {
+                Log.w(TAG, "resumeAllSounds: Sound $soundId not loaded, reloading...")
+                val filePath = PlaybackStateManager.getLoadedSoundPath(soundId)
+                if (filePath != null) {
+                    val audioFile = java.io.File(filePath)
+                    if (audioFile.exists()) {
+                        playSound(soundId, audioFile)
+                        resumedCount++
+                    } else {
+                        Log.e(TAG, "resumeAllSounds: File not found for $soundId: $filePath")
+                    }
+                } else {
+                    Log.e(TAG, "resumeAllSounds: No file path for $soundId")
+                }
+            }
+        }
+        
+        Log.d(TAG, "resumeAllSounds: Resumed $resumedCount sounds")
+        
         ScatteredPlayerManager.resumeAll()
+        
+        isServicePlaying = true
+        updatePlayingAudioIds()
+        updateNotification()
     }
 
     private fun restoreStreamAndResume() {
-        val soundsToRestore = PlaybackStateManager.getAllSoundIds().filter { !PlaybackStateManager.isPlaying(it) }
+        val soundsToRestore = PlaybackStateManager.getAllSoundIds().filter { !OboeAudioEngine.isPlaying(it) }
         Log.i(TAG, "restoreStreamAndResume: soundsToRestore=$soundsToRestore")
         
         if (soundsToRestore.isEmpty()) {
@@ -682,7 +818,7 @@ class MusicService : Service() {
                 }
             }
             
-            if (PlaybackStateManager.getPlayingSounds().isNotEmpty()) {
+            if (PlaybackStateManager.getAllSoundIds().any { OboeAudioEngine.isPlaying(it) }) {
                 Log.i(TAG, "restoreStreamAndResume: Updating service state")
                 isServicePlaying = true
                 updatePlayingAudioIds()
@@ -706,15 +842,15 @@ class MusicService : Service() {
     }
     
     fun isPlaying(soundId: String): Boolean {
-        return PlaybackStateManager.isPlaying(soundId)
+        return OboeAudioEngine.isPlaying(soundId)
     }
     
     fun isSoundPlaying(soundId: String): Boolean {
-        return PlaybackStateManager.isPlaying(soundId)
+        return OboeAudioEngine.isPlaying(soundId)
     }
     
     fun getPlayingSounds(): Set<String> {
-        return PlaybackStateManager.getPlayingSounds().toSet()
+        return PlaybackStateManager.getAllSoundIds().filter { OboeAudioEngine.isPlaying(it) }.toSet()
     }
     
     fun isLoaded(soundId: String): Boolean {
@@ -724,7 +860,7 @@ class MusicService : Service() {
     fun setReverbConfig(soundId: String, config: ReverbConfig) {
         ReverbManager.setReverbEffect(soundId, config)
         PlaybackStateManager.updateReverbConfig(soundId, config)
-        if (PlaybackStateManager.isPlaying(soundId)) {
+        if (OboeAudioEngine.isPlaying(soundId)) {
             if (config.enabled) {
                 OboeAudioEngine.setEffectEnabled(soundId, true)
                 OboeAudioEngine.setReverbParams(soundId, config.roomSize, config.damping, config.wetLevel)
@@ -743,15 +879,19 @@ class MusicService : Service() {
     }
     
     private fun handlePlayPause() {
-        if (isServicePlaying) {
-            pauseAllSounds()
-        } else {
-            resumeAllSounds()
-        }
+        mS7k.handleExternalPlayPause()
     }
     
     private fun handleStop() {
-        stopAllSounds()
+        mS7k.handleExternalStop()
+    }
+    
+    private fun handleNext() {
+        mS7k.handleExternalNext()
+    }
+    
+    private fun handlePrevious() {
+        mS7k.handleExternalPrevious()
     }
     
     private fun acquireWakeLock() {
@@ -777,7 +917,7 @@ class MusicService : Service() {
     }
     
     private fun updateWakeLockState() {
-        if (PlaybackStateManager.getPlayingSounds().isNotEmpty()) {
+        if (PlaybackStateManager.getAllSoundIds().any { OboeAudioEngine.isPlaying(it) }) {
             acquireWakeLock()
         } else {
             releaseWakeLock()
@@ -785,7 +925,7 @@ class MusicService : Service() {
     }
     
     fun reloadAllTracksWithNewEffectOrder() {
-        val wasPlaying = PlaybackStateManager.getPlayingSounds()
+        val wasPlaying = PlaybackStateManager.getAllSoundIds().filter { OboeAudioEngine.isPlaying(it) }
         
         if (wasPlaying.isEmpty()) {
             return

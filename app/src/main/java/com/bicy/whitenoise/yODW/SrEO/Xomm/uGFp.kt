@@ -2,6 +2,9 @@ package com.bicy.whitenoise.yODW.SrEO.Xomm
 
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.bicy.whitenoise.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -54,18 +57,20 @@ enum class SortType {
     Title, Artist, Duration, DateAdded
 }
 
+@Composable
 fun MusicCategory.getLabel(): String = when(this) {
-    MusicCategory.CurrentList -> "当前列表"
-    MusicCategory.All -> "所有"
-    MusicCategory.Folder -> "文件夹"
-    MusicCategory.Artist -> "歌手"
-    MusicCategory.Album -> "专辑"
-    MusicCategory.Playlist -> "歌单"
+    MusicCategory.CurrentList -> stringResource(R.string.current_list)
+    MusicCategory.All -> stringResource(R.string.all)
+    MusicCategory.Folder -> stringResource(R.string.folder)
+    MusicCategory.Artist -> stringResource(R.string.artist)
+    MusicCategory.Album -> stringResource(R.string.album)
+    MusicCategory.Playlist -> stringResource(R.string.playlist)
 }
 
+@Composable
 fun SortType.getLabel(): String = when(this) {
-    SortType.Title -> "标题"
-    SortType.Artist -> "歌手"
-    SortType.Duration -> "时长"
-    SortType.DateAdded -> "添加时间"
+    SortType.Title -> stringResource(R.string.title)
+    SortType.Artist -> stringResource(R.string.artist)
+    SortType.Duration -> stringResource(R.string.duration)
+    SortType.DateAdded -> stringResource(R.string.date_added)
 }
