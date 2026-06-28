@@ -1,0 +1,27 @@
+# 忽略所有文件
+/*
+
+# 但保留以下文件和文件夹
+!README.md
+!README/
+!img/
+!video/
+!LICENSE
+!.gitignore
+!gradlew
+!gradlew.bat
+!gradle.properties
+!build.gradle.kts
+!settings.gradle.kts
+!local.properties
+!gradle/
+!app/
+
+app/.cxx/
+app/build/
+备份/
+code_dictionary/
+error_1.txt
+keystore.properties
+*.jks
+*.so

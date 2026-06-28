@@ -1,0 +1,36 @@
+{
+    "title": "AVIV",
+    "width": 32,
+    "height": 32,
+
+    "idle": {
+        "image": "idle/idle",
+        "frame_rate": 1,
+        "speed": 4.0
+    },
+    "hide_bottom": {
+        "image": "hide/bottom",
+        "frame_rate": 4,
+        "speed": 2.0
+    },
+    "hide_top": {
+        "image": "hide/top",
+        "frame_rate": 4,
+        "speed": 2.0
+    },
+    "hide_left": {
+        "image": "hide/left",
+        "frame_rate": 4,
+        "speed": 2.0
+    },
+    "hide_right": {
+        "image": "hide/right",
+        "frame_rate": 4,
+        "speed": 2.0
+    },
+    "move": {
+        "image": "move/move",
+        "frame_rate": 1,
+        "speed": 1.0
+    }
+}

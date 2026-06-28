@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "packages": [
+        {
+            "id": "AVIV",
+            "title": "AVIV",
+            "path": "AVIV",
+            "isBuiltin": true
+        }
+    ]
+}

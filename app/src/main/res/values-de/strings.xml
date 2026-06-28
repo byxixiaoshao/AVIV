@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AVIV</string>
+    
+    <string name="download_failed">Download fehlgeschlagen</string>
+    <string name="download_failed_switch_source">Download fehlgeschlagen, bitte andere Quelle versuchen</string>
+    <string name="download_already_downloading">Download läuft, bitte warten</string>
+    
+    <string name="sound_library">Sound-Bibliothek</string>
+    <string name="select_white_noise">Wählen Sie Ihren Lieblings-Weißes Rauschen</string>
+    <string name="collapse">Einklappen</string>
+    <string name="expand">Ausklappen</string>
+    <string name="download_address">Download-URL</string>
+    <string name="author">Autor</string>
+    <string name="author_homepage">Autoren-Homepage</string>
+    <string name="download_info">Download-Info</string>
+    <string name="download_date">Download-Datum</string>
+    <string name="file_size">Dateigröße</string>
+    <string name="audio_duration">Audiodauer</string>
+    <string name="donate_author_hint">Wenn Ihnen der Sound gefällt, erwägen Sie eine Spende an den Autor</string>
+    <string name="close">Schließen</string>
+    
+    <string name="now_playing">Jetzt läuft</string>
+    <string name="adjust_volume_effects">Lautstärke und Effekte anpassen</string>
+    <string name="still_empty">Leere zum Leeren hinzufügen</string>
+    <string name="select_from_library">Wählen Sie Ihr Lieblings-Weißes Rauschen aus der Bibliothek</string>
+    <string name="white_noise">Weißes Rauschen</string>
+    <string name="scattered">Verstreut</string>
+    <string name="audio_clips_count">Audio-Clips</string>
+    <string name="config">Konfiguration</string>
+    <string name="remove">Entfernen</string>
+    <string name="play">Abspielen</string>
+    <string name="pause">Pause</string>
+    
+    <string name="settings">Einstellungen</string>
+    <string name="customize_experience">Passen Sie Ihre Erfahrung an</string>
+    <string name="music">Musik</string>
+    <string name="music_directory">Musikverzeichnis</string>
+    <string name="directories_count">Verzeichnisse</string>
+    <string name="general">Allgemein</string>
+    <string name="initialize_white_noise_list">Weißes Rauschen Liste initialisieren</string>
+    <string name="initialize_white_noise_list_desc">Weißes Rauschen Liste neu initialisieren (vorhandene Audios werden nicht gelöscht)</string>
+    <string name="initialize_success">Initialisierung erfolgreich</string>
+    <string name="auto_play_on_startup">Automatische Wiedergabe beim Start</string>
+    <string name="audio_effect_order">Audio-Effekt-Reihenfolge</string>
+    <string name="customize">Anpassen</string>
+    <string name="theme_color">Themenfarbe</string>
+    <string name="custom_colors">Benutzerdefinierte Farben</string>
+    <string name="accent_color">Akzentfarbe</string>
+    <string name="primary_color">Primärfarbe</string>
+    <string name="background_color">Hintergrundfarbe</string>
+    <string name="text_color">Textfarbe</string>
+    <string name="log_recording">Protokollaufzeichnung</string>
+    <string name="about_app">Über</string>
+    
+    <string name="scattered_sound_library">Verstreute Sound-Bibliothek</string>
+    <string name="select_random_sound_group">Wählen Sie eine zufällige Soundgruppe zum Abspielen</string>
+    <string name="add">Hinzufügen</string>
+    <string name="create_player">Player erstellen</string>
+    <string name="no_scattered_data">Keine verstreuten Sound-Daten</string>
+    
+    <string name="theme_color_dialog_title">Themenfarbe</string>
+    <string name="custom_color">Benutzerdefinierte Farbe</string>
+    <string name="confirm">Bestätigen</string>
+    <string name="cancel">Abbrechen</string>
+    
+    <string name="hue">Farbton</string>
+    <string name="saturation">Sättigung</string>
+    <string name="brightness">Helligkeit</string>
+    <string name="preview_text">Vorschautext</string>
+    
+    <string name="add_directory">Verzeichnis hinzufügen</string>
+    <string name="scanning_music">Musik wird gescannt...</string>
+    <string name="delete">Löschen</string>
+    
+    <string name="donate_support">Spenden-Unterstützung</string>
+    <string name="unlock_premium">Premium freischalten</string>
+    <string name="thank_you_premium">Danke, dass Sie Premium-Nutzer sind!\n\nWenn Ihnen die App gefällt, können Sie den QR-Code scannen, um zu spenden und den Entwickler zu unterstützen, weitere Funktionen hinzuzufügen.</string>
+    <string name="wechat_pay">WeChat Pay</string>
+    <string name="alipay">Alipay</string>
+    <string name="unlock_premium_hint">Schalten Sie Premium für nur 10 CNY frei und genießen Sie mehr Funktionen:</string>
+    <string name="feature">Funktion</string>
+    <string name="normal_version">Normal</string>
+    <string name="premium_version">Premium</string>
+    <string name="music_player">Musikplayer</string>
+    <string name="basic_playback">Basis</string>
+    <string name="full_feature">✓ Vollständig</string>
+    <string name="sound_quality_adjust">Klangqualität anpassen</string>
+    <string name="basic_adjust">Basis</string>
+    <string name="sound_classification">Sound-Klassifizierung</string>
+    <string name="preset_classification">Preset</string>
+    <string name="spatial_audio">Räumliches Audio</string>
+    <string name="basic_function">Basis</string>
+    <string name="import_sounds">Sounds importieren</string>
+    <string name="not_supported">Nicht unterstützt</string>
+    <string name="custom_classification">Benutzerdefinierte Klassifizierung</string>
+    <string name="weekly_usage_limit">Wochenlimit</string>
+    <string name="go_to_payment">Zur Zahlung</string>
+    
+    <string name="thank_you_support">Danke für Ihre Unterstützung</string>
+    <string name="thank_you_message">Ich habe Ihre Freundlichkeit erhalten, behalten Sie dieses Geld für einen Milchtee~</string>
+    <string name="thank_you_hint">Wenn Sie die Mittel haben, können Sie versuchen, den Entwickler durch eine Spende in den Einstellungen zu unterstützen. Natürlich können Sie auch die Weißes Rauschen-Autoren unterstützen.</string>
+    <string name="continue_">Weiter</string>
+    
+    <string name="app_icon">App-Symbol</string>
+    <string name="open_source_license">Open-Source-Lizenz</string>
+    <string name="sound_source_credit">Sound-Quelle Credits</string>
+    <string name="sound_source_hint">Alle Weißes Rauschen-Sounds stammen von Pixabay\nFolgend der Pixabay-Lizenz für kommerzielle Nutzung</string>
+    <string name="sound_source_tip">Drücken Sie lange auf die Weißes Rauschen-Option, um Audio- und Autorendetails anzuzeigen. Unterstützung wird geschätzt.</string>
+    
+    <string name="audio_effect_order_title">Audio-Effekt-Verarbeitungsreihenfolge</string>
+    <string name="audio_effect_order_hint">Klicken Sie auf Pfeile, um die Verarbeitungsreihenfolge anzupassen (von oben nach unten)</string>
+    <string name="spatial_offset">Räumlicher Versatz</string>
+    <string name="spatial_reverb">Räumlicher Hall</string>
+    <string name="equalizer">Equalizer</string>
+    <string name="quality_effect">Qualitätseffekt</string>
+    <string name="pseudo_restoration_processing">Pseudo-Restaurationsverarbeitung</string>
+    
+    <string name="create_scattered_group">Verstreute Gruppe erstellen</string>
+    <string name="group_name">Gruppenname</string>
+    <string name="create">Erstellen</string>
+    
+    <string name="add_to_track">Zur Spur hinzufügen</string>
+    <string name="select_track">Spur auswählen</string>
+    <string name="no_available_tracks">Keine Spuren verfügbar</string>
+    <string name="create_new_track">Neue Spur erstellen</string>
+    
+    <string name="more_adjustments">Weitere Anpassungen</string>
+    <string name="premium_exclusive_feature">Premium-Exklusivfunktion</string>
+    <string name="preset">Preset</string>
+    <string name="limiter">Limiter</string>
+    <string name="flat">Flach</string>
+    
+    <string name="all">Alle</string>
+    <string name="folder">Ordner</string>
+    <string name="artist">Künstler</string>
+    <string name="album">Album</string>
+    <string name="title">Titel</string>
+    <string name="duration">Dauer</string>
+    <string name="date_added">Hinzugefügt am</string>
+    
+    <string name="music_player_premium_feature">Musikplayer ist eine Premium-Funktion</string>
+    <string name="please_unlock_premium">Bitte Premium freischalten</string>
+    
+    <string name="hours">Stunden</string>
+    <string name="minutes">Minuten</string>
+    <string name="start_timer">Timer starten</string>
+    <string name="pause_type">Pausentyp</string>
+    <string name="snooze_time">Schlummerzeit</string>
+    <string name="timer_end_ring">Klingelton bei Timer-Ende</string>
+    <string name="global">Global</string>
+    <string name="music_only">Nur Musik</string>
+    <string name="white_noise_only">Nur Weißes Rauschen</string>
+    <string name="timer_15_min">15 Min</string>
+    <string name="timer_30_min">30 Min</string>
+    <string name="timer_45_min">45 Min</string>
+    <string name="timer_1_hour">1 Stunde</string>
+    <string name="timer_2_hour">2 Stunden</string>
+    <string name="timer_3_hour">3 Stunden</string>
+    
+    <string name="audio_group_config">Audio-Gruppenkonfiguration</string>
+    <string name="add_audio">Audio hinzufügen</string>
+    <string name="tap_to_add_audio">Tippen Sie, um Audio hinzuzufügen</string>
+    <string name="added_audio">Hinzugefügtes Audio (%1$d)</string>
+    <string name="playback_interval">Wiedergabeintervall</string>
+    <string name="min_interval">Min. Intervall</string>
+    <string name="max_interval">Max. Intervall</string>
+    <string name="seconds">Sek</string>
+    <string name="overlay_mode">Overlay-Modus</string>
+    <string name="overlay_mode_hint">(Timer startet wenn Audio beginnt, wartet nicht auf Ende)</string>
+    <string name="none">Keine</string>
+    <string name="room_size">Raumgröße</string>
+    <string name="decay_time">Abklingzeit</string>
+    <string name="damping">Dämpfung</string>
+    <string name="wet_level">Wet-Level</string>
+    <string name="dry_level">Dry-Level</string>
+    <string name="pre_delay">Pre-Delay</string>
+    <string name="insulation">Isolierung</string>
+    <string name="reflection_density">Reflexionsdichte</string>
+    <string name="reflection_spread">Reflexionsverteilung</string>
+    <string name="highpass_filter">Hochpassfilter</string>
+    <string name="early_reflection">Frühe Reflexion</string>
+    
+    <string name="shining_star">Leuchtender Stern</string>
+    <string name="dim_stardust">Schwaches Sternenstaub</string>
+    <string name="premium_user">Premium-Nutzer</string>
+    <string name="free_user">Kostenloser Nutzer</string>
+    <string name="donate_author">An Autor spenden</string>
+    
+    <string name="please_add_music_directory">Bitte fügen Sie zuerst ein Musikverzeichnis hinzu</string>
+    
+    <string name="personalization">Personalisierung</string>
+    <string name="viz_wn_sensitivity">Weißes Rauschen Visualisierungsempfindlichkeit</string>
+    <string name="viz_music_sensitivity">Musik-Visualisierungsempfindlichkeit</string>
+    <string name="viz_flash_sensitivity">Musik-Flash-Empfindlichkeit</string>
+    <string name="viz_refresh_rate">Visualisierungs-Änderungsgeschwindigkeit</string>
+    <string name="low">Niedrig</string>
+    <string name="medium">Mittel</string>
+    <string name="high">Hoch</string>
+    <string name="slow">Langsam</string>
+    <string name="fast">Schnell</string>
+    
+    <string name="security_warning_title">Sicherheitswarnung</string>
+    <string name="security_warning_message">Warnung: Dieses Installationspaket könnte kompromittiert sein!\n\nDas aktuelle Paket könnte von anderen verändert worden sein.\nAus Sicherheitsgründen bitte deinstallieren Sie diese App.\n(Dies kann nicht umgangen werden)</string>
+    <string name="security_warning_uninstall">Deinstallation bestätigen</string>
+    
+    <string name="eq_preset_flat">Flach</string>
+    <string name="eq_preset_bass_boost">Bass-Boost</string>
+    <string name="eq_preset_treble_boost">Höhen-Boost</string>
+    <string name="eq_preset_vocal">Vocal</string>
+    <string name="eq_preset_rock">Rock</string>
+    <string name="eq_preset_pop">Pop</string>
+    <string name="eq_preset_jazz">Jazz</string>
+    <string name="eq_preset_classical">Klassisch</string>
+    <string name="eq_preset_electronic">Elektronisch</string>
+    <string name="eq_preset_custom">Benutzerdefiniert</string>
+    <string name="eq_mode_manual">Manuell</string>
+    <string name="eq_mode_auto">Auto</string>
+    <string name="eq_mode_simple">Einfach</string>
+    <string name="eq_mode_advanced">Erweitert</string>
+    <string name="auto_eq_global_intensity">Globale Intensität</string>
+    <string name="auto_eq_bass_bias">Bass-Bias</string>
+    <string name="auto_eq_mid_bias">Mitten-Bias</string>
+    <string name="auto_eq_treble_bias">Höhen-Bias</string>
+    <string name="auto_eq_target_curve">Zielkurve</string>
+    <string name="auto_eq_curve_flat">Flach</string>
+    <string name="auto_eq_curve_warm">Warm</string>
+    <string name="auto_eq_curve_bright">Hell</string>
+    <string name="auto_eq_curve_vocal">Vocal</string>
+    <string name="auto_eq_curve_loudness">Lautheit</string>
+    <string name="auto_eq_response_speed">Dynamische Antwortgeschwindigkeit</string>
+    <string name="auto_eq_speed_fast">Schnell</string>
+    <string name="auto_eq_speed_medium">Mittel</string>
+    <string name="auto_eq_speed_slow">Langsam</string>
+    <string name="auto_eq_simple_desc">Auto-Equalizer analysiert Audioinhalt in Echtzeit und passt Frequenzbänder dynamisch an für optimales Klangerlebnis.</string>
+    <string name="auto_eq_freq_bias">Frequenz-Bias</string>
+    <string name="auto_eq_bass_bias_freq">Bass-Bias (&lt;250Hz)</string>
+    <string name="auto_eq_mid_bias_freq">Mitten-Bias (250-4kHz)</string>
+    <string name="auto_eq_treble_bias_freq">Höhen-Bias (&gt;4kHz)</string>
+    <string name="auto_eq_dynamic_response">Dynamische Antwort</string>
+    <string name="auto_eq_max_slope">Max. Anstieg</string>
+    <string name="auto_eq_freq_limit">Frequenz-Limit</string>
+    <string name="auto_eq_max_boost">Max. Boost</string>
+    <string name="auto_eq_max_cut">Max. Cut</string>
+    <string name="auto_eq_hysteresis">Hysterese</string>
+    <string name="auto_eq_spectrum_analysis">Spektrumanalyse</string>
+    <string name="auto_eq_smoothing">Glättung</string>
+    <string name="auto_eq_coupling">Kopplung</string>
+    <string name="auto_eq_curve_fine_tune">Kurven-Feintuning</string>
+    <string name="auto_eq_brightness_target">Helligkeitsziel</string>
+    <string name="auto_eq_loudness_target">Lautheitsziel</string>
+    <string name="auto_eq_dynamic_q">Dynamisches Q</string>
+    <string name="auto_eq_advanced_desc">Erweiterter Modus bietet vollständige Frequenzanalyse, Entscheidungsmaschine und dynamische Ausführungsparameter. Anpassungen beeinflussen direkt das Verhalten des Auto-Equalizers.</string>
+    <string name="reverb_preset_stadium">Stadion</string>
+    <string name="reverb_preset_car">Im Auto</string>
+    <string name="reverb_preset_bathroom">Badezimmer</string>
+    <string name="reverb_preset_church">Kirche</string>
+    <string name="reverb_preset_small_club">Kleiner Club</string>
+    <string name="reverb_preset_forest">Wald</string>
+    <string name="reverb_preset_valley">Tal</string>
+    <string name="reverb_preset_seaside">Strand</string>
+    <string name="reverb_preset_desert">Wüste</string>
+    <string name="reverb_preset_cave">Höhle</string>
+    <string name="reverb_preset_tunnel">Tunnel</string>
+    <string name="audio_adjust">Audio-Anpassung</string>
+    <string name="spatial_reverb_title">Räumlicher Hall</string>
+    <string name="preset_label">Preset: %1$s</string>
+    <string name="custom">Benutzerdefiniert</string>
+    <string name="format_seconds">%.2f Sek</string>
+    <string name="reverb_room_size">Raumgröße</string>
+    <string name="reverb_decay_time">Abklingzeit</string>
+    <string name="reverb_damping">Dämpfung</string>
+    <string name="reverb_wet_level">Wet-Level</string>
+    <string name="reverb_dry_level">Dry-Level</string>
+    <string name="reverb_pre_delay">Pre-Delay</string>
+    <string name="reverb_reflection_density">Reflexionsdichte</string>
+    <string name="reverb_reflection_spread">Reflexionsverteilung</string>
+    <string name="reverb_highpass">Hochpass</string>
+    <string name="reverb_early_reflection">Frühe Reflexion</string>
+    <string name="sound_quality_effects">Klangqualitätseffekte</string>
+    <string name="insulation_coefficient">Isolationskoeffizient</string>
+    <string name="effect_8bit_game">8-Bit-Spiel</string>
+    <string name="effect_underwater">Unterwasser</string>
+    <string name="effect_alien_signal">Alien-Signal</string>
+    <string name="effect_megaphone">Megafon</string>
+    <string name="sound_offset">Klangversatz</string>
+    <string name="experimental">(Experimentell)</string>
+    <string name="stutter_warning">Kann während der Verwendung ruckeln</string>
+    <string name="enable">Aktivieren</string>
+    <string name="offset_type_label">Versatztyp: %1$s</string>
+    <string name="offset_type_fixed">Fester Versatz</string>
+    <string name="offset_type_surround">3D-Surround</string>
+    <string name="offset_type_random">Zufällige Bewegung</string>
+    
+    <string name="mixer">Mixer</string>
+    <string name="playlist">Wiedergabeliste</string>
+    
+    <string name="no_scattered_tracks_hint">Keine Streuungsspuren\nBitte erstellen Sie zuerst eine Streuungsspur im Player</string>
+    <string name="select_scattered_track_hint">Streuungsspur zum Hinzufügen auswählen:</string>
+    <string name="enter_scattered_group_name">Bitte geben Sie den Streuungsgruppennamen ein</string>
+    <string name="name">Name</string>
+    <string name="enter_group_name">Gruppennamen eingeben</string>
+    
+    <string name="spatial_scatter_warning">Als Klangversatzverarbeitung kann es während der Verwendung zu Ruckeln kommen</string>
+    <string name="axis_x">X-Achse (Links/Rechts)</string>
+    <string name="axis_y">Y-Achse (Höhe)</string>
+    <string name="axis_z">Z-Achse (Vorne/Hinten)</string>
+    
+    <string name="current_playing_count">Aktuelle Wiedergabe (%1$d Titel)</string>
+    <string name="save_as_playlist">Als Wiedergabeliste speichern</string>
+    <string name="no_music_playing">Keine Musik wird abgespielt</string>
+    <string name="unknown_artist">Unbekannter Künstler</string>
+    <string name="favorites">Favoriten</string>
+    <string name="track_count">%1$d Titel</string>
+    <string name="create_playlist">Wiedergabeliste erstellen</string>
+    <string name="playlist_name">Wiedergabelistenname</string>
+    <string name="save">Speichern</string>
+    <string name="save_current_playlist_hint">Aktuelle Wiedergabeliste (%1$d Titel) als neue Wiedergabeliste speichern</string>
+    
+    <string name="current_list">Aktuelle Liste</string>
+    
+    <string name="preload_completed">Vorladen abgeschlossen</string>
+    <string name="preload_initializing">Vorladen wird initialisiert...</string>
+    <string name="preload_loading_music_config">Musikverzeichniskonfiguration wird geladen...</string>
+    <string name="preload_scanning_music">Musikbibliothek wird gescannt...</string>
+    <string name="preload_loading_sound_categories">Soundkategorien werden geladen...</string>
+    <string name="preload_warming_animation">Animationssystem wird aufgewärmt...</string>
+    <string name="preload_prerendering_ui">UI-Komponenten werden vorgerendert...</string>
+    <string name="preload_complete">Vorladen abgeschlossen</string>
+    
+    <string name="seconds_format">%.2f s</string>
+    <string name="x_axis_rotation">X-Achsen-Rotation</string>
+    <string name="y_axis_rotation">Y-Achsen-Rotation</string>
+    <string name="z_axis_rotation">Z-Achsen-Rotation</string>
+    <string name="offset_distance">Offset-Abstand</string>
+    
+    <string name="home">Startseite</string>
+    <string name="setting">Einstellungen</string>
+    
+    <string name="end_timer">Timer beenden</string>
+    <string name="snooze">Snooze</string>
+    
+    <string name="theme_default">Standard</string>
+    <string name="theme_default_night">Standard·Nacht</string>
+    <string name="theme_ocean_blue">Ozeanblau</string>
+    <string name="theme_ocean_blue_night">Ozeanblau·Nacht</string>
+    <string name="theme_forest_green">Waldgrün</string>
+    <string name="theme_forest_green_night">Waldgrün·Nacht</string>
+    <string name="theme_sunset_orange">Sonnenuntergang-Orange</string>
+    <string name="theme_sunset_orange_night">Sonnenuntergang-Orange·Nacht</string>
+    <string name="theme_purple_dream">Violetter Traum</string>
+    <string name="theme_purple_dream_night">Violetter Traum·Nacht</string>
+    <string name="theme_rose_pink">Rosenrosa</string>
+    <string name="theme_rose_pink_night">Rosenrosa·Nacht</string>
+    <string name="theme_coffee_brown">Kaffeebraun</string>
+    <string name="theme_coffee_brown_night">Kaffeebraun·Nacht</string>
+    <string name="theme_pure_white">Reines Weiß</string>
+    <string name="theme_pure_black">Reines Schwarz</string>
+    <string name="theme_custom">Benutzerdefiniert</string>
+    
+    <string name="no_music_directory">Kein Musikverzeichnis hinzugefügt\nKlicken Sie auf die Schaltfläche unten zum Hinzufügen</string>
+    <string name="move_up">Nach oben verschieben</string>
+    <string name="move_down">Nach unten verschieben</string>
+    
+    <string name="category_name">Kategoriename</string>
+    <string name="audio_name">Audioname</string>
+    <string name="download_link">Download-Link</string>
+    <string name="file_selected">Datei ausgewählt</string>
+    <string name="select_audio_file">Audiodatei auswählen</string>
+    <string name="uncategorized">Nicht kategorisiert</string>
+    
+    <string name="in_development">In Entwicklung</string>
+    
+    <string name="surround_mode">Surround-Modus: %1$s</string>
+    <string name="surround_horizontal">Horizontaler Surround</string>
+    <string name="surround_vertical">Vertikaler Surround</string>
+    <string name="surround_cross">Kreuz-Surround</string>
+    
+    <string name="timer_finished">Timer beendet</string>
+    <string name="snooze_time_minutes">Snooze-Zeit: %1$d Minuten</string>
+    
+    <string name="category">Kategorie</string>
+    <string name="audio">Audio</string>
+    <string name="network">Netzwerk</string>
+    <string name="local">Lokal</string>
+    <string name="spatial_min_distance">Min Distance</string>
+    <string name="volume">Volume</string>
+    <string name="speed">Speed</string>
+    <string name="limit_effects">Limit Quality Effects</string>
+    <string name="audio_effect_config">Audio Effect Config</string>
+    <string name="quality_effect_title">Quality Effect</string>
+    <string name="offset_type_random_wander">Random Wander</string>
+    <string name="spatial_surround_speed">Surround Speed</string>
+    <string name="added_audio_count">Added %1$d audio</string>
+    <string name="media_control_smart">Smart</string>
+    <string name="media_control_white_noise">White Noise</string>
+    <string name="spatial_surround_radius">Surround Radius</string>
+    <string name="surround_mode_vertical">Vertical Surround</string>
+    <string name="select_scattered_track">Select scattered track:</string>
+    <string name="new_playlist">New Playlist</string>
+    <string name="mix_mode">Mix Mode</string>
+    <string name="auto_eq_bias_offset">Bias Offset</string>
+    <string name="surround_mode_horizontal">Horizontal Surround</string>
+    <string name="reset">Reset</string>
+    <string name="delete_confirm">Confirm Delete</string>
+    <string name="media_control_priority">Media Control Priority</string>
+    <string name="developing">Developing</string>
+    <string name="limit_equalizer">Limit Equalizer</string>
+    <string name="timer_end">Timer End</string>
+    <string name="spatial_wander_random">Wander Randomness</string>
+    <string name="surround_mode_transverse">Transverse Surround</string>
+    <string name="media_control_music">Music</string>
+    <string name="limit_reverb">Limit Spatial Reverb</string>
+    <string name="media_control_all">All</string>
+    <string name="input_scattered_name">Please enter scattered group name</string>
+    <string name="favorite">Favorite</string>
+    <string name="media_control_priority_title">Select priority control target</string>
+    <string name="no_scattered_track">No scattered tracks\nPlease create a scattered track first</string>
+    <string name="auto_eq_assist">Auto EQ Assist</string>
+    <string name="spatial_scatter_range">Spatial Scatter Range</string>
+    <string name="test">Test</string>
+    <string name="timer">Timer</string>
+    <string name="spatial_offset_title">Spatial Offset</string>
+    <string name="spatial_offset_distance">Offset Distance</string>
+    <string name="spatial_max_distance">Max Distance</string>
+    <string name="click_to_download">Click to Download</string>
+    <string name="limit_spatial">Limit Spatial Offset</string>
+    <string name="media_control_smart_desc">Auto select based on playback state</string>
+    <string name="spatial_wander_speed">Wander Speed</string>
+    <string name="offset_type_3d_surround">3D Surround</string>
+    <string name="current_playing">Current Playing (%1$d)</string>
+    <string name="tone">Tone</string>
+    <string name="delete_sound_hint">Are you sure you want to delete this sound? This action cannot be undone.</string>
+    <string name="eq_preset_v_shape">V Shape</string>
+</resources>

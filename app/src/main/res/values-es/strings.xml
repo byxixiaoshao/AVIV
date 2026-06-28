@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AVIV</string>
+    
+    <string name="download_failed">Descarga fallida</string>
+    <string name="download_failed_switch_source">Descarga fallida, intente cambiar de fuente</string>
+    <string name="download_already_downloading">Descargando, por favor espere</string>
+    
+    <string name="sound_library">Biblioteca de sonidos</string>
+    <string name="select_white_noise">Seleccione su ruido blanco favorito</string>
+    <string name="collapse">Colapsar</string>
+    <string name="expand">Expandir</string>
+    <string name="download_address">URL de descarga</string>
+    <string name="author">Autor</string>
+    <string name="author_homepage">Página del autor</string>
+    <string name="download_info">Información de descarga</string>
+    <string name="download_date">Fecha de descarga</string>
+    <string name="file_size">Tamaño del archivo</string>
+    <string name="audio_duration">Duración del audio</string>
+    <string name="donate_author_hint">Si le gusta el sonido, considere donar al autor</string>
+    <string name="close">Cerrar</string>
+    
+    <string name="now_playing">Reproduciendo ahora</string>
+    <string name="adjust_volume_effects">Ajustar volumen y efectos</string>
+    <string name="still_empty">Añadir vacío al vacío</string>
+    <string name="select_from_library">Seleccione su ruido blanco favorito de la biblioteca</string>
+    <string name="white_noise">Ruido blanco</string>
+    <string name="scattered">Disperso</string>
+    <string name="audio_clips_count">clips de audio</string>
+    <string name="config">Configuración</string>
+    <string name="remove">Eliminar</string>
+    <string name="play">Reproducir</string>
+    <string name="pause">Pausar</string>
+    
+    <string name="settings">Ajustes</string>
+    <string name="customize_experience">Personalice su experiencia</string>
+    <string name="music">Música</string>
+    <string name="music_directory">Directorio de música</string>
+    <string name="directories_count">directorios</string>
+    <string name="general">General</string>
+    <string name="initialize_white_noise_list">Inicializar lista de ruido blanco</string>
+    <string name="initialize_white_noise_list_desc">Reinicializar lista de ruido blanco (no se eliminarán audios existentes)</string>
+    <string name="initialize_success">Inicialización exitosa</string>
+    <string name="auto_play_on_startup">Reproducción automática al inicio</string>
+    <string name="audio_effect_order">Orden de efectos de audio</string>
+    <string name="customize">Personalizar</string>
+    <string name="theme_color">Color del tema</string>
+    <string name="custom_colors">Colores personalizados</string>
+    <string name="accent_color">Color de acento</string>
+    <string name="primary_color">Color primario</string>
+    <string name="background_color">Color de fondo</string>
+    <string name="text_color">Color de texto</string>
+    <string name="log_recording">Registro de logs</string>
+    <string name="about_app">Acerca de</string>
+    
+    <string name="scattered_sound_library">Biblioteca de sonidos dispersos</string>
+    <string name="select_random_sound_group">Seleccione grupo de sonido aleatorio para reproducir</string>
+    <string name="add">Añadir</string>
+    <string name="create_player">Crear reproductor</string>
+    <string name="no_scattered_data">Sin datos de sonido disperso</string>
+    
+    <string name="theme_color_dialog_title">Color del tema</string>
+    <string name="custom_color">Color personalizado</string>
+    <string name="confirm">Confirmar</string>
+    <string name="cancel">Cancelar</string>
+    
+    <string name="hue">Tono</string>
+    <string name="saturation">Saturación</string>
+    <string name="brightness">Brillo</string>
+    <string name="preview_text">Texto de vista previa</string>
+    
+    <string name="add_directory">Añadir directorio</string>
+    <string name="scanning_music">Escaneando música...</string>
+    <string name="delete">Eliminar</string>
+    
+    <string name="donate_support">Donar apoyo</string>
+    <string name="unlock_premium">Desbloquear premium</string>
+    <string name="thank_you_premium">¡Gracias por ser usuario premium!\n\nSi le gusta la aplicación, puede escanear el código QR para donar y apoyar al desarrollador para seguir añadiendo más funciones.</string>
+    <string name="wechat_pay">WeChat Pay</string>
+    <string name="alipay">Alipay</string>
+    <string name="unlock_premium_hint">Desbloquee premium por solo 10 CNY y disfrute de más funciones:</string>
+    <string name="feature">Característica</string>
+    <string name="normal_version">Normal</string>
+    <string name="premium_version">Premium</string>
+    <string name="music_player">Reproductor de música</string>
+    <string name="basic_playback">Básico</string>
+    <string name="full_feature">✓ Completo</string>
+    <string name="sound_quality_adjust">Ajuste de calidad de sonido</string>
+    <string name="basic_adjust">Básico</string>
+    <string name="sound_classification">Clasificación de sonido</string>
+    <string name="preset_classification">Preset</string>
+    <string name="spatial_audio">Audio espacial</string>
+    <string name="basic_function">Básico</string>
+    <string name="import_sounds">Importar sonidos</string>
+    <string name="not_supported">No soportado</string>
+    <string name="custom_classification">Clasificación personalizada</string>
+    <string name="weekly_usage_limit">Límite semanal</string>
+    <string name="go_to_payment">Ir al pago</string>
+    
+    <string name="thank_you_support">Gracias por su apoyo</string>
+    <string name="thank_you_message">Recibí su amabilidad, guarde este dinero para un té con leche~</string>
+    <string name="thank_you_hint">Si tiene los medios, puede intentar apoyar al desarrollador donando en la configuración. Por supuesto, también puede apoyar a los autores de ruido blanco.</string>
+    <string name="continue_">Continuar</string>
+    
+    <string name="app_icon">Icono de la aplicación</string>
+    <string name="open_source_license">Licencia de código abierto</string>
+    <string name="sound_source_credit">Crédito de fuente de sonido</string>
+    <string name="sound_source_hint">Todos los sonidos de ruido blanco son de Pixabay\nSiguiendo la licencia de Pixabay para uso comercial</string>
+    <string name="sound_source_tip">Mantén presionada la opción de ruido blanco para ver los detalles del audio y del autor. Se agradece el apoyo.</string>
+    
+    <string name="audio_effect_order_title">Orden de procesamiento de efectos de audio</string>
+    <string name="audio_effect_order_hint">Haga clic en las flechas para ajustar el orden de procesamiento (de arriba a abajo)</string>
+    <string name="spatial_offset">Desplazamiento espacial</string>
+    <string name="spatial_reverb">Reverberación espacial</string>
+    <string name="equalizer">Ecualizador</string>
+    <string name="quality_effect">Efecto de calidad</string>
+    <string name="pseudo_restoration_processing">Procesamiento de pseudo-restauración</string>
+    
+    <string name="create_scattered_group">Crear grupo disperso</string>
+    <string name="group_name">Nombre del grupo</string>
+    <string name="create">Crear</string>
+    
+    <string name="add_to_track">Añadir a pista</string>
+    <string name="select_track">Seleccionar pista</string>
+    <string name="no_available_tracks">Sin pistas disponibles</string>
+    <string name="create_new_track">Crear nueva pista</string>
+    
+    <string name="more_adjustments">Más ajustes</string>
+    <string name="premium_exclusive_feature">Función exclusiva premium</string>
+    <string name="preset">Preset</string>
+    <string name="limiter">Limitador</string>
+    <string name="flat">Plano</string>
+    
+    <string name="all">Todo</string>
+    <string name="folder">Carpeta</string>
+    <string name="artist">Artista</string>
+    <string name="album">Álbum</string>
+    <string name="title">Título</string>
+    <string name="duration">Duración</string>
+    <string name="date_added">Fecha añadida</string>
+    
+    <string name="music_player_premium_feature">El reproductor de música es una función premium</string>
+    <string name="please_unlock_premium">Por favor desbloquee premium</string>
+    
+    <string name="hours">Horas</string>
+    <string name="minutes">Minutos</string>
+    <string name="start_timer">Iniciar temporizador</string>
+    <string name="pause_type">Tipo de pausa</string>
+    <string name="snooze_time">Tiempo de posposición</string>
+    <string name="timer_end_ring">Timbre al finalizar temporizador</string>
+    <string name="global">Global</string>
+    <string name="music_only">Solo música</string>
+    <string name="white_noise_only">Solo ruido blanco</string>
+    <string name="timer_15_min">15 min</string>
+    <string name="timer_30_min">30 min</string>
+    <string name="timer_45_min">45 min</string>
+    <string name="timer_1_hour">1 hora</string>
+    <string name="timer_2_hour">2 horas</string>
+    <string name="timer_3_hour">3 horas</string>
+    
+    <string name="audio_group_config">Configuración de grupo de audio</string>
+    <string name="add_audio">Añadir audio</string>
+    <string name="tap_to_add_audio">Toque para añadir audio</string>
+    <string name="added_audio">Audio añadido (%1$d)</string>
+    <string name="playback_interval">Intervalo de reproducción</string>
+    <string name="min_interval">Intervalo mínimo</string>
+    <string name="max_interval">Intervalo máximo</string>
+    <string name="seconds">seg</string>
+    <string name="overlay_mode">Modo superpuesto</string>
+    <string name="overlay_mode_hint">(El temporizador comienza cuando el audio inicia, no espera a que termine)</string>
+    <string name="none">Ninguno</string>
+    <string name="room_size">Tamaño de sala</string>
+    <string name="decay_time">Tiempo de decaimiento</string>
+    <string name="damping">Amortiguación</string>
+    <string name="wet_level">Nivel húmedo</string>
+    <string name="dry_level">Nivel seco</string>
+    <string name="pre_delay">Pre-delay</string>
+    <string name="insulation">Aislamiento</string>
+    <string name="reflection_density">Densidad de reflexión</string>
+    <string name="reflection_spread">Dispersión de reflexión</string>
+    <string name="highpass_filter">Filtro paso alto</string>
+    <string name="early_reflection">Reflexión temprana</string>
+    
+    <string name="shining_star">Estrella brillante</string>
+    <string name="dim_stardust">Polvo estelar tenue</string>
+    <string name="premium_user">Usuario premium</string>
+    <string name="free_user">Usuario gratuito</string>
+    <string name="donate_author">Donar al autor</string>
+    
+    <string name="please_add_music_directory">Por favor añada primero un directorio de música</string>
+    
+    <string name="personalization">Personalización</string>
+    <string name="viz_wn_sensitivity">Sensibilidad de visualización de ruido blanco</string>
+    <string name="viz_music_sensitivity">Sensibilidad de visualización de música</string>
+    <string name="viz_flash_sensitivity">Sensibilidad de flash de música</string>
+    <string name="viz_refresh_rate">Velocidad de cambio de visualización</string>
+    <string name="low">Bajo</string>
+    <string name="medium">Medio</string>
+    <string name="high">Alto</string>
+    <string name="slow">Lento</string>
+    <string name="fast">Rápido</string>
+    
+    <string name="security_warning_title">Advertencia de Seguridad</string>
+    <string name="security_warning_message">¡Advertencia: Este paquete de instalación puede estar comprometido!\n\nEl paquete actual puede haber sido modificado por otros.\nPor razones de seguridad, por favor desinstale esta aplicación.\n(Esto no se puede omitir)</string>
+    <string name="security_warning_uninstall">Confirmar Desinstalación</string>
+    
+    <string name="eq_preset_flat">Plano</string>
+    <string name="eq_preset_bass_boost">Refuerzo de Graves</string>
+    <string name="eq_preset_treble_boost">Refuerzo de Agudos</string>
+    <string name="eq_preset_vocal">Vocal</string>
+    <string name="eq_preset_rock">Rock</string>
+    <string name="eq_preset_pop">Pop</string>
+    <string name="eq_preset_jazz">Jazz</string>
+    <string name="eq_preset_classical">Clásico</string>
+    <string name="eq_preset_electronic">Electrónico</string>
+    <string name="eq_preset_custom">Personalizado</string>
+    <string name="eq_mode_manual">Manual</string>
+    <string name="eq_mode_auto">Auto</string>
+    <string name="eq_mode_simple">Simple</string>
+    <string name="eq_mode_advanced">Avanzado</string>
+    <string name="auto_eq_global_intensity">Intensidad Global</string>
+    <string name="auto_eq_bass_bias">Sesgo de Graves</string>
+    <string name="auto_eq_mid_bias">Sesgo de Medios</string>
+    <string name="auto_eq_treble_bias">Sesgo de Agudos</string>
+    <string name="auto_eq_target_curve">Curva Objetivo</string>
+    <string name="auto_eq_curve_flat">Plano</string>
+    <string name="auto_eq_curve_warm">Cálido</string>
+    <string name="auto_eq_curve_bright">Brillante</string>
+    <string name="auto_eq_curve_vocal">Vocal</string>
+    <string name="auto_eq_curve_loudness">Sonoridad</string>
+    <string name="auto_eq_response_speed">Velocidad de Respuesta Dinámica</string>
+    <string name="auto_eq_speed_fast">Rápido</string>
+    <string name="auto_eq_speed_medium">Medio</string>
+    <string name="auto_eq_speed_slow">Lento</string>
+    <string name="auto_eq_simple_desc">El ecualizador automático analiza el contenido de audio en tiempo real y ajusta dinámicamente las bandas de frecuencia para una experiencia óptima.</string>
+    <string name="auto_eq_freq_bias">Sesgo de Frecuencia</string>
+    <string name="auto_eq_bass_bias_freq">Sesgo de Graves (&lt;250Hz)</string>
+    <string name="auto_eq_mid_bias_freq">Sesgo de Medios (250-4kHz)</string>
+    <string name="auto_eq_treble_bias_freq">Sesgo de Agudos (&gt;4kHz)</string>
+    <string name="auto_eq_dynamic_response">Respuesta Dinámica</string>
+    <string name="auto_eq_max_slope">Pendiente Máx.</string>
+    <string name="auto_eq_freq_limit">Límite de Frecuencia</string>
+    <string name="auto_eq_max_boost">Boost Máx.</string>
+    <string name="auto_eq_max_cut">Corte Máx.</string>
+    <string name="auto_eq_hysteresis">Histéresis</string>
+    <string name="auto_eq_spectrum_analysis">Análisis Espectral</string>
+    <string name="auto_eq_smoothing">Suavizado</string>
+    <string name="auto_eq_coupling">Acoplamiento</string>
+    <string name="auto_eq_curve_fine_tune">Ajuste Fino de Curva</string>
+    <string name="auto_eq_brightness_target">Objetivo de Brillo</string>
+    <string name="auto_eq_loudness_target">Objetivo de Sonoridad</string>
+    <string name="auto_eq_dynamic_q">Q Dinámico</string>
+    <string name="auto_eq_advanced_desc">El modo avanzado proporciona análisis de frecuencia completo, motor de decisión y parámetros de ejecución dinámica. Los ajustes afectan directamente el comportamiento del ecualizador automático.</string>
+    <string name="reverb_preset_stadium">Estadio</string>
+    <string name="reverb_preset_car">Dentro del Coche</string>
+    <string name="reverb_preset_bathroom">Baño</string>
+    <string name="reverb_preset_church">Iglesia</string>
+    <string name="reverb_preset_small_club">Club Pequeño</string>
+    <string name="reverb_preset_forest">Bosque</string>
+    <string name="reverb_preset_valley">Valle</string>
+    <string name="reverb_preset_seaside">Costa</string>
+    <string name="reverb_preset_desert">Desierto</string>
+    <string name="reverb_preset_cave">Cueva</string>
+    <string name="reverb_preset_tunnel">Túnel</string>
+    <string name="audio_adjust">Ajuste de Audio</string>
+    <string name="spatial_reverb_title">Reverberación Espacial</string>
+    <string name="preset_label">Preset: %1$s</string>
+    <string name="custom">Personalizado</string>
+    <string name="format_seconds">%.2f s</string>
+    <string name="reverb_room_size">Tamaño de Sala</string>
+    <string name="reverb_decay_time">Tiempo de Decaimiento</string>
+    <string name="reverb_damping">Amortiguación</string>
+    <string name="reverb_wet_level">Nivel Wet</string>
+    <string name="reverb_dry_level">Nivel Dry</string>
+    <string name="reverb_pre_delay">Pre-Delay</string>
+    <string name="reverb_reflection_density">Densidad de Reflexión</string>
+    <string name="reverb_reflection_spread">Dispersión de Reflexión</string>
+    <string name="reverb_highpass">Paso Alto</string>
+    <string name="reverb_early_reflection">Reflexión Temprana</string>
+    <string name="sound_quality_effects">Efectos de Calidad de Sonido</string>
+    <string name="insulation_coefficient">Coeficiente de Aislamiento</string>
+    <string name="effect_8bit_game">Juego 8-bit</string>
+    <string name="effect_underwater">Bajo el Agua</string>
+    <string name="effect_alien_signal">Señal Alienígena</string>
+    <string name="effect_megaphone">Megáfono</string>
+    <string name="sound_offset">Desplazamiento de Sonido</string>
+    <string name="experimental">(Experimental)</string>
+    <string name="stutter_warning">Puede tartamudear durante el uso</string>
+    <string name="enable">Activar</string>
+    <string name="offset_type_label">Tipo de Desplazamiento: %1$s</string>
+    <string name="offset_type_fixed">Desplazamiento Fijo</string>
+    <string name="offset_type_surround">Envolvente 3D</string>
+    <string name="offset_type_random">Movimiento Aleatorio</string>
+    
+    <string name="mixer">Mezclador</string>
+    <string name="playlist">Lista de Reproducción</string>
+    
+    <string name="no_scattered_tracks_hint">No hay pistas dispersas\nPor favor, crea primero una pista dispersa en el reproductor</string>
+    <string name="select_scattered_track_hint">Selecciona la pista dispersa a añadir:</string>
+    <string name="enter_scattered_group_name">Por favor, introduce el nombre del grupo disperso</string>
+    <string name="name">Nombre</string>
+    <string name="enter_group_name">Introduce el nombre del grupo</string>
+    
+    <string name="spatial_scatter_warning">Como procesamiento de desplazamiento de sonido, pueden producirse tartamudeos durante el uso</string>
+    <string name="axis_x">Eje X (Izquierda/Derecha)</string>
+    <string name="axis_y">Eje Y (Altura)</string>
+    <string name="axis_z">Eje Z (Delante/Detrás)</string>
+    
+    <string name="current_playing_count">Reproduciendo (%1$d pistas)</string>
+    <string name="save_as_playlist">Guardar como Lista de Reproducción</string>
+    <string name="no_music_playing">No hay música reproduciéndose</string>
+    <string name="unknown_artist">Artista Desconocido</string>
+    <string name="favorites">Favoritos</string>
+    <string name="track_count">%1$d pistas</string>
+    <string name="create_playlist">Crear Lista de Reproducción</string>
+    <string name="playlist_name">Nombre de Lista de Reproducción</string>
+    <string name="save">Guardar</string>
+    <string name="save_current_playlist_hint">Guardar lista actual (%1$d pistas) como nueva lista de reproducción</string>
+    
+    <string name="current_list">Lista Actual</string>
+    
+    <string name="preload_completed">Precarga completada</string>
+    <string name="preload_initializing">Inicializando precarga...</string>
+    <string name="preload_loading_music_config">Cargando configuración de directorio de música...</string>
+    <string name="preload_scanning_music">Escaneando biblioteca de música...</string>
+    <string name="preload_loading_sound_categories">Cargando categorías de sonido...</string>
+    <string name="preload_warming_animation">Calentando sistema de animación...</string>
+    <string name="preload_prerendering_ui">Pre-renderizando componentes de UI...</string>
+    <string name="preload_complete">Precarga completa</string>
+    
+    <string name="seconds_format">%.2f s</string>
+    <string name="x_axis_rotation">Rotación Eje X</string>
+    <string name="y_axis_rotation">Rotación Eje Y</string>
+    <string name="z_axis_rotation">Rotación Eje Z</string>
+    <string name="offset_distance">Distancia de Desplazamiento</string>
+    
+    <string name="home">Inicio</string>
+    <string name="setting">Configuración</string>
+    
+    <string name="end_timer">Terminar Temporizador</string>
+    <string name="snooze">Posponer</string>
+    
+    <string name="theme_default">Predeterminado</string>
+    <string name="theme_default_night">Predeterminado·Noche</string>
+    <string name="theme_ocean_blue">Azul Océano</string>
+    <string name="theme_ocean_blue_night">Azul Océano·Noche</string>
+    <string name="theme_forest_green">Verde Bosque</string>
+    <string name="theme_forest_green_night">Verde Bosque·Noche</string>
+    <string name="theme_sunset_orange">Naranja Atardecer</string>
+    <string name="theme_sunset_orange_night">Naranja Atardecer·Noche</string>
+    <string name="theme_purple_dream">Sueño Púrpura</string>
+    <string name="theme_purple_dream_night">Sueño Púrpura·Noche</string>
+    <string name="theme_rose_pink">Rosa</string>
+    <string name="theme_rose_pink_night">Rosa·Noche</string>
+    <string name="theme_coffee_brown">Marrón Café</string>
+    <string name="theme_coffee_brown_night">Marrón Café·Noche</string>
+    <string name="theme_pure_white">Blanco Puro</string>
+    <string name="theme_pure_black">Negro Puro</string>
+    <string name="theme_custom">Personalizado</string>
+    
+    <string name="no_music_directory">No se ha añadido ningún directorio de música\nHaz clic en el botón de abajo para añadir</string>
+    <string name="move_up">Mover Arriba</string>
+    <string name="move_down">Mover Abajo</string>
+    
+    <string name="category_name">Nombre de Categoría</string>
+    <string name="audio_name">Nombre de Audio</string>
+    <string name="download_link">Enlace de Descarga</string>
+    <string name="file_selected">Archivo seleccionado</string>
+    <string name="select_audio_file">Seleccionar archivo de audio</string>
+    <string name="uncategorized">Sin Categorizar</string>
+    
+    <string name="in_development">En Desarrollo</string>
+    
+    <string name="surround_mode">Modo Envolvente: %1$s</string>
+    <string name="surround_horizontal">Envolvente Horizontal</string>
+    <string name="surround_vertical">Envolvente Vertical</string>
+    <string name="surround_cross">Envolvente Cruzada</string>
+    
+    <string name="timer_finished">Temporizador terminado</string>
+    <string name="snooze_time_minutes">Tiempo de posposición: %1$d minutos</string>
+    
+    <string name="category">Categoría</string>
+    <string name="audio">Audio</string>
+    <string name="network">Red</string>
+    <string name="local">Local</string>
+    <string name="spatial_min_distance">Min Distance</string>
+    <string name="volume">Volume</string>
+    <string name="speed">Speed</string>
+    <string name="limit_effects">Limit Quality Effects</string>
+    <string name="audio_effect_config">Audio Effect Config</string>
+    <string name="quality_effect_title">Quality Effect</string>
+    <string name="offset_type_random_wander">Random Wander</string>
+    <string name="spatial_surround_speed">Surround Speed</string>
+    <string name="added_audio_count">Added %1$d audio</string>
+    <string name="media_control_smart">Smart</string>
+    <string name="media_control_white_noise">White Noise</string>
+    <string name="spatial_surround_radius">Surround Radius</string>
+    <string name="surround_mode_vertical">Vertical Surround</string>
+    <string name="select_scattered_track">Select scattered track:</string>
+    <string name="new_playlist">New Playlist</string>
+    <string name="mix_mode">Mix Mode</string>
+    <string name="auto_eq_bias_offset">Bias Offset</string>
+    <string name="surround_mode_horizontal">Horizontal Surround</string>
+    <string name="reset">Reset</string>
+    <string name="delete_confirm">Confirm Delete</string>
+    <string name="media_control_priority">Media Control Priority</string>
+    <string name="developing">Developing</string>
+    <string name="limit_equalizer">Limit Equalizer</string>
+    <string name="timer_end">Timer End</string>
+    <string name="spatial_wander_random">Wander Randomness</string>
+    <string name="surround_mode_transverse">Transverse Surround</string>
+    <string name="media_control_music">Music</string>
+    <string name="limit_reverb">Limit Spatial Reverb</string>
+    <string name="media_control_all">All</string>
+    <string name="input_scattered_name">Please enter scattered group name</string>
+    <string name="favorite">Favorite</string>
+    <string name="media_control_priority_title">Select priority control target</string>
+    <string name="no_scattered_track">No scattered tracks\nPlease create a scattered track first</string>
+    <string name="auto_eq_assist">Auto EQ Assist</string>
+    <string name="spatial_scatter_range">Spatial Scatter Range</string>
+    <string name="test">Test</string>
+    <string name="timer">Timer</string>
+    <string name="spatial_offset_title">Spatial Offset</string>
+    <string name="spatial_offset_distance">Offset Distance</string>
+    <string name="spatial_max_distance">Max Distance</string>
+    <string name="click_to_download">Click to Download</string>
+    <string name="limit_spatial">Limit Spatial Offset</string>
+    <string name="media_control_smart_desc">Auto select based on playback state</string>
+    <string name="spatial_wander_speed">Wander Speed</string>
+    <string name="offset_type_3d_surround">3D Surround</string>
+    <string name="current_playing">Current Playing (%1$d)</string>
+    <string name="tone">Tone</string>
+    <string name="delete_sound_hint">Are you sure you want to delete this sound? This action cannot be undone.</string>
+    <string name="eq_preset_v_shape">V Shape</string>
+</resources>
