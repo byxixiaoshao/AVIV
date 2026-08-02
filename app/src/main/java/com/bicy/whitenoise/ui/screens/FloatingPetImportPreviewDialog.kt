@@ -104,7 +104,7 @@ fun FloatingPetImportPreviewDialog(
                 currentFrame = frameList[frameIndex]
                 frameIndex = (frameIndex + 1) % frameList.size
                 // 帧间隔 = speed * 1000ms / frameCount
-                val interval = (speed * 1000L / frameList.size).coerceAtLeast(50L)
+                val interval = (speed * 1000f / frameList.size).toLong().coerceAtLeast(50L)
                 delay(interval)
             }
         }

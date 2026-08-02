@@ -26,8 +26,11 @@ class GetAlgorithmInfoTool : AgentTool {
         val effectName = params.getString("effect_name")
         val subEffect = params.optString("sub_effect", "")
         val info = AlgorithmDatabase.query(effectName, subEffect)
-            ?: return ToolResult.Error("未知效果：$effect_name" + if (subEffect.isNotEmpty()) "/$subEffect" else "")
-        return ToolResult.Success(info, data = mapOf("effect_name" to effectName, "sub_effect" to subEffect))
+        if (info == null) {
+            val msg = if (subEffect.isNotEmpty()) "未知效果：$effectName/$subEffect" else "未知效果：$effectName"
+            return ToolResult.Error(msg)
+        }
+        return ToolResult.Success(info)
     }
 }
 
