@@ -41,8 +41,13 @@ fun calculateTransitionProgress(
     val controlsOffsetX = p * horizontalDistance
     val controlsOffsetY = 0f
     
-    val prevButtonOffsetX = controlsOffsetX - p * 20f
-    val nextButtonOffsetX = controlsOffsetX + p * 20f
+    // 三个按钮的偏移量：
+    // 当面板打开时，按钮所在的区域宽度会缩小（因为左右面板占据空间）
+    // 需要减小偏移量，避免按钮超出可视区域被裁剪
+    // 使用较小的偏移系数，让按钮在过渡过程中保持视觉可见
+    val buttonSpreadOffset = p * 8f  // 大幅减小偏移量，确保按钮不被裁剪
+    val prevButtonOffsetX = controlsOffsetX - buttonSpreadOffset
+    val nextButtonOffsetX = controlsOffsetX + buttonSpreadOffset
     
     val mainContentAlpha = if (p >= 1f) 0f else 1f
     val extraButtonsAlpha = 1f - (p * 2f).coerceIn(0f, 1f)

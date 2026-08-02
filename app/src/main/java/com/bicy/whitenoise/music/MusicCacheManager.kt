@@ -6,23 +6,37 @@ import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.bicy.whitenoise.audio.OboeAudioEngine
+import com.bicy.whitenoise.service.AnomalyType
+import com.bicy.whitenoise.service.MemoryLockService
+import com.bicy.whitenoise.storage.core.JsonStorageManager
+import com.bicy.whitenoise.utils.AppInitializer
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.File
 import java.lang.ref.WeakReference
 import java.util.Collections
 import java.util.LinkedHashMap
+import com.bicy.whitenoise.music.MusicLibraryPart.*
+
+data class MusicCacheEntity(
+    val id: String = "library",
+    val tracksJson: String = "[]",
+    val directoriesJson: String = "[]",
+    val lastScanTime: Long = 0
+)
 
 object MusicCacheManager {
     
     private const val TAG = "MusicCacheManager"
-    private const val CACHE_FILE_NAME = "music_library_cache.json"
     private const val MAX_LOADED_TRACKS = 5
+    private const val CACHE_FILE = "music_cache.json"
     
     private var contextRef: WeakReference<Context>? = null
-    private var libraryCacheDir: File? = null
     
     private val loadedTracks = Collections.synchronizedMap(
         object : LinkedHashMap<String, String>(MAX_LOADED_TRACKS, 0.75f, true) {
@@ -45,10 +59,7 @@ object MusicCacheManager {
     
     fun init(context: Context) {
         contextRef = WeakReference(context.applicationContext)
-        libraryCacheDir = File(context.filesDir, "music")
-        if (!libraryCacheDir!!.exists()) {
-            libraryCacheDir!!.mkdirs()
-        }
+        JsonStorageManager.init(context.applicationContext)
     }
     
     fun getSoundId(trackId: String): String {
@@ -91,6 +102,7 @@ object MusicCacheManager {
             true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load track from uri: ${track.title}", e)
+            MemoryLockService.reportAnomaly(AnomalyType.AUDIO_DECODE_ERROR, "\u4eceURI\u52a0\u8f7d\u66f2\u76ee\u5931\u8d25: ${track.title}", e.stackTraceToString())
             false
         }
     }
@@ -112,7 +124,7 @@ object MusicCacheManager {
     fun loadTrack(track: MusicTrack, callback: ((Boolean) -> Unit)? = null) {
         val soundId = getSoundId(track.id)
         
-        Log.w(TAG, "loadTrack: ${track.title}, soundId=$soundId, isLoaded=${OboeAudioEngine.isLoaded(soundId)}, isLoading=${OboeAudioEngine.isLoading(soundId)}")
+        Log.w(TAG, "loadTrack: ${track.title}, soundId=$soundId, isLoaded=${OboeAudioEngine.isLoaded(soundId)}, isLoading=${OboeAudioEngine.isLoading(soundId)}, isOnline=${track.isOnline}")
         
         if (OboeAudioEngine.isLoaded(soundId)) {
             loadedTracks[soundId] = track.path
@@ -125,6 +137,23 @@ object MusicCacheManager {
             return
         }
         
+        // 在线音乐：检查缓存文件是否存在
+        if (track.isOnline) {
+            val cacheFile = java.io.File(track.path)
+            if (cacheFile.exists()) {
+                // 缓存文件存在，直接加载
+                Log.d(TAG, "Loading online track from cache: ${track.title}")
+                val success = loadFromPath(track)
+                callback?.invoke(success)
+            } else {
+                // 缓存文件不存在，需要先下载
+                Log.d(TAG, "Cache file not found for online track: ${track.title}, need download")
+                downloadAndLoadOnlineTrack(track, callback)
+            }
+            return
+        }
+        
+        // 本地音乐
         val success = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && track.contentUri != null) {
             loadFromUri(track)
         } else {
@@ -133,6 +162,57 @@ object MusicCacheManager {
         
         callback?.invoke(success)
         Log.w(TAG, "Loading track: ${track.title}, success=$success")
+    }
+    
+    private fun downloadAndLoadOnlineTrack(track: MusicTrack, callback: ((Boolean) -> Unit)? = null) {
+        val ctx = contextRef?.get() ?: run {
+            callback?.invoke(false)
+            return
+        }
+        
+        val streamUrl = track.streamUrl ?: run {
+            Log.e(TAG, "No streamUrl for online track: ${track.title}")
+            callback?.invoke(false)
+            return
+        }
+        
+        @OptIn(DelicateCoroutinesApi::class)
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
+                Log.d(TAG, "Downloading online track: ${track.title} from $streamUrl")
+                
+                // 下载文件
+                val client = okhttp3.OkHttpClient()
+                val request = okhttp3.Request.Builder().url(streamUrl).build()
+                val response = client.newCall(request).execute()
+                
+                if (!response.isSuccessful) {
+                    Log.e(TAG, "Download failed: ${response.code}")
+                    withContext(Dispatchers.Main) { callback?.invoke(false) }
+                    return@launch
+                }
+                
+                val cacheFile = java.io.File(track.path)
+                cacheFile.parentFile?.mkdirs()
+                
+                response.body?.byteStream()?.use { input ->
+                    cacheFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                
+                Log.d(TAG, "Download complete: ${cacheFile.absolutePath}")
+                
+                // 下载完成后加载
+                val success = loadFromPath(track)
+                withContext(Dispatchers.Main) { callback?.invoke(success) }
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Download error: ${track.title}", e)
+                MemoryLockService.reportAnomaly(AnomalyType.NETWORK_ERROR, "\u5728\u7ebf\u66f2\u76ee\u4e0b\u8f7d\u5931\u8d25: ${track.title}", e.stackTraceToString())
+                withContext(Dispatchers.Main) { callback?.invoke(false) }
+            }
+        }
     }
     
     fun setCurrentPlaying(trackId: String) {
@@ -185,46 +265,46 @@ object MusicCacheManager {
         directories: List<com.bicy.whitenoise.storage.music.MusicDirectory>,
         lastScanTime: Long = System.currentTimeMillis()
     ) {
-        val ctx = contextRef?.get() ?: return
-        
         withContext(Dispatchers.IO) {
             try {
-                val rootJson = JSONObject()
-                rootJson.put("lastScanTime", lastScanTime)
+                val tracksJson = JSONArray().apply {
+                    tracks.forEach { track ->
+                        put(JSONObject().apply {
+                            put("id", track.id)
+                            put("path", track.path)
+                            put("title", track.title)
+                            put("artist", track.artist ?: "")
+                            put("album", track.album ?: "")
+                            put("duration", track.duration)
+                            track.uriString?.let { put("uriString", it) }
+                            put("dateAdded", track.dateAdded)
+                        })
+                    }
+                }.toString()
                 
-                val dirArray = JSONArray()
-                directories.forEach { dir ->
-                    dirArray.put(JSONObject().apply {
-                        put("path", dir.path)
-                        put("uri", dir.uriString ?: "")
-                        put("name", dir.name)
-                        put("isEnabled", dir.isEnabled)
-                    })
-                }
-                rootJson.put("directories", dirArray)
+                val dirsJson = JSONArray().apply {
+                    directories.forEach { dir ->
+                        put(JSONObject().apply {
+                            put("path", dir.path)
+                            put("uri", dir.uriString ?: "")
+                            put("name", dir.name)
+                            put("isEnabled", dir.isEnabled)
+                        })
+                    }
+                }.toString()
                 
-                val tracksArray = JSONArray()
-                tracks.forEach { track ->
-                    tracksArray.put(JSONObject().apply {
-                        put("id", track.id)
-                        put("path", track.path)
-                        put("title", track.title)
-                        put("artist", track.artist ?: "")
-                        put("album", track.album ?: "")
-                        put("duration", track.duration)
-                        track.uriString?.let { put("uriString", it) }
-                        put("dateAdded", track.dateAdded)
-                    })
-                }
-                rootJson.put("tracks", tracksArray)
-                
-                val dir = libraryCacheDir ?: return@withContext
-                val cacheFile = File(dir, CACHE_FILE_NAME)
-                cacheFile.writeText(rootJson.toString())
+                val entity = MusicCacheEntity(
+                    id = "library",
+                    tracksJson = tracksJson,
+                    directoriesJson = dirsJson,
+                    lastScanTime = lastScanTime
+                )
+                JsonStorageManager.write(CACHE_FILE, entity)
                 
                 Log.d(TAG, "Saved ${tracks.size} tracks and ${directories.size} directories to cache")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to save library cache", e)
+                MemoryLockService.reportAnomaly(AnomalyType.IO_ERROR, "\u4fdd\u5b58\u66f2\u5e93\u7f13\u5b58\u5931\u8d25", e.stackTraceToString())
             }
         }
     }
@@ -236,58 +316,47 @@ object MusicCacheManager {
     )
     
     suspend fun loadLibraryCache(): LibraryCache? {
-        val ctx = contextRef?.get() ?: return null
-        
         return withContext(Dispatchers.IO) {
             try {
-                val dir = libraryCacheDir ?: return@withContext null
-                val cacheFile = File(dir, CACHE_FILE_NAME)
-                if (!cacheFile.exists()) return@withContext null
-                
-                val jsonString = cacheFile.readText()
-                val rootJson = JSONObject(jsonString)
+                val entity = JsonStorageManager.read(CACHE_FILE, MusicCacheEntity::class.java) ?: return@withContext null
                 
                 val dirList = mutableListOf<com.bicy.whitenoise.storage.music.MusicDirectory>()
-                val dirArray = rootJson.optJSONArray("directories")
-                if (dirArray != null) {
-                    for (i in 0 until dirArray.length()) {
-                        val json = dirArray.getJSONObject(i)
-                        dirList.add(
-                            com.bicy.whitenoise.storage.music.MusicDirectory(
-                                path = json.getString("path"),
-                                uriString = json.optString("uri").takeIf { it.isNotEmpty() },
-                                name = json.getString("name"),
-                                isEnabled = json.optBoolean("isEnabled", true)
-                            )
+                val dirArray = JSONArray(entity.directoriesJson)
+                for (i in 0 until dirArray.length()) {
+                    val json = dirArray.getJSONObject(i)
+                    dirList.add(
+                        com.bicy.whitenoise.storage.music.MusicDirectory(
+                            path = json.getString("path"),
+                            uriString = json.optString("uri").takeIf { it.isNotEmpty() },
+                            name = json.getString("name"),
+                            isEnabled = json.optBoolean("isEnabled", true)
                         )
-                    }
+                    )
                 }
                 
                 val tracks = mutableListOf<MusicTrack>()
-                val tracksArray = rootJson.optJSONArray("tracks")
-                if (tracksArray != null) {
-                    for (i in 0 until tracksArray.length()) {
-                        val json = tracksArray.getJSONObject(i)
-                        val track = MusicTrack(
-                            id = json.getString("id"),
-                            path = json.getString("path"),
-                            title = json.getString("title"),
-                            artist = json.optString("artist").takeIf { it.isNotEmpty() },
-                            album = json.optString("album").takeIf { it.isNotEmpty() },
-                            duration = json.optLong("duration", 0),
-                            albumArt = null,
-                            uriString = json.optString("uriString").takeIf { it.isNotEmpty() },
-                            dateAdded = json.optLong("dateAdded", System.currentTimeMillis())
-                        )
-                        tracks.add(track)
-                    }
+                val tracksArray = JSONArray(entity.tracksJson)
+                for (i in 0 until tracksArray.length()) {
+                    val json = tracksArray.getJSONObject(i)
+                    val track = MusicTrack(
+                        id = json.getString("id"),
+                        path = json.getString("path"),
+                        title = json.getString("title"),
+                        artist = json.optString("artist").takeIf { it.isNotEmpty() },
+                        album = json.optString("album").takeIf { it.isNotEmpty() },
+                        duration = json.optLong("duration", 0),
+                        albumArt = null,
+                        uriString = json.optString("uriString").takeIf { it.isNotEmpty() },
+                        dateAdded = json.optLong("dateAdded", System.currentTimeMillis())
+                    )
+                    tracks.add(track)
                 }
                 
                 Log.d(TAG, "Loaded ${tracks.size} tracks and ${dirList.size} directories from cache")
-                val lastScanTime = rootJson.optLong("lastScanTime", 0L)
-                LibraryCache(tracks, dirList, lastScanTime)
+                LibraryCache(tracks, dirList, entity.lastScanTime)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load library cache", e)
+                MemoryLockService.reportAnomaly(AnomalyType.IO_ERROR, "\u52a0\u8f7d\u66f2\u5e93\u7f13\u5b58\u5931\u8d25", e.stackTraceToString())
                 null
             }
         }
@@ -306,10 +375,13 @@ object MusicCacheManager {
     }
     
     fun clearLibraryCache() {
-        val dir = libraryCacheDir ?: return
-        val cacheFile = File(dir, CACHE_FILE_NAME)
-        if (cacheFile.exists()) {
-            cacheFile.delete()
+        try {
+            runBlocking {
+                JsonStorageManager.delete(CACHE_FILE)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to clear library cache", e)
+            MemoryLockService.reportAnomaly(AnomalyType.IO_ERROR, "\u6e05\u9664\u66f2\u5e93\u7f13\u5b58\u5931\u8d25", e.stackTraceToString())
         }
     }
 }

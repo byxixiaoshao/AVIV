@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.bicy.whitenoise.servies.MusicService
-import com.bicy.whitenoise.subPage.home.model.SoundMetadata
+import com.bicy.whitenoise.subPage.home.model.SoundMetadataPart.*
 import com.bicy.whitenoise.utils.DownloadManager
 
 object Function {
@@ -23,7 +23,13 @@ object Function {
     
     fun getCachedFile(context: Context, soundId: String) = DownloadManager.getCachedFile(context, soundId)
     
+    fun getCachedFile(context: Context, soundId: String, categoryName: String, soundName: String) = 
+        DownloadManager.getCachedFile(context, soundId, categoryName, soundName)
+    
     fun isCached(context: Context, soundId: String) = DownloadManager.isCached(context, soundId)
+    
+    fun isCached(context: Context, soundId: String, categoryName: String, soundName: String) = 
+        DownloadManager.isCached(context, soundId, categoryName, soundName)
     
     fun isDownloading(soundId: String) = DownloadManager.isDownloading(soundId)
     
@@ -47,7 +53,7 @@ object Function {
     }
     
     fun playSound(context: Context, sound: SoundMetadata) {
-        val cachedFile = getCachedFile(context, sound.id)
+        val cachedFile = getCachedFile(context, sound.id, sound.categoryName, sound.name)
         
         if (cachedFile != null) {
             val serviceIntent = Intent(context, MusicService::class.java).apply {

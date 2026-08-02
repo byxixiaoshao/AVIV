@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,7 +30,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.math.abs
 
 @Composable
 fun InteractiveSlider(
@@ -42,6 +44,8 @@ fun InteractiveSlider(
     thumbRadiusPressed: Dp = 10.dp,
     enabled: Boolean = true
 ) {
+    val currentOnValueChange by rememberUpdatedState(onValueChange)
+    
     var isPressed by remember { mutableStateOf(false) }
     var sliderWidth by remember { mutableStateOf(0) }
     
@@ -51,6 +55,11 @@ fun InteractiveSlider(
     )
     
     val density = LocalDensity.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val isDragged by interactionSource.collectIsDraggedAsState()
+    
+    // 当拖动时，isPressed为true
+    isPressed = isDragged
     
     val rawFraction = if (valueRange.endInclusive - valueRange.start == 0f) {
         0f
@@ -83,7 +92,10 @@ fun InteractiveSlider(
                 if (enabled) {
                     Modifier.pointerInput(valueRange, steps) {
                         awaitEachGesture {
-                            val down = awaitFirstDown(requireUnconsumed = false)
+                            val down = awaitFirstDown(
+                                requireUnconsumed = false,
+                                pass = PointerEventPass.Initial
+                            )
                             isPressed = true
                             
                             if (sliderWidth > 0) {
@@ -100,10 +112,13 @@ fun InteractiveSlider(
                                 }
                                 
                                 val newValue = valueRange.start + newFraction * (valueRange.endInclusive - valueRange.start)
-                                onValueChange(newValue)
+                                currentOnValueChange(newValue)
                             }
                             
                             drag(down.id) { change ->
+                                // 消费事件，防止父容器的翻页手势检测器捕获
+                                change.consume()
+                                
                                 if (sliderWidth > 0) {
                                     val xPos = change.position.x.coerceIn(0f, sliderWidth.toFloat())
                                     val rawFraction = xPos / sliderWidth
@@ -118,7 +133,7 @@ fun InteractiveSlider(
                                     }
                                     
                                     val newValue = valueRange.start + newFraction * (valueRange.endInclusive - valueRange.start)
-                                    onValueChange(newValue)
+                                    currentOnValueChange(newValue)
                                 }
                             }
                             

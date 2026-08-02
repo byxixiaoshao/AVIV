@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewOutlineProvider
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
@@ -15,23 +16,27 @@ import com.bicy.whitenoise.R
 
 sealed class FolderItem {
     data class Directory(val name: String) : FolderItem()
-    data class Track(val track: com.bicy.whitenoise.music.MusicTrack, val isPlaying: Boolean) : FolderItem()
+    data class Track(val track: com.bicy.whitenoise.music.MusicLibraryPart.MusicTrack, val isPlaying: Boolean) : FolderItem()
 }
 
 class FolderContentAdapter(
     initialOnDirectoryClick: (String) -> Unit,
-    initialOnTrackClick: (com.bicy.whitenoise.music.MusicTrack) -> Unit
+    initialOnTrackClick: (com.bicy.whitenoise.music.MusicLibraryPart.MusicTrack) -> Unit,
+    initialOnMoreClick: (com.bicy.whitenoise.music.MusicLibraryPart.MusicTrack) -> Unit = {}
 ) : ListAdapter<FolderItem, RecyclerView.ViewHolder>(DiffCallback) {
 
     private var onDirectoryClick: (String) -> Unit = initialOnDirectoryClick
-    private var onTrackClick: (com.bicy.whitenoise.music.MusicTrack) -> Unit = initialOnTrackClick
+    private var onTrackClick: (com.bicy.whitenoise.music.MusicLibraryPart.MusicTrack) -> Unit = initialOnTrackClick
+    private var onMoreClick: (com.bicy.whitenoise.music.MusicLibraryPart.MusicTrack) -> Unit = initialOnMoreClick
     
     fun updateClickListeners(
         newOnDirectoryClick: (String) -> Unit,
-        newOnTrackClick: (com.bicy.whitenoise.music.MusicTrack) -> Unit
+        newOnTrackClick: (com.bicy.whitenoise.music.MusicLibraryPart.MusicTrack) -> Unit,
+        newOnMoreClick: (com.bicy.whitenoise.music.MusicLibraryPart.MusicTrack) -> Unit = {}
     ) {
         onDirectoryClick = newOnDirectoryClick
         onTrackClick = newOnTrackClick
+        onMoreClick = newOnMoreClick
     }
 
     object DiffCallback : DiffUtil.ItemCallback<FolderItem>() {
@@ -60,6 +65,7 @@ class FolderContentAdapter(
         val root: View = view.findViewById(R.id.root)
         val title: TextView = view.findViewById(R.id.title)
         val artist: TextView = view.findViewById(R.id.artist)
+        val moreButton: ImageButton = view.findViewById(R.id.moreButton)
         val content: View = view.findViewById(R.id.content)
         val shadow: View = view.findViewById(R.id.shadow)
     }
@@ -183,6 +189,8 @@ class FolderContentAdapter(
                 }
                 
                 holder.artist.setTextColor(secondaryTextColor)
+                
+                holder.moreButton.setOnClickListener { onMoreClick(trackItem.track) }
                 
                 holder.root.post {
                     holder.root.animate()

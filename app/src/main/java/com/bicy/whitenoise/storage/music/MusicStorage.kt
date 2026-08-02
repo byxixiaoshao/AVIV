@@ -3,10 +3,15 @@ package com.bicy.whitenoise.storage.music
 import android.net.Uri
 import android.util.Log
 import com.bicy.whitenoise.audio.ReverbConfig
-import com.bicy.whitenoise.storage.core.StorageManager
+import com.bicy.whitenoise.storage.core.JsonStorageManager
+import com.bicy.whitenoise.utils.AppInitializer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -14,7 +19,8 @@ data class MusicDirectory(
     val path: String,
     val uriString: String? = null,
     val name: String,
-    val isEnabled: Boolean = true
+    val isEnabled: Boolean = true,
+    val isDefault: Boolean = false
 ) {
     val uri: Uri?
         get() = uriString?.let { Uri.parse(it) }
@@ -40,7 +46,8 @@ data class MusicPlaybackState(
     val repeatMode: String = "OFF",
     val shuffleMode: String = "OFF",
     val playlistIndex: Int = 0,
-    val playlistTrackIds: List<String> = emptyList()
+    val playlistTrackIds: List<String> = emptyList(),
+    val onlineTracksJson: String = "{}"
 )
 
 data class EffectIntensities(
@@ -117,11 +124,17 @@ data class MusicMixerConfig(
 object MusicStorage {
     
     private const val TAG = "MusicStorage"
-    
-    private const val PLAYBACK_STATE_FILE = "playback_state.json"
-    private const val MIXER_CONFIG_FILE = "mixer_config.json"
-    private const val DIRECTORIES_FILE = "directories.json"
-    private const val PLAYLIST_FILE = "playlist.json"
+
+    /** 默认音乐目录路径 */
+    val DEFAULT_MUSIC_DIR = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_MUSIC).absolutePath
+
+    private const val DIRECTORIES_FILE = "music_directories.json"
+    private const val PLAYBACK_FILE = "music_playback.json"
+    private const val MIXER_FILE = "music_mixer.json"
+    private const val PLAYLIST_FILE = "music_playlist.json"
+    private const val PLAYLIST_TRACK_KEY = "__music_queue__"
+
+    private val scope = CoroutineScope(Dispatchers.IO)
     
     private val _directories = MutableStateFlow<List<MusicDirectory>>(emptyList())
     val directories: StateFlow<List<MusicDirectory>> = _directories.asStateFlow()
@@ -159,304 +172,138 @@ object MusicStorage {
         Log.d(TAG, "MusicStorage initialized")
     }
     
+    // ==================== Directory operations ====================
+    
     private fun loadDirectories() {
-        val file = StorageManager.getFile("music", DIRECTORIES_FILE) ?: return
-        val jsonArray = StorageManager.loadJsonArray(file)
-        
-        if (jsonArray != null) {
-            val dirList = mutableListOf<MusicDirectory>()
-            for (i in 0 until jsonArray.length()) {
-                val json = jsonArray.getJSONObject(i)
-                dirList.add(
-                    MusicDirectory(
-                        path = json.getString("path"),
-                        uriString = json.optString("uri").takeIf { it.isNotEmpty() },
-                        name = json.getString("name"),
-                        isEnabled = json.optBoolean("isEnabled", true)
-                    )
-                )
+        try {
+            val array = runBlocking {
+                JsonStorageManager.read(DIRECTORIES_FILE, Array<MusicDirectory>::class.java)
             }
-            _directories.value = dirList
+            _directories.value = array?.toList() ?: emptyList()
+            // 确保默认目录始终存在
+            ensureDefaultDirectory()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to load directories from JSON", e)
+        }
+    }
+
+    /** 确保默认音乐目录存在 */
+    private fun ensureDefaultDirectory() {
+        val dirs = _directories.value.toMutableList()
+        val hasDefault = dirs.any { it.path == DEFAULT_MUSIC_DIR }
+        if (!hasDefault) {
+            dirs.add(MusicDirectory(
+                path = DEFAULT_MUSIC_DIR,
+                name = "音乐目录",
+                isEnabled = true,
+                isDefault = true
+            ))
+            _directories.value = dirs
         }
     }
     
-    private fun saveDirectories() {
-        val file = StorageManager.getFile("music", DIRECTORIES_FILE) ?: return
-        val jsonArray = JSONArray()
-        _directories.value.forEach { dir ->
-            jsonArray.put(JSONObject().apply {
-                put("path", dir.path)
-                dir.uriString?.let { put("uri", it) }
-                put("name", dir.name)
-                put("isEnabled", dir.isEnabled)
-            })
-        }
-        StorageManager.saveJsonSync(file, jsonArray)
-    }
-    
-    private fun loadPlaybackState() {
-        val file = StorageManager.getFile("music", PLAYBACK_STATE_FILE) ?: return
-        val json = StorageManager.loadJson(file)
-        
-        if (json != null) {
-            val trackIds = mutableListOf<String>()
-            val trackIdsArray = json.optJSONArray("playlistTrackIds")
-            if (trackIdsArray != null) {
-                for (i in 0 until trackIdsArray.length()) {
-                    trackIds.add(trackIdsArray.getString(i))
-                }
-            }
-            
-            _playbackState.value = MusicPlaybackState(
-                trackId = json.optString("trackId").takeIf { it.isNotEmpty() },
-                trackTitle = json.optString("trackTitle").takeIf { it.isNotEmpty() },
-                trackArtist = json.optString("trackArtist").takeIf { it.isNotEmpty() },
-                trackDuration = json.optLong("trackDuration", 0),
-                position = json.optLong("position", 0),
-                isPlaying = json.optBoolean("isPlaying", false),
-                repeatMode = json.optString("repeatMode", "OFF"),
-                shuffleMode = json.optString("shuffleMode", "OFF"),
-                playlistIndex = json.optInt("playlistIndex", 0),
-                playlistTrackIds = trackIds
-            )
-        }
-    }
-    
-    private fun savePlaybackState() {
-        val file = StorageManager.getFile("music", PLAYBACK_STATE_FILE) ?: return
-        val state = _playbackState.value
-        
-        val json = JSONObject().apply {
-            put("trackId", state.trackId ?: "")
-            put("trackTitle", state.trackTitle ?: "")
-            put("trackArtist", state.trackArtist ?: "")
-            put("trackDuration", state.trackDuration)
-            put("position", state.position)
-            put("isPlaying", state.isPlaying)
-            put("repeatMode", state.repeatMode)
-            put("shuffleMode", state.shuffleMode)
-            put("playlistIndex", state.playlistIndex)
-            put("playlistTrackIds", JSONArray(state.playlistTrackIds))
-        }
-        
-        StorageManager.saveJsonSync(file, json)
-    }
-    
-    private fun loadMixerConfig() {
-        val file = StorageManager.getFile("music", MIXER_CONFIG_FILE) ?: return
-        val json = StorageManager.loadJson(file)
-        
-        if (json != null) {
-            val reverbJson = json.optJSONObject("reverbConfig")
-            val reverbConfig = if (reverbJson != null) {
-                ReverbConfig(
-                    enabled = reverbJson.optBoolean("enabled", false),
-                    preset = reverbJson.optString("preset", "NONE"),
-                    roomSize = reverbJson.optDouble("roomSize", 0.0).toFloat(),
-                    decayTime = reverbJson.optDouble("decayTime", 1.5).toFloat(),
-                    damping = reverbJson.optDouble("damping", 0.0).toFloat(),
-                    wetLevel = reverbJson.optDouble("wetLevel", 0.0).toFloat(),
-                    dryLevel = reverbJson.optDouble("dryLevel", 1.0).toFloat(),
-                    preDelay = reverbJson.optDouble("preDelay", 0.025).toFloat(),
-                    insulation = reverbJson.optDouble("insulation", 0.0).toFloat()
-                )
-            } else {
-                ReverbConfig()
-            }
-            
-            val effectsJson = json.optJSONObject("effectIntensities")
-            val effectIntensities = if (effectsJson != null) {
-                EffectIntensities(
-                    loFi = effectsJson.optDouble("loFi", 0.0).toFloat(),
-                    eightBit = effectsJson.optDouble("eightBit", 0.0).toFloat(),
-                    underwater = effectsJson.optDouble("underwater", 0.0).toFloat(),
-                    alienSignal = effectsJson.optDouble("alienSignal", 0.0).toFloat(),
-                    megaphone = effectsJson.optDouble("megaphone", 0.0).toFloat(),
-                    pitch = effectsJson.optDouble("pitch", 0.0).toFloat(),
-                    speed = effectsJson.optDouble("speed", 1.0).toFloat(),
-                    hifi = effectsJson.optDouble("hifi", 0.0).toFloat(),
-                    distortion = effectsJson.optDouble("distortion", 0.0).toFloat()
-                )
-            } else {
-                EffectIntensities()
-            }
-            
-            val spatialJson = json.optJSONObject("spatialAudioConfig")
-            val spatialConfig = if (spatialJson != null) {
-                MusicSpatialConfig(
-                    enabled = spatialJson.optBoolean("enabled", false),
-                    offsetType = spatialJson.optInt("offsetType", 0),
-                    fixedLeftRight = spatialJson.optDouble("fixedLeftRight", 0.0).toFloat(),
-                    fixedUpDown = spatialJson.optDouble("fixedUpDown", 0.0).toFloat(),
-                    fixedFrontBack = spatialJson.optDouble("fixedFrontBack", 0.0).toFloat(),
-                    fixedMultiplier = spatialJson.optDouble("fixedMultiplier", 1.0).toFloat(),
-                    surroundMode = spatialJson.optInt("surroundMode", 0),
-                    surroundRadius = spatialJson.optDouble("surroundRadius", 1.0).toFloat(),
-                    surroundSpeed = spatialJson.optDouble("surroundSpeed", 5.0).toFloat(),
-                    randomMaxDistance = spatialJson.optDouble("randomMaxDistance", 5.0).toFloat(),
-                    randomMinDistance = spatialJson.optDouble("randomMinDistance", 0.0).toFloat(),
-                    randomValue = spatialJson.optDouble("randomValue", 0.5).toFloat(),
-                    randomSpeed = spatialJson.optDouble("randomSpeed", 0.3).toFloat()
-                )
-            } else {
-                MusicSpatialConfig()
-            }
-            
-            val eqJson = json.optJSONObject("equalizerConfig")
-            val equalizerConfig = if (eqJson != null) {
-                val gainsArray = eqJson.optJSONArray("gains")
-                val gains = if (gainsArray != null && gainsArray.length() == 12) {
-                    FloatArray(12) { i -> gainsArray.getDouble(i).toFloat() }
+    private fun persistDirectories() {
+        scope.launch {
+            try {
+                val dirs = _directories.value
+                    .filter { !it.isDefault }
+                    .toTypedArray()
+                if (dirs.isNotEmpty()) {
+                    JsonStorageManager.write(DIRECTORIES_FILE, dirs)
                 } else {
-                    FloatArray(12) { 0f }
+                    JsonStorageManager.write(DIRECTORIES_FILE, emptyArray<MusicDirectory>())
                 }
-                EqualizerConfig(
-                    enabled = eqJson.optBoolean("enabled", false),
-                    gains = gains
-                )
-            } else {
-                EqualizerConfig()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to save directories to JSON", e)
             }
-            
-            val limiterJson = json.optJSONObject("limiterConfig")
-            val limiterConfig = if (limiterJson != null) {
-                LimiterConfig(
-                    enabled = limiterJson.optBoolean("enabled", true),
-                    limitEqualizer = limiterJson.optBoolean("limitEqualizer", true),
-                    limitEffects = limiterJson.optBoolean("limitEffects", true),
-                    limitReverb = limiterJson.optBoolean("limitReverb", true),
-                    limitSpatial = limiterJson.optBoolean("limitSpatial", true),
-                    threshold = limiterJson.optDouble("threshold", 0.9).toFloat(),
-                    attack = limiterJson.optDouble("attack", 5.0).toFloat(),
-                    release = limiterJson.optDouble("release", 50.0).toFloat()
-                )
-            } else {
-                LimiterConfig()
-            }
-            
-            _mixerConfig.value = MusicMixerConfig(
-                reverbConfig = reverbConfig,
-                volume = json.optDouble("volume", 1.0).toFloat(),
-                effectIntensities = effectIntensities,
-                spatialAudioConfig = spatialConfig,
-                equalizerConfig = equalizerConfig,
-                limiterConfig = limiterConfig
-            )
         }
-    }
-    
-    private fun saveMixerConfig() {
-        val file = StorageManager.getFile("music", MIXER_CONFIG_FILE) ?: return
-        val config = _mixerConfig.value
-        
-        val json = JSONObject().apply {
-            put("volume", config.volume)
-            
-            put("reverbConfig", JSONObject().apply {
-                put("enabled", config.reverbConfig.enabled)
-                put("preset", config.reverbConfig.preset)
-                put("roomSize", config.reverbConfig.roomSize)
-                put("decayTime", config.reverbConfig.decayTime)
-                put("damping", config.reverbConfig.damping)
-                put("wetLevel", config.reverbConfig.wetLevel)
-                put("dryLevel", config.reverbConfig.dryLevel)
-                put("preDelay", config.reverbConfig.preDelay)
-                put("insulation", config.reverbConfig.insulation)
-            })
-            
-            put("effectIntensities", JSONObject().apply {
-                put("loFi", config.effectIntensities.loFi)
-                put("eightBit", config.effectIntensities.eightBit)
-                put("underwater", config.effectIntensities.underwater)
-                put("alienSignal", config.effectIntensities.alienSignal)
-                put("megaphone", config.effectIntensities.megaphone)
-                put("pitch", config.effectIntensities.pitch)
-                put("speed", config.effectIntensities.speed)
-                put("hifi", config.effectIntensities.hifi)
-                put("distortion", config.effectIntensities.distortion)
-            })
-            
-            put("spatialAudioConfig", JSONObject().apply {
-                put("enabled", config.spatialAudioConfig.enabled)
-                put("offsetType", config.spatialAudioConfig.offsetType)
-                put("fixedLeftRight", config.spatialAudioConfig.fixedLeftRight)
-                put("fixedUpDown", config.spatialAudioConfig.fixedUpDown)
-                put("fixedFrontBack", config.spatialAudioConfig.fixedFrontBack)
-                put("fixedMultiplier", config.spatialAudioConfig.fixedMultiplier)
-                put("surroundMode", config.spatialAudioConfig.surroundMode)
-                put("surroundRadius", config.spatialAudioConfig.surroundRadius)
-                put("surroundSpeed", config.spatialAudioConfig.surroundSpeed)
-                put("randomMaxDistance", config.spatialAudioConfig.randomMaxDistance)
-                put("randomMinDistance", config.spatialAudioConfig.randomMinDistance)
-                put("randomValue", config.spatialAudioConfig.randomValue)
-                put("randomSpeed", config.spatialAudioConfig.randomSpeed)
-            })
-            
-            put("equalizerConfig", JSONObject().apply {
-                put("enabled", config.equalizerConfig.enabled)
-                val gainsArray = JSONArray()
-                config.equalizerConfig.gains.forEach { gainsArray.put(it) }
-                put("gains", gainsArray)
-            })
-            
-            put("limiterConfig", JSONObject().apply {
-                put("enabled", config.limiterConfig.enabled)
-                put("limitEqualizer", config.limiterConfig.limitEqualizer)
-                put("limitEffects", config.limiterConfig.limitEffects)
-                put("limitReverb", config.limiterConfig.limitReverb)
-                put("limitSpatial", config.limiterConfig.limitSpatial)
-                put("threshold", config.limiterConfig.threshold)
-                put("attack", config.limiterConfig.attack)
-                put("release", config.limiterConfig.release)
-            })
-        }
-        
-        StorageManager.saveJsonSync(file, json)
     }
     
     fun getDirectories(): List<MusicDirectory> = _directories.value
     
-    fun addDirectory(path: String, uri: Uri? = null) {
-        if (_directories.value.any { it.path == path }) return
+    fun addDirectory(path: String, uri: Uri? = null): Boolean {
+        // 如果目录已存在但需要更新 URI（如用户通过 SAF 重新授权默认目录），则更新 URI
+        val existing = _directories.value.find { it.path == path }
+        if (existing != null) {
+            if (uri != null && existing.uriString != uri.toString()) {
+                _directories.value = _directories.value.map {
+                    if (it.path == path) it.copy(uriString = uri.toString()) else it
+                }
+                persistDirectories()
+                return true
+            }
+            return false
+        }
         
         val name = path.substringAfterLast('/')
         val newDir = MusicDirectory(
             path = path,
             uriString = uri?.toString(),
             name = name,
-            isEnabled = true
+            isEnabled = true,
+            isDefault = path == DEFAULT_MUSIC_DIR
         )
         
         _directories.value = _directories.value + newDir
-        saveDirectories()
+        persistDirectories()
+        return true
     }
     
     fun removeDirectory(path: String) {
+        val dir = _directories.value.find { it.path == path }
+        if (dir?.isDefault == true) return
         _directories.value = _directories.value.filter { it.path != path }
-        saveDirectories()
+        persistDirectories()
     }
     
     fun setDirectoryEnabled(path: String, enabled: Boolean) {
         _directories.value = _directories.value.map { dir ->
             if (dir.path == path) dir.copy(isEnabled = enabled) else dir
         }
-        saveDirectories()
+        persistDirectories()
     }
     
     fun clearDirectories() {
-        _directories.value = emptyList()
-        saveDirectories()
+        _directories.value = _directories.value.filter { it.isDefault }
+        persistDirectories()
     }
     
     fun getEnabledDirectories(): List<MusicDirectory> = _directories.value.filter { it.isEnabled }
     
     fun hasDirectories(): Boolean = _directories.value.isNotEmpty()
     
+    // ==================== Playback State operations ====================
+    
+    private fun loadPlaybackState() {
+        try {
+            val state = runBlocking {
+                JsonStorageManager.read(PLAYBACK_FILE, MusicPlaybackState::class.java)
+            }
+            if (state != null) {
+                _playbackState.value = state
+                Log.d(TAG, "Loaded playback state: trackId=${state.trackId}, position=${state.position}, playlistIndex=${state.playlistIndex}, playlistSize=${state.playlistTrackIds.size}")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to load playback state from JSON", e)
+        }
+    }
+    
+    private fun persistPlaybackState() {
+        scope.launch {
+            try {
+                JsonStorageManager.write(PLAYBACK_FILE, _playbackState.value)
+                Log.d(TAG, "Saved playback state: trackId=${_playbackState.value.trackId}, position=${_playbackState.value.position}, playlistIndex=${_playbackState.value.playlistIndex}, playlistSize=${_playbackState.value.playlistTrackIds.size}")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to save playback state to JSON", e)
+            }
+        }
+    }
+    
     fun getPlaybackState(): MusicPlaybackState = _playbackState.value
     
     fun savePlaybackState(state: MusicPlaybackState) {
         _playbackState.value = state
-        savePlaybackState()
+        persistPlaybackState()
     }
     
     fun updatePlaybackState(
@@ -482,12 +329,37 @@ object MusicStorage {
             shuffleMode = shuffleMode ?: current.shuffleMode,
             playlistIndex = playlistIndex ?: current.playlistIndex
         )
-        savePlaybackState()
+        persistPlaybackState()
     }
     
     fun clearPlaybackState() {
         _playbackState.value = MusicPlaybackState()
-        savePlaybackState()
+        persistPlaybackState()
+    }
+    
+    // ==================== Mixer Config operations ====================
+    
+    private fun loadMixerConfig() {
+        try {
+            val config = runBlocking {
+                JsonStorageManager.read(MIXER_FILE, MusicMixerConfig::class.java)
+            }
+            if (config != null) {
+                _mixerConfig.value = config
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to load mixer config from JSON", e)
+        }
+    }
+    
+    private fun persistMixerConfig() {
+        scope.launch {
+            try {
+                JsonStorageManager.write(MIXER_FILE, _mixerConfig.value)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to save mixer config to JSON", e)
+            }
+        }
     }
     
     fun getMixerConfig(): MusicMixerConfig = _mixerConfig.value
@@ -496,7 +368,7 @@ object MusicStorage {
     
     fun updateReverbConfig(config: ReverbConfig) {
         _mixerConfig.value = _mixerConfig.value.copy(reverbConfig = config)
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
     fun setReverbEnabled(enabled: Boolean) {
@@ -504,7 +376,7 @@ object MusicStorage {
         _mixerConfig.value = _mixerConfig.value.copy(
             reverbConfig = current.copy(enabled = enabled)
         )
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
     fun setReverbPreset(preset: String) {
@@ -512,14 +384,14 @@ object MusicStorage {
         _mixerConfig.value = _mixerConfig.value.copy(
             reverbConfig = current.copy(preset = preset)
         )
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
     fun getVolume(): Float = _mixerConfig.value.volume
     
     fun updateVolume(volume: Float) {
         _mixerConfig.value = _mixerConfig.value.copy(volume = volume)
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
     fun getPitch(): Float = _mixerConfig.value.effectIntensities.pitch
@@ -530,7 +402,7 @@ object MusicStorage {
     
     fun updateEffectIntensities(intensities: EffectIntensities) {
         _mixerConfig.value = _mixerConfig.value.copy(effectIntensities = intensities)
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
     fun updateEffectIntensity(effectName: String, intensity: Float) {
@@ -551,14 +423,14 @@ object MusicStorage {
             else -> current
         }
         _mixerConfig.value = _mixerConfig.value.copy(effectIntensities = newIntensities)
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
     fun getSpatialAudioConfig(): MusicSpatialConfig = _mixerConfig.value.spatialAudioConfig
     
     fun updateSpatialAudioConfig(config: MusicSpatialConfig) {
         _mixerConfig.value = _mixerConfig.value.copy(spatialAudioConfig = config)
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
     fun updateSpatialAudioEnabled(enabled: Boolean) {
@@ -566,7 +438,7 @@ object MusicStorage {
         _mixerConfig.value = _mixerConfig.value.copy(
             spatialAudioConfig = current.copy(enabled = enabled)
         )
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
     fun updateSpatialAudioOffsetType(offsetType: Int) {
@@ -574,7 +446,7 @@ object MusicStorage {
         _mixerConfig.value = _mixerConfig.value.copy(
             spatialAudioConfig = current.copy(offsetType = offsetType)
         )
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
     fun updateSpatialAudioFixedOffset(leftRight: Float, upDown: Float, frontBack: Float, multiplier: Float) {
@@ -587,7 +459,7 @@ object MusicStorage {
                 fixedMultiplier = multiplier
             )
         )
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
     fun updateSpatialAudioSurroundParams(mode: Int, radius: Float, speed: Float) {
@@ -599,7 +471,7 @@ object MusicStorage {
                 surroundSpeed = speed
             )
         )
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
     fun updateSpatialAudioRandomParams(maxDistance: Float, minDistance: Float, randomValue: Float, speed: Float) {
@@ -612,14 +484,14 @@ object MusicStorage {
                 randomSpeed = speed
             )
         )
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
     fun getEqualizerConfig(): EqualizerConfig = _mixerConfig.value.equalizerConfig
     
     fun updateEqualizerConfig(config: EqualizerConfig) {
         _mixerConfig.value = _mixerConfig.value.copy(equalizerConfig = config)
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
     fun updateEqualizerEnabled(enabled: Boolean) {
@@ -627,7 +499,7 @@ object MusicStorage {
         _mixerConfig.value = _mixerConfig.value.copy(
             equalizerConfig = current.copy(enabled = enabled)
         )
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
     fun updateEqualizerGains(gains: FloatArray) {
@@ -635,14 +507,14 @@ object MusicStorage {
         _mixerConfig.value = _mixerConfig.value.copy(
             equalizerConfig = current.copy(gains = gains.copyOf())
         )
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
     fun getLimiterConfig(): LimiterConfig = _mixerConfig.value.limiterConfig
     
     fun updateLimiterConfig(config: LimiterConfig) {
         _mixerConfig.value = _mixerConfig.value.copy(limiterConfig = config)
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
     fun updateLimiterEnabled(enabled: Boolean) {
@@ -650,7 +522,7 @@ object MusicStorage {
         _mixerConfig.value = _mixerConfig.value.copy(
             limiterConfig = current.copy(enabled = enabled)
         )
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
     fun updateLimiterTargets(
@@ -668,38 +540,45 @@ object MusicStorage {
                 limitSpatial = limitSpatial ?: current.limitSpatial
             )
         )
-        saveMixerConfig()
+        persistMixerConfig()
     }
     
+    // ==================== Playlist operations ====================
+    
     private fun loadPlaylist() {
-        val file = StorageManager.getFile("music", PLAYLIST_FILE) ?: return
-        val jsonArray = StorageManager.loadJsonArray(file)
-        
-        if (jsonArray != null) {
-            val items = mutableListOf<PlaylistItem>()
-            for (i in 0 until jsonArray.length()) {
-                val json = jsonArray.getJSONObject(i)
-                items.add(
-                    PlaylistItem(
-                        id = json.getString("id"),
-                        uri = Uri.parse(json.getString("uri")),
-                        title = json.getString("title"),
-                        artist = json.optString("artist").takeIf { it.isNotEmpty() },
-                        album = json.optString("album").takeIf { it.isNotEmpty() },
-                        duration = json.optLong("duration", 0),
-                        path = json.getString("path")
-                    )
-                )
+        try {
+            // Read the stored serialized version and parse
+            val stored = runBlocking {
+                JsonStorageManager.read(PLAYLIST_FILE, PlaylistStore::class.java)
             }
-            _playlist.value = items
+            if (stored != null) {
+                _playlist.value = parsePlaylistItemsJson(stored.itemsJson)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to load playlist from JSON", e)
         }
     }
     
-    private fun savePlaylist() {
-        val file = StorageManager.getFile("music", PLAYLIST_FILE) ?: return
-        val jsonArray = JSONArray()
-        _playlist.value.forEach { item ->
-            jsonArray.put(JSONObject().apply {
+    /** Simple data class for persisting playlist items as JSON */
+    private data class PlaylistStore(
+        val itemsJson: String = "[]"
+    )
+    
+    private fun persistPlaylist() {
+        scope.launch {
+            try {
+                val json = serializePlaylistItems(_playlist.value)
+                JsonStorageManager.write(PLAYLIST_FILE, PlaylistStore(itemsJson = json))
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to save playlist to JSON", e)
+            }
+        }
+    }
+
+    private fun serializePlaylistItems(items: List<PlaylistItem>): String {
+        val arr = JSONArray()
+        items.forEach { item ->
+            arr.put(JSONObject().apply {
                 put("id", item.id)
                 put("uri", item.uri.toString())
                 put("title", item.title)
@@ -709,19 +588,45 @@ object MusicStorage {
                 put("path", item.path)
             })
         }
-        StorageManager.saveJsonSync(file, jsonArray)
+        return arr.toString()
+    }
+
+    private fun parsePlaylistItemsJson(json: String): List<PlaylistItem> {
+        if (json.isBlank()) return emptyList()
+        return try {
+            val arr = JSONArray(json)
+            val items = mutableListOf<PlaylistItem>()
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                items.add(
+                    PlaylistItem(
+                        id = obj.getString("id"),
+                        uri = Uri.parse(obj.getString("uri")),
+                        title = obj.getString("title"),
+                        artist = obj.optString("artist").takeIf { it.isNotEmpty() },
+                        album = obj.optString("album").takeIf { it.isNotEmpty() },
+                        duration = obj.optLong("duration", 0),
+                        path = obj.getString("path")
+                    )
+                )
+            }
+            items
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to parse playlist JSON", e)
+            emptyList()
+        }
     }
     
     fun getPlaylist(): List<PlaylistItem> = _playlist.value
     
     fun savePlaylist(items: List<PlaylistItem>) {
         _playlist.value = items
-        savePlaylist()
+        persistPlaylist()
     }
     
     fun clearPlaylist() {
         _playlist.value = emptyList()
-        savePlaylist()
+        persistPlaylist()
     }
     
     fun getPlaylistIndex(): Int = playlistIndex

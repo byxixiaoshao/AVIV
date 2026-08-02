@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -22,6 +24,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.bicy.whitenoise.ui.components.InteractiveSlider
 
@@ -250,4 +254,51 @@ fun PresetChip(
                    else MaterialTheme.colorScheme.onSurface
         )
     }
+}
+
+/**
+ * 音效配置窗口顶部的图标 Tab 按钮。
+ * 选中时使用主色背景，未选中时使用 surfaceVariant 背景。
+ */
+@Composable
+fun EffectConfigTabButton(
+    icon: ImageVector,
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val containerColor = if (isSelected) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.surfaceVariant
+    val contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                      else MaterialTheme.colorScheme.onSurface
+
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(containerColor)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // 纯图标 tab 按钮：不显示文字标签（label 仅作 contentDescription 供无障碍）。
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = contentColor,
+            modifier = Modifier.size(24.dp)
+        )
+    }
+}
+
+/**
+ * "更多调整" Tab 内容容器。
+ * 包裹混响 / 音质效果 / 声音偏移等可折叠区块。
+ */
+@Composable
+fun MoreAdjustmentsContent(
+    content: @Composable () -> Unit
+) {
+    content()
 }

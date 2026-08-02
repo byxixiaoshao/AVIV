@@ -144,7 +144,7 @@ object SecurityManager {
                 val entry = entries.nextElement()
                 if (!entry.isDirectory) {
                     entryCount++
-                    totalCrc += entry.crc.toLong() and 0xFFFFFFFFL
+                    totalCrc += entry.crc and 0xFFFFFFFFL
                 }
             }
             zipFile.close()

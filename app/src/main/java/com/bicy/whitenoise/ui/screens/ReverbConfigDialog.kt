@@ -1,5 +1,6 @@
 package com.bicy.whitenoise.ui.screens
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +21,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.filled.Equalizer
+import androidx.compose.material.icons.filled.Tune
+import com.bicy.whitenoise.ui.components.glass.GlassAlertDialogSimple
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -42,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -56,12 +60,15 @@ import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStoragePart.SpatialAudio
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStoragePart.CreativeEffectConfig
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStorage
 import com.bicy.whitenoise.ui.screens.ReverbConfigDialogPart.CollapsibleSection
+import com.bicy.whitenoise.ui.screens.ReverbConfigDialogPart.EffectConfigTabButton
 import com.bicy.whitenoise.ui.screens.ReverbConfigDialogPart.EffectSliderItem
-import com.bicy.whitenoise.ui.screens.ReverbConfigDialogPart.PremiumRequiredReverbDialog
+import com.bicy.whitenoise.ui.screens.ReverbConfigDialogPart.MoreAdjustmentsContent
 import com.bicy.whitenoise.ui.screens.ReverbConfigDialogPart.PresetChip
 import com.bicy.whitenoise.ui.screens.ReverbConfigDialogPart.ReverbSlider
+import com.bicy.whitenoise.ui.screens.ReverbConfigDialogPart.WhiteNoiseEqPanel
 import com.bicy.whitenoise.ui.screens.ReverbConfigDialogPart.reverbPresets
 import com.bicy.whitenoise.ui.utils.ResponsiveDimensions
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,13 +78,6 @@ fun ReverbConfigDialog(
     onDismiss: () -> Unit,
     onApply: (ReverbConfig) -> Unit
 ) {
-    val globalState by ConfigStorage.config.collectAsState()
-    val isPremiumUser = globalState.isPremium
-    
-    if (!isPremiumUser) {
-        PremiumRequiredReverbDialog(onDismiss = onDismiss)
-        return
-    }
     
     val savedConfig = remember { 
         WhiteNoiseStorage.getPlaybackState().sounds.find { it.id == soundId }?.reverbConfig
@@ -101,8 +101,11 @@ fun ReverbConfigDialog(
     var expandedSection by remember { mutableStateOf<String?>(null) }
     val spatialReverbExpanded = expandedSection == "spatialReverb"
     val creativeExpanded = expandedSection == "creative"
-    
+
     var selectedPreset by remember { mutableStateOf("") }
+
+    // 顶部 Tab：0 = 更多调整（混响/音质/空间），1 = 均衡器
+    var selectedTab by remember { mutableStateOf(0) }
     
     val savedCreativeConfig = remember { WhiteNoiseStorage.getPlaybackState().sounds.find { it.id == soundId }?.creativeEffectConfig ?: CreativeEffectConfig() }
     var loFiIntensity by remember { mutableFloatStateOf(savedCreativeConfig.loFi) }
@@ -173,7 +176,22 @@ fun ReverbConfigDialog(
         OboeAudioEngine.setSpatialSurroundParams(soundId, obrSurroundMode, obrSurroundRadius, obrSurroundSpeed)
         OboeAudioEngine.setSpatialRandomParams(soundId, obrRandomMaxDistance, obrRandomMinDistance, obrRandomValue, obrRandomSpeed)
     }
-    
+
+    // 速度调整状态（按轨道独立持久化，与音乐速度完全独立）
+    // 速度 0.1x-5.0x（1.0=原速），音调 ±12 半音（0=原调），通过 SoundTouch 实时变速变调
+    val savedSpeed = remember { WhiteNoiseStorage.getPlaybackState().sounds.find { it.id == soundId }?.playbackSpeed ?: 1f }
+    val savedPitch = remember { WhiteNoiseStorage.getPlaybackState().sounds.find { it.id == soundId }?.pitchShift ?: 0f }
+    var playbackSpeed by remember { mutableFloatStateOf(savedSpeed) }
+    var pitchShift by remember { mutableFloatStateOf(savedPitch) }
+    val speedSectionExpanded = expandedSection == "speed"
+
+    // 300ms debounce 持久化（拖动时频繁写盘会导致UI卡顿，延后批量写入）
+    // 实时调用 OboeAudioEngine 在 onValueChange 中立即执行，不 debounce，确保拖动即生效
+    LaunchedEffect(playbackSpeed, pitchShift) {
+        delay(300)
+        WhiteNoiseStorage.updatePlayingSoundSpeed(soundId, playbackSpeed, pitchShift)
+    }
+
     val applyPreview: () -> Unit = {
         OboeAudioEngine.setReverbParams(soundId, roomSize, damping, wetLevel)
         OboeAudioEngine.setInsulation(soundId, insulation)
@@ -223,18 +241,14 @@ fun ReverbConfigDialog(
         }
     }
     
-    @Suppress("DEPRECATION")
-    AlertDialog(
+    GlassAlertDialogSimple(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-        modifier = Modifier
-            .fillMaxWidth(ResponsiveDimensions.dialogMaxWidth() / LocalConfiguration.current.screenWidthDp.dp)
-            .clip(RoundedCornerShape(16.dp))
+        modifier = Modifier.fillMaxWidth(ResponsiveDimensions.dialogMaxWidth() / LocalConfiguration.current.screenWidthDp.dp)
     ) {
         Column(
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.surface)
                 .padding(20.dp)
+                .heightIn(max = (LocalConfiguration.current.screenHeightDp * 0.88f).dp)
         ) {
             Text(
                 text = stringResource(R.string.audio_effect_config),
@@ -249,15 +263,50 @@ fun ReverbConfigDialog(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
-            
-            Spacer(modifier = Modifier.height(20.dp))
-            
-            Column(
-                modifier = Modifier
-                    .weight(1f, fill = false)
-                    .heightIn(max = ResponsiveDimensions.dialogMaxHeight())
-                    .verticalScroll(rememberScrollState())
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 顶部 Tab 切换条（图标按钮）
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                EffectConfigTabButton(
+                    icon = Icons.Filled.Tune,
+                    label = stringResource(R.string.more_adjustments),
+                    isSelected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    modifier = Modifier.weight(1f)
+                )
+                EffectConfigTabButton(
+                    icon = Icons.Filled.Equalizer,
+                    label = stringResource(R.string.equalizer),
+                    isSelected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Crossfade(
+                targetState = selectedTab,
+                // weight(fill=false)：内容少时按内容收缩，内容多时封顶在剩余空间并滚动，
+                // 确保底部「重置/取消/应用」按钮始终可见、不被顶掉。
+                modifier = Modifier.weight(1f, fill = false),
+                label = "effect_config_tab"
+            ) { tab ->
+                Column(
+                    modifier = Modifier
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    when (tab) {
+                        0 -> {
+                            // 更多调整：混响 / 音质效果 / 声音偏移
+                            // 注意：必须用 Column 纵向排列三个 CollapsibleSection，
+                            // 若用 Row 会导致三个 section 横排，音质效果与声向偏移被挤出屏幕不可见。
+                            MoreAdjustmentsContent {
+        Column(modifier = Modifier.fillMaxWidth()) {
             CollapsibleSection(
                 title = stringResource(R.string.spatial_reverb),
                 expanded = spatialReverbExpanded,
@@ -769,10 +818,10 @@ fun ReverbConfigDialog(
                     ReverbSlider(
                         label = "环绕速度",
                         value = obrSurroundSpeed,
-                        valueRange = 1f..60f,
-                        valueText = String.format("%.0f秒/圈", obrSurroundSpeed),
-                        steps = 59,
-                        onValueChange = { 
+                        valueRange = 0.25f..10f,
+                        valueText = String.format("%.2f秒/圈", obrSurroundSpeed),
+                        steps = 38,
+                        onValueChange = {
                             obrSurroundSpeed = it
                             saveSpatialConfig()
                             OboeAudioEngine.setSpatialSurroundParams(soundId, obrSurroundMode, obrSurroundRadius, it)
@@ -827,16 +876,60 @@ fun ReverbConfigDialog(
                         valueRange = 0.1f..2f,
                         valueText = String.format("%.1f", obrRandomSpeed),
                         steps = 19,
-                        onValueChange = { 
+                        onValueChange = {
                             obrRandomSpeed = it
                             saveSpatialConfig()
                             OboeAudioEngine.setSpatialRandomParams(soundId, obrRandomMaxDistance, obrRandomMinDistance, obrRandomValue, it)
                         }
                     )
                 }
+                                }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 速度调整分类（声向偏移之后）：速度 0.1-5.0x + 音调 ±12 半音
+            // 与音乐面板规格一致，按轨道独立持久化，实时调用 OboeAudioEngine 变速变调
+            CollapsibleSection(
+                title = "速度调整",
+                expanded = speedSectionExpanded,
+                onToggle = { expandedSection = if (speedSectionExpanded) null else "speed" }
+            ) {
+                ReverbSlider(
+                    label = "播放速度",
+                    value = playbackSpeed,
+                    valueRange = 0.1f..5f,
+                    valueText = String.format("%.2fx", playbackSpeed),
+                    onValueChange = {
+                        playbackSpeed = it
+                        OboeAudioEngine.setPlaybackSpeed(soundId, it)
+                    }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                ReverbSlider(
+                    label = "音调偏移",
+                    value = pitchShift,
+                    valueRange = -12f..12f,
+                    valueText = String.format("%+.1f", pitchShift),
+                    onValueChange = {
+                        pitchShift = it
+                        OboeAudioEngine.setPitchShift(soundId, it)
+                    }
+                )
             }
+                            }
+                        }
+                    }
+                        1 -> {
+                            // 均衡器（每音轨独立 EQ）
+                            WhiteNoiseEqPanel(
+                                soundId = soundId,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
             
             Row(

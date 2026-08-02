@@ -37,6 +37,7 @@ enum class SoundType {
 data class SoundPlayConfig(
     val id: String,
     val name: String,
+    val categoryName: String = "",
     val volume: Float = 1f,
     val reverbConfig: ReverbConfig = ReverbConfig(),
     val spatialAudioConfig: SpatialAudioConfig = SpatialAudioConfig(),
@@ -49,7 +50,12 @@ data class SoundPlayConfig(
     val spatialScatterRange: SpatialScatterRangeData = SpatialScatterRangeData(),
     val spatialScatterEnabled: Boolean = false,
     val overlayMode: Boolean = false,
-    val filePath: String? = null
+    val eqEnabled: Boolean = false,
+    val filePath: String? = null,
+    // 播放速度/音调（按轨道独立持久化，与音乐速度完全独立）
+    // 速度 0.1x-5.0x（1.0=原速），音调 ±12 半音（0=原调），通过 SoundTouch 实时变速变调
+    val playbackSpeed: Float = 1f,
+    val pitchShift: Float = 0f
 )
 
 data class ScatteredAudioClipData(
@@ -60,12 +66,15 @@ data class ScatteredAudioClipData(
 )
 
 data class SpatialScatterRangeData(
-    val xMin: Float = -5f,
-    val xMax: Float = 5f,
-    val yMin: Float = 0f,
-    val yMax: Float = 3f,
-    val zMin: Float = -5f,
-    val zMax: Float = 5f
+    val minRadius: Float = 0.5f,
+    val maxRadius: Float = 5.0f,
+    val xEnabled: Boolean = true,
+    val yEnabled: Boolean = true,
+    val zEnabled: Boolean = true,
+    val moveEnabled: Boolean = false,
+    val moveRandomValue: Float = 0.5f,
+    val moveSpeed: Float = 1.0f,
+    val directionRandomValue: Float = 0.3f
 )
 
 data class SpatialAudioConfig(

@@ -19,9 +19,19 @@
 
 app/.cxx/
 app/build/
+app/release/
+app/src/main/assets/Scripts/
+
+# 顶层构建产物 / IDE / 第三方源码目录（/* 已忽略，此处显式声明意图）
+.gradle/
+.idea/
+.kotlin/
+lxmusic-main/
+
 备份/
 code_dictionary/
 error_1.txt
+error_2.txt
 keystore.properties
 *.jks
 *.so

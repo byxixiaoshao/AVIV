@@ -1,8 +1,7 @@
 package com.bicy.whitenoise.subPage.home
 
 import android.content.Context
-import com.bicy.whitenoise.subPage.home.model.SoundCategory
-import com.bicy.whitenoise.subPage.home.model.SoundMetadata
+import com.bicy.whitenoise.subPage.home.model.SoundMetadataPart.*
 import com.bicy.whitenoise.utils.LanguageManager
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
@@ -13,7 +12,7 @@ import kotlinx.coroutines.withContext
 object ItemList {
     
     private val gson = Gson()
-    private var manifestCache: com.bicy.whitenoise.subPage.home.model.SoundsManifest? = null
+    private var manifestCache: SoundsManifest? = null
     
     fun loadManifest(context: Context, onLoaded: (List<SoundCategory>, List<SoundMetadata>) -> Unit) {
         CoroutineScope(Dispatchers.IO).launch {
@@ -22,7 +21,7 @@ object ItemList {
                     val json = context.assets.open("sounds_remote.json").use { 
                         it.bufferedReader().use { reader -> reader.readText() }
                     }
-                    manifestCache = gson.fromJson(json, com.bicy.whitenoise.subPage.home.model.SoundsManifest::class.java)
+                    manifestCache = gson.fromJson(json, SoundsManifest::class.java)
                 }
                 
                 withContext(Dispatchers.Main) {
@@ -39,13 +38,13 @@ object ItemList {
         }
     }
     
-    fun getManifest(context: Context): com.bicy.whitenoise.subPage.home.model.SoundsManifest? {
+    fun getManifest(context: Context): SoundsManifest? {
         if (manifestCache == null) {
             try {
                 val json = context.assets.open("sounds_remote.json").use { 
                     it.bufferedReader().use { reader -> reader.readText() }
                 }
-                manifestCache = gson.fromJson(json, com.bicy.whitenoise.subPage.home.model.SoundsManifest::class.java)
+                manifestCache = gson.fromJson(json, SoundsManifest::class.java)
             } catch (e: Exception) {
                 android.util.Log.e("ItemList", "加载音频清单失败: ${e.message}")
             }

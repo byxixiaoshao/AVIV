@@ -7,6 +7,7 @@ import com.bicy.whitenoise.storage.core.StorageManager
 import com.bicy.whitenoise.storage.music.MusicStorage
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStorage
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStoragePart.PlaybackRestorer
+import com.bicy.whitenoise.storage.whitenoise.PresetManager
 
 object AppStorage {
     
@@ -27,6 +28,7 @@ object AppStorage {
         ConfigStorage.init()
         WhiteNoiseStorage.init()
         MusicStorage.init()
+        PresetManager.load()
         
         PlaybackRestorer.init(context)
         

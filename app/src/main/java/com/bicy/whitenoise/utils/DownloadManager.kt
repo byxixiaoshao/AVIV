@@ -5,12 +5,16 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import android.widget.Toast
 import com.bicy.whitenoise.R
+import com.bicy.whitenoise.service.AnomalyType
+import com.bicy.whitenoise.service.MemoryLockService
 import com.bicy.whitenoise.servies.MusicService
-import com.bicy.whitenoise.subPage.home.model.SoundMetadata
+import com.bicy.whitenoise.subPage.home.model.SoundMetadataPart.*
 import com.bicy.whitenoise.subPage.scattered.model.ScatteredSoundWithType
+import com.bicy.whitenoise.ui.components.toast.ToastManager
+import com.bicy.whitenoise.storage.core.JsonStorageManager
 import kotlinx.coroutines.*
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -170,32 +174,24 @@ object DownloadManager {
         
         val libraryDir = File(context.filesDir, WHITE_NOISE_DIR)
         if (libraryDir.exists() && libraryDir.isDirectory) {
-            libraryDir.listFiles()?.forEach { categoryDir ->
-                if (categoryDir.isDirectory) {
-                    val soundsListFile = File(categoryDir, "${categoryDir.name}_sounds_list.json")
-                    if (soundsListFile.exists()) {
-                        try {
-                            val json = soundsListFile.readText()
-                            val soundsList = com.google.gson.Gson().fromJson(
-                                json,
-                                object : com.google.gson.reflect.TypeToken<List<SoundStorageManager.SoundItem>>() {}.type
-                            ) as? List<SoundStorageManager.SoundItem>
-                            
-                            val matchedSound = soundsList?.find { it.id == soundId }
-                            if (matchedSound != null) {
-                                val soundDir = File(categoryDir, matchedSound.name)
-                                if (soundDir.exists() && soundDir.isDirectory) {
-                                    soundDir.listFiles()?.forEach { file ->
-                                        if (file.isFile && file.name.startsWith("$AUDIO_FILE.")) {
-                                            if (file.length() > 0) return file
-                                        }
-                                    }
-                                }
+            try {
+                val entities = runBlocking {
+                    JsonStorageManager.read("white_noise_entities.json", Array<WhiteNoiseEntity>::class.java)?.toList() ?: emptyList()
+                }
+                val entity = entities.firstOrNull { it.id == soundId }
+                
+                if (entity != null) {
+                    val soundDir = File(File(libraryDir, entity.category), entity.name)
+                    if (soundDir.exists() && soundDir.isDirectory) {
+                        soundDir.listFiles()?.forEach { file ->
+                            if (file.isFile && file.name.startsWith("$AUDIO_FILE.")) {
+                                if (file.length() > 0) return file
                             }
-                        } catch (e: Exception) {
                         }
                     }
                 }
+            } catch (e: Exception) {
+                MemoryLockService.reportAnomaly(AnomalyType.IO_ERROR, "数据库查询失败: $soundId", e.stackTraceToString())
             }
         }
         
@@ -280,6 +276,14 @@ object DownloadManager {
         return getCachedFile(context, soundId) != null
     }
     
+    fun isCached(context: Context, soundId: String, categoryName: String, soundName: String): Boolean {
+        return getCachedFile(context, soundId) != null || getCachedFileByPath(context, categoryName, soundName) != null
+    }
+    
+    fun getCachedFile(context: Context, soundId: String, categoryName: String, soundName: String): File? {
+        return getCachedFile(context, soundId) ?: getCachedFileByPath(context, categoryName, soundName)
+    }
+    
     fun isScatteredCached(context: Context, soundId: String): Boolean {
         return getScatteredCachedFile(context, soundId) != null
     }
@@ -334,12 +338,12 @@ object DownloadManager {
         onComplete: (Boolean) -> Unit
     ) {
         if (isDownloading(soundId)) {
-            showToast(context, context.getString(R.string.download_already_downloading))
+            ToastManager.info(context.getString(R.string.download_already_downloading))
             return
         }
         
         val url = remoteUrl ?: run {
-            showToast(context, context.getString(R.string.download_failed))
+            ToastManager.error(context.getString(R.string.download_failed))
             onComplete(false)
             return
         }
@@ -349,6 +353,7 @@ object DownloadManager {
             
             withContext(Dispatchers.Main) {
                 onProgress(0f)
+                ToastManager.loading("正在下载 $soundName...")
             }
             
             var downloadSuccess = false
@@ -374,7 +379,7 @@ object DownloadManager {
                         if (downloadType == DownloadType.WHITE_NOISE) {
                             val service = MusicService.getInstance()
                             if (service != null) {
-                                val cachedFile = getCachedFile(context, soundId)
+                                val cachedFile = getCachedFile(context, soundId, categoryName, soundName)
                                 if (cachedFile != null && cachedFile.exists() && cachedFile.length() > 0) {
                                     CoroutineScope(Dispatchers.IO).launch {
                                         val preloadSuccess = service.preloadSound(soundId, cachedFile)
@@ -389,9 +394,10 @@ object DownloadManager {
                         }
                         
                         onComplete(true)
+                        ToastManager.complete("「$soundName」下载完成")
                     } else {
                         Log.e(TAG, "下载失败: $soundName")
-                        showToast(context, context.getString(R.string.download_failed))
+                        ToastManager.error(context.getString(R.string.download_failed))
                         onComplete(false)
                     }
                 }
@@ -404,7 +410,7 @@ object DownloadManager {
             } catch (e: Exception) {
                 Log.e(TAG, "下载失败: ${e.message}")
                 withContext(Dispatchers.Main) {
-                    showToast(context, context.getString(R.string.download_failed))
+                    ToastManager.error(context.getString(R.string.download_failed))
                     onComplete(false)
                 }
             } finally {
@@ -571,10 +577,12 @@ object DownloadManager {
             } catch (e: IOException) {
                 Log.e(TAG, "下载IO错误: ${e.javaClass.simpleName} - ${e.message}")
                 e.printStackTrace()
+                MemoryLockService.reportAnomaly(AnomalyType.NETWORK_ERROR, "下载IO错误: $soundName", e.stackTraceToString())
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "下载错误: ${e.javaClass.simpleName} - ${e.message}")
                 e.printStackTrace()
+                MemoryLockService.reportAnomaly(AnomalyType.NETWORK_ERROR, "下载错误: $soundName", e.stackTraceToString())
                 throw e
             } finally {
                 try {
@@ -588,12 +596,6 @@ object DownloadManager {
                     Log.e(TAG, "关闭输出流失败: ${e.message}")
                 }
             }
-        }
-    }
-    
-    private fun showToast(context: Context, message: String) {
-        handler.post {
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
     }
     

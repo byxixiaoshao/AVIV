@@ -19,6 +19,39 @@
     <string name="audio_duration">音频时长</string>
     <string name="donate_author_hint">如果觉得声音不错，可以尝试给声音作者捐赠</string>
     <string name="close">关闭</string>
+    <string name="blur_backdrop">弹窗模糊背板</string>
+    <string name="blur_backdrop_enable">启用模糊背板</string>
+    <string name="blur_backdrop_blur">模糊强度</string>
+    <string name="blur_backdrop_darkness">背板暗度</string>
+
+    <!-- 背景渲染 -->
+    <string name="background_render">背景渲染</string>
+    <string name="background_render_enable">启用背景渲染</string>
+    <string name="bg_brightness">亮度</string>
+    <string name="bg_contrast">对比度</string>
+    <string name="bg_saturation">饱和度</string>
+    <string name="bg_highlights">高亮</string>
+    <string name="bg_shadows">阴影</string>
+    <string name="bg_blur">高斯模糊</string>
+    <string name="bg_vignette">暗角</string>
+
+    <!-- 背景玻璃模糊 -->
+    <string name="background_glass">背景玻璃模糊</string>
+    <string name="background_glass_enable">启用玻璃模糊</string>
+    <string name="bg_glass_type">玻璃类型</string>
+    <string name="bg_glass_sandblasted">磨砂玻璃</string>
+    <string name="bg_glass_frosted">毛玻璃</string>
+    <string name="bg_glass_grid">格栅玻璃</string>
+    <string name="bg_glass_misty">云雾玻璃</string>
+    <string name="bg_glass_silk">丝绸玻璃</string>
+    <string name="bg_glass_blur">模糊强度</string>
+    <string name="bg_glass_opacity">不透明度</string>
+    <string name="bg_glass_darkness">暗度</string>
+    <string name="bg_glass_noise">噪点强度</string>
+    <string name="bg_glass_grid_size">格栅大小</string>
+    <string name="bg_glass_gradient">渐变范围</string>
+    <string name="bg_glass_sheen">光泽强度</string>
+    <string name="bg_glass_select_type">选择玻璃类型</string>
     
     <string name="now_playing">正在播放</string>
     <string name="adjust_volume_effects">调整音量和效果</string>
@@ -85,39 +118,18 @@
     <string name="delete_sound_hint">确定要删除此声音吗？此操作无法撤销。</string>
     
     <string name="donate_support">捐赠支持</string>
-    <string name="unlock_premium">解锁高级版</string>
-    <string name="thank_you_premium">感谢您成为高级版用户！\n\n如果您觉得应用不错，可以扫码捐赠支持作者继续开发更多功能。</string>
+    <string name="donate_encourage">如果您觉得应用不错，可以扫码捐赠支持作者继续开发更多功能。</string>
     <string name="wechat_pay">微信支付</string>
     <string name="alipay">支付宝</string>
-    <string name="unlock_premium_hint">解锁高级版，仅需10元，享受更多功能：</string>
-    <string name="feature">功能</string>
-    <string name="normal_version">普通版</string>
-    <string name="premium_version">高级版</string>
     <string name="music_player">音乐播放器</string>
-    <string name="basic_playback">基础播放</string>
-    <string name="full_feature">✓ 完整</string>
-    <string name="sound_quality_adjust">音质调节</string>
-    <string name="basic_adjust">基础调节</string>
-    <string name="sound_classification">声音分类</string>
-    <string name="preset_classification">预设分类</string>
-    <string name="spatial_audio">空间音频</string>
-    <string name="basic_function">基础功能</string>
-    <string name="import_sounds">导入声音</string>
-    <string name="not_supported">不支持</string>
-    <string name="custom_classification">自定义分类</string>
-    <string name="weekly_usage_limit">每周使用限制</string>
-    <string name="go_to_payment">前往支付界面</string>
-    
-    <string name="thank_you_support">感谢您的支持</string>
-    <string name="thank_you_message">您的心意我收下了，这笔钱您留下用来买一杯奶茶叭~</string>
-    <string name="thank_you_hint">如果有条件了，可以尝试支持前往设置点击捐赠以支持作者，当然，您也可以尝试支持白噪音的作者。</string>
-    <string name="continue_">继续</string>
-    
     <string name="app_icon">应用图标</string>
     <string name="open_source_license">开源许可</string>
     <string name="sound_source_credit">音源致谢</string>
     <string name="sound_source_hint">所有白噪音音源均来自 Pixabay\n遵循 Pixabay License 允许商用</string>
     <string name="sound_source_tip">长按白噪音选项即可查看音频及其作者详情，有条件的可以支持一下</string>
+    <string name="special_thanks">特别鸣谢</string>
+    <string name="software_testing">软件测试</string>
+    <string name="art_support">美术支持</string>
     
     <string name="audio_effect_order_title">音频效果处理顺序</string>
     <string name="audio_effect_order_hint">点击箭头调整处理顺序（从上到下依次处理）</string>
@@ -139,7 +151,6 @@
     <string name="create_new_track">创建新音轨</string>
     
     <string name="more_adjustments">更多调整</string>
-    <string name="premium_exclusive_feature">高级用户专属功能</string>
     <string name="preset">预设</string>
     <string name="limiter">限制器</string>
     <string name="flat">平坦</string>
@@ -148,6 +159,10 @@
     <string name="limit_effects">限制音质效果</string>
     <string name="limit_reverb">限制空间混响</string>
     <string name="limit_spatial">限制声向偏移</string>
+    <string name="limit_apply_to">应用范围</string>
+    <string name="limit_threshold">阈值</string>
+    <string name="limit_attack">启动</string>
+    <string name="limit_release">释放</string>
     
     <string name="all">所有</string>
     <string name="folder">文件夹</string>
@@ -157,11 +172,12 @@
     <string name="duration">时长</string>
     <string name="date_added">添加时间</string>
     
-    <string name="music_player_premium_feature">音乐播放器为高级版功能</string>
-    <string name="please_unlock_premium">请解锁高级版</string>
+
     
     <string name="hours">小时</string>
     <string name="minutes">分钟</string>
+    <string name="hours_label">时</string>
+    <string name="minutes_label">分</string>
     <string name="start_timer">开始定时</string>
     <string name="pause_type">暂停类型</string>
     <string name="snooze_time">贪睡时间</string>
@@ -201,13 +217,60 @@
     
     <string name="shining_star">闪耀之星</string>
     <string name="dim_stardust">暗淡星尘</string>
-    <string name="premium_user">高级版用户</string>
-    <string name="free_user">免费版用户</string>
     <string name="donate_author">捐赠作者</string>
+    <string name="add_void_in_void">空里添空</string>
+    <string name="bicy_studio">Bicy Studio</string>
     
     <string name="please_add_music_directory">请先添加音乐目录</string>
     
     <string name="personalization">个性化</string>
+    <string name="liquid_glass_mode">液态玻璃效果</string>
+    <string name="liquid_glass_off">关闭</string>
+    <string name="liquid_glass_compatible">兼容</string>
+    <string name="liquid_glass_perfect">完美</string>
+    <string name="nav_background_image">背景图片</string>
+    <string name="nav_background_image_set">已设置（点击清除）</string>
+    <string name="nav_background_image_none">未设置</string>
+    <string name="nav_background_alpha">背景色透明度</string>
+    <string name="rendering_experimental">渲染（实验性）</string>
+    <string name="glass_adjust_params">调整参数</string>
+    <string name="glass_blur_strength">模糊强度</string>
+    <string name="glass_scale_effect">镜头效果</string>
+    <string name="glass_center_distortion">中心畸变</string>
+    <string name="glass_edge_darkness">边缘暗度</string>
+    <string name="glass_edge_warp">边缘扭曲</string>
+    <string name="glass_shadow_height">阴影高度</string>
+    <string name="glass_shadow_enable">启用阴影</string>
+    <string name="glass_shadow_strength">阴影强度</string>
+    <string name="liquid_glass_components">液态玻璃组件</string>
+    <string name="glass_compat_opacity">模拟模糊</string>
+    <string name="glass_compat_darkness">边缘暗度</string>
+    <string name="glass_compat_scale">缩放效果</string>
+    <string name="glass_scope">作用范围</string>
+    <string name="glass_scope_bottom_nav">底部导航栏</string>
+    <string name="glass_scope_top_bar">顶部栏</string>
+    <string name="glass_scope_all">全部</string>
+    
+    <!-- 毛玻璃 -->
+    <string name="frosted_glass">毛玻璃</string>
+    <string name="frosted_glass_enable">启用毛玻璃</string>
+    <string name="frosted_blur">模糊强度</string>
+    <string name="frosted_opacity">透明度</string>
+    <string name="frosted_edge_highlight">边缘高光</string>
+    <string name="frosted_darkness">暗度</string>
+    <string name="save_preset">保存预设</string>
+    <string name="presets">预设</string>
+    <string name="preset_name">预设名称</string>
+    <string name="no_presets">暂无保存的预设</string>
+    <string name="delete_preset_confirm">删除预设？</string>
+    <string name="delete_preset_hint">确定要删除预设 \"%s\" 吗？此操作不可撤销。</string>
+    <string name="load_preset_confirm">加载预设？</string>
+    <string name="load_preset_hint">加载 \"%s\" 将清空当前播放列表并替换为预设内容。是否继续？</string>
+    <string name="sounds">个声音</string>
+    <string name="frosted_scope_sections">收纳条</string>
+    <string name="frosted_scope_cards">卡片</string>
+    <string name="frosted_scope_dialogs">弹窗</string>
+    <string name="frosted_scope_notifications">通知条</string>
     <string name="viz_wn_sensitivity">白噪音可视化灵敏度</string>
     <string name="viz_music_sensitivity">音乐可视化灵敏度</string>
     <string name="viz_flash_sensitivity">音乐闪烁灵敏度</string>
@@ -274,7 +337,17 @@
     <string name="auto_eq_brightness_target">明亮度目标</string>
     <string name="auto_eq_loudness_target">响度目标</string>
     <string name="auto_eq_dynamic_q">动态 Q 值</string>
-    
+    <string name="auto_eq_band_config">频段配置</string>
+    <string name="auto_eq_band_ratio">频段点分配比例</string>
+    <string name="auto_eq_low_band">低频段</string>
+    <string name="auto_eq_mid_band">中频段</string>
+    <string name="auto_eq_high_band">高频段</string>
+    <string name="auto_eq_attack_release">包络时间 (Attack/Release)</string>
+    <string name="auto_eq_attack">启动时间</string>
+    <string name="auto_eq_release">释放时间</string>
+    <string name="auto_eq_curve_control">曲线平滑控制</string>
+    <string name="auto_eq_stability">稳定性控制</string>
+
     <string name="auto_eq_simple_desc">自动均衡器将根据音频内容实时分析，动态调整各频段增益以达到最佳听感。</string>
     <string name="auto_eq_advanced_desc">专业模式提供完整的频率分析、决策引擎与动态执行参数。调整将直接影响自动均衡器的行为特征。</string>
     
@@ -349,7 +422,19 @@
     <string name="speaker_preset_flat">平坦（无补偿）</string>
     <string name="speaker_compensation_intensity">补偿强度</string>
     <string name="speaker_compensation_desc">静态扬声器补偿曲线：应用预定义的EQ增益来补偿扬声器频响缺陷。选择您的扬声器类型并调整强度。</string>
+    <string name="auto_eq_filter_editor_title">滤波器编辑（增益 / 频率 / Q 值）</string>
+    <string name="auto_eq_filter_editor_desc">下方每个滤波器均可编辑，覆盖自动计算值。修改实时生效，并按预设独立保存。</string>
+    <string name="auto_eq_filter_gain">增益</string>
+    <string name="auto_eq_filter_freq">频率</string>
+    <string name="auto_eq_filter_q">Q 值</string>
+    <string name="auto_eq_filter_reset_all">重置全部滤波器</string>
+    <string name="auto_eq_filter_band">频段 %1$d</string>
     <string name="sync_compensation_to_manual_eq">同步补偿曲线到手动EQ</string>
+    <string name="eq_unlimited_points">均衡器频段点限制解除</string>
+    <string name="eq_unlimited_points_warning_title">警告</string>
+    <string name="eq_unlimited_points_warning_msg">解除均衡器频段点限制可能导致以下风险：\n\n• 音频处理性能严重下降\n• 极端情况下可能引起应用闪退\n• 内存占用急剧增加\n\n开启后将启用内存锁监控异常状态。\n\n确定继续？</string>
+    <string name="eq_unlimited_points_warning_confirm">确定开启</string>
+    <string name="eq_unlimited_points_warning_cancel">取消</string>
     <string name="test">测试</string>
     <string name="network">网络</string>
     <string name="local">本地</string>
@@ -360,6 +445,14 @@
     <string name="snooze_time_minutes">贪睡时间: %1$d 分钟</string>
     <string name="timer">定时器</string>
     <string name="spatial_scatter_range">空间散点范围</string>
+    <string name="random_radius">随机半径</string>
+    <string name="axis_range">范围轴</string>
+    <string name="dynamic_move">动态移动</string>
+    <string name="move_random_value">移动随机值</string>
+    <string name="direction_random_value">方向随机值</string>
+    <string name="distance_range">距离范围</string>
+    <string name="random_smoothness">随机平滑度</string>
+    <string name="move_speed">移动速度</string>
     
     <string name="mixer">混音器</string>
     <string name="playlist">播放列表</string>
@@ -369,6 +462,12 @@
     <string name="enter_scattered_group_name">请输入散点播放组名称</string>
     <string name="name">名称</string>
     <string name="enter_group_name">输入播放组名称</string>
+    
+    <string name="go_to_sound_library">前往音效库</string>
+    <string name="unsaved_changes">未保存的更改</string>
+    <string name="unsaved_changes_hint">您有未保存的更改，是否保存后再离开？</string>
+    <string name="save_and_continue">保存并继续</string>
+    <string name="discard_changes">放弃更改</string>
     
     <string name="effect_8bit_game">8-bit游戏</string>
     <string name="effect_underwater">水下</string>
@@ -468,4 +567,209 @@
     <string name="reverb_reflection_spread">反射扩散</string>
     <string name="reverb_highpass">高通滤波</string>
     <string name="reverb_early_reflection">早期反射</string>
+
+    <!-- 歌单操作 -->
+    <string name="more_options">更多选项</string>
+    <string name="add_to_playlist">添加到歌单</string>
+    <string name="remove_from_playlist">从歌单移除</string>
+    <string name="add_to_favorites">添加到收藏</string>
+    <string name="remove_from_favorites">从收藏移除</string>
+    <string name="delete_playlist">删除歌单</string>
+    <string name="rename_playlist">重命名歌单</string>
+    <string name="delete_playlist_confirm">删除歌单 \"%1$s\"？</string>
+    <string name="playlist_deleted">歌单已删除</string>
+    <string name="playlist_renamed">歌单已重命名</string>
+    <string name="select_target_playlist">选择目标歌单</string>
+    <string name="track_added">已添加到歌单</string>
+    <string name="track_removed">已从歌单移除</string>
+
+    <!-- 应用统计 -->
+    <string name="app_statistics">应用统计</string>
+    <string name="total_used_days">累计使用天数</string>
+    <string name="total_run_duration">累计运行总时长</string>
+    <string name="total_white_noise_duration">累计播放白噪音总时长</string>
+    <string name="total_music_duration">累计播放音乐总时长</string>
+    <string name="total_timer_duration">累计定时器总时长</string>
+    <string name="today_stats">今日统计</string>
+    <string name="today_white_noise">今日白噪音</string>
+    <string name="today_music">今日音乐</string>
+    <string name="today_timer">今日定时器</string>
+    <string name="history_stats">历史统计</string>
+    <string name="view_history">查看历史</string>
+    <string name="total_timer_starts">累计启动定时次数</string>
+    <string name="days_unit">天</string>
+    <string name="times_unit">次</string>
+    <string name="no_history_data">暂无历史数据</string>
+    <string name="history_dialog_title">使用历史（最近14天）</string>
+    <string name="view">查看</string>
+
+    <!-- 悬浮萌宠 -->
+    <string name="floating_pet">悬浮萌宠</string>
+    <string name="switch_floating_pet">切换萌宠</string>
+    <string name="floating_pet_size">调整大小</string>
+    <string name="floating_pet_antialias">抗锯齿</string>
+    <string name="floating_pet_hide_delay">隐藏延迟（秒）</string>
+    <string name="select_floating_pet">选择悬浮萌宠</string>
+    
+    <!-- AI -->
+    <string name="ai">AI</string>
+    <string name="ai_base_url">API 基础地址</string>
+    <string name="ai_api_key">API 密钥</string>
+    <string name="ai_model">模型</string>
+    <string name="ai_max_tokens">Token 限制</string>
+    <string name="ai_max_tool_calls">最大工具调用次数</string>
+    <string name="ai_system_prompt">系统提示词</string>
+    <string name="ai_system_prompt_default">你是一个白噪音兼音乐播放器的AI助手，可以与用户聊天，也可以通过调用工具帮助为用户提供应用内的服务（具体功能详细描述）等等。</string>
+    <string name="ai_enabled">启用AI</string>
+    <string name="ai_temperature">温度</string>
+    <string name="ai_enable_thinking">启用思考</string>
+    <string name="ai_test_connection">测试连接</string>
+    <string name="ai_connection_success">连接成功</string>
+    <string name="ai_connection_failed">连接失败：%1$s</string>
+    <string name="ai_not_configured">请先配置 API 设置</string>
+    
+    <!-- Floating Pet additional -->
+    <string name="floating_pet_alpha">透明度</string>
+    <string name="floating_pet_hidden_alpha">透明度（隐藏时）</string>
+    <string name="floating_pet_window_mode">悬浮窗窗口模式</string>
+    
+    <!-- Floating Window -->
+    <string name="floating_window_wn_play">白噪音</string>
+    <string name="floating_window_music_prev">上一曲</string>
+    <string name="floating_window_music_play">暂停/播放</string>
+    <string name="floating_window_music_next">下一曲</string>
+    <string name="floating_window_chat_hint">输入消息...</string>
+    
+    <!-- AI Chat -->
+    <string name="ai_chat">AI 对话</string>
+    <string name="ai_history">历史</string>
+    <string name="ai_welcome">今天我能帮你什么？</string>
+    <string name="ai_input_hint">输入消息...</string>
+    <string name="ai_send">发送</string>
+    <string name="ai_token_total">Token 用量</string>
+    <string name="ai_clear_chat">清空对话</string>
+    <string name="ai_loading">处理中…</string>
+    <string name="ai_thinking">思考</string>
+    <string name="ai_dismiss">关闭</string>
+    
+    <!-- Data Migration -->
+    <string name="migration_title">数据迁移</string>
+    <string name="migration_subtitle">检测到旧版本数据</string>
+    <string name="migration_button">迁移</string>
+    <string name="migration_message">检测到旧版本数据，点击确定后将开始迁移数据，完成后将自动重启应用。</string>
+    <string name="migration_in_progress">正在迁移…</string>
+    <string name="migration_complete">迁移完成</string>
+    <string name="migration_failed">迁移失败</string>
+    <string name="migration_failed_message">迁移过程中出现错误，可稍后重试。</string>
+    <string name="migration_restarting">正在重启…</string>
+
+    <!-- Theme Mode -->
+    <string name="theme_mode">主题模式</string>
+    <string name="theme_mode_title">选择主题模式</string>
+    <string name="theme_mode_off">关闭</string>
+    <string name="theme_mode_off_desc">使用单一主题色</string>
+    <string name="theme_mode_follow_system">跟随系统</string>
+    <string name="theme_mode_follow_system_desc">根据系统设置自动切换日间/夜间主题</string>
+    <string name="theme_mode_scheduled">定时</string>
+    <string name="theme_mode_scheduled_desc">按预定时间自动切换主题</string>
+
+    <!-- Day/Night Theme -->
+    <string name="day_theme">日间主题</string>
+    <string name="night_theme">夜间主题</string>
+
+    <!-- Scheduled Theme -->
+    <string name="schedule_config">定时配置</string>
+    <string name="schedule_default_theme">默认主题</string>
+    <string name="schedule_default_theme_desc">无计划匹配时使用的主题</string>
+    <string name="schedule_tasks">定时任务</string>
+    <string name="schedule_no_tasks">暂无定时任务</string>
+    <string name="schedule_add_task">添加任务</string>
+    <string name="schedule_task_time">时间范围</string>
+    <string name="schedule_task_theme">主题</string>
+
+    <!-- Add Schedule Task -->
+    <string name="add_schedule_task">添加定时任务</string>
+    <string name="schedule_start_time">开始时间</string>
+    <string name="schedule_end_time">结束时间</string>
+    <string name="schedule_select_theme">选择主题色</string>
+    <string name="schedule_task_name">任务名称（可选）</string>
+    <string name="schedule_time_conflict">时间冲突</string>
+    <string name="schedule_time_conflict_desc">此时间范围与已有任务冲突</string>
+    <string name="schedule_cross_day">跨天</string>
+    <string name="schedule_cross_day_desc">结束时间早于开始时间（如夜间到早晨）</string>
+
+    <!-- Custom Theme -->
+    <string name="create_custom_theme">创建自定义主题</string>
+    <string name="custom_theme_name">主题名称</string>
+    <string name="custom_theme_name_hint">输入唯一的主题名称</string>
+    <string name="custom_theme_name_exists">主题名称已存在</string>
+    <string name="custom_theme_colors">颜色配置</string>
+    <string name="custom_theme_preview">预览</string>
+    <string name="delete_custom_theme">删除自定义主题</string>
+    <string name="delete_custom_theme_confirm">删除自定义主题"%1$s"？</string>
+    <string name="edit_custom_theme">编辑自定义主题</string>
+
+    <!-- Theme Color Dialog -->
+    <string name="theme_color_presets">预设</string>
+    <string name="theme_color_custom_library">自定义库</string>
+    <string name="theme_color_create_button">创建新主题</string>
+    
+    <!-- Tutorial -->
+    <string name="tutorial">使用教程</string>
+    <string name="start_tutorial">开始教程</string>
+    <string name="next_step">下一步</string>
+    <string name="skip">跳过</string>
+    <string name="finish">完成</string>
+    <string name="tutorial_top_bar_title">顶部音乐栏</string>
+    <string name="tutorial_top_bar_desc">向下滑动展开音乐播放器，点击即可播放音乐（如果你有音乐的情况下）</string>
+    <string name="tutorial_bottom_bar_title">底部定时栏</string>
+    <string name="tutorial_bottom_bar_desc">向上滑动展开定时器，用于控制定时暂停，也可以作为简易的倒计时器</string>
+    <string name="tutorial_sample_sound_title">白噪音控制</string>
+    <string name="tutorial_sample_sound_desc">点击齿轮按钮可以弹出音质效果控制台，点击 × 即可移除该声音</string>
+    <string name="tutorial_save_load_title">保存与加载</string>
+    <string name="tutorial_save_load_desc">点击保存按钮可以保存你当前的播放配置，点击加号按钮可以加载你之前保存的配置，但是它会移除掉你当前的播放列表，请注意</string>
+    <string name="tutorial_nav_play_title">底部导航栏</string>
+    <string name="tutorial_nav_play_desc">如果你在白噪音播放页，点击播放页按钮即可切换白噪音播放／暂停状态</string>
+    <string name="tutorial_final_title">教程结束</string>
+    <string name="tutorial_final_desc">这个软件最隐蔽的东西都和你讲完了，Bicy 祝您用的愉快。</string>
+    <!-- Search & Script -->
+    <string name="search">搜索</string>
+    <string name="sort">排序</string>
+    <string name="retry">重试</string>
+    <string name="online_music">在线</string>
+    <string name="search_online_music">搜索在线音乐</string>
+    <string name="search_channel">搜索渠道</string>
+    <string name="search_channel_all">聚合</string>
+    <string name="search_channel_wy">网易</string>
+    <string name="search_channel_kg">酷狗</string>
+    <string name="search_channel_tx">QQ</string>
+    <string name="search_channel_kw">酷我</string>
+    <string name="search_channel_mg">咪咕</string>
+    <string name="searching">搜索中...</string>
+    <string name="no_search_results">无搜索结果</string>
+    <string name="search_online_music_hint">输入关键词搜索在线音乐</string>
+    <string name="source_script_management">音源管理</string>
+    <string name="scripts_count">个音源</string>
+    <string name="no_scripts">暂无音源</string>
+    <string name="import_script">导入音源</string>
+    <string name="script_imported">音源导入成功</string>
+    <string name="script_import_failed">音源导入失败</string>
+
+    <!-- 应用后台保活引导 -->
+    <string name="keep_alive_guide">应用后台保活引导</string>
+    <string name="keep_alive_guide_desc">关闭省电策略，避免后台播放被系统杀掉</string>
+    <string name="keep_alive_guide_open_failed">无法打开设置页面，请手动前往系统电池设置</string>
+    <string name="keep_alive_dialog_title">推荐关闭省电策略</string>
+    <string name="keep_alive_dialog_message">为保证白噪音能够持续在后台播放，避免在睡眠或长时间使用时被系统杀掉，推荐关闭本应用的省电策略。\n\n这能确保后台播放不被打断，带来更好的使用体验。</string>
+    <string name="keep_alive_dialog_dismiss">暂不</string>
+    <string name="keep_alive_dialog_confirm">立刻</string>
+
+    <!-- 白噪音每音轨均衡器 -->
+    <string name="wn_eq_enable">启用均衡器</string>
+    <string name="wn_eq_disabled_hint">均衡器已关闭，切换开关以启用</string>
+    <string name="wn_eq_point_hint">点击曲线添加控制点 | 拖拽移动 | 选择点后编辑</string>
+    <string name="wn_eq_delete_point">删除此点</string>
+    <string name="wn_eq_limit_warning">同时启用均衡器的白噪音超过上限（最多 %1$d 个），已停止应用均衡器。</string>
+    <string name="wn_eq_flat">平直</string>
+    <string name="wn_eq_reset">重置</string>
 </resources>

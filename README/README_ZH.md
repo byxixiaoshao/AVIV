@@ -1,197 +1,270 @@
-# 添空 - 白噪音与音乐播放应用
+# 添空 AVIV — 白噪音 & 音乐播放器
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![Platform](https://img.shields.io/badge/platform-Android-green.svg)
-![License](https://img.shields.io/badge/license-CC%20BY--NC%204.0-red.svg)
+![Platform](https://img.shields.io/badge/platform-Android%207.0%2B-green.svg)
+![Language](https://img.shields.io/badge/Kotlin%20%2B%20C%2B%2B-Compose%20%2F%20Oboe-blue.svg)
+![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 
-**一款功能强大的白噪音与音乐播放应用**
+**一款以实时 C++ 音频引擎为核心的 Android 白噪音与音乐播放器，集成十余种专业效果器、空间音频、AutoEQ 与在线流媒体。**
 
-[功能特性](#-功能特性) • [下载安装](#-下载安装) • [使用说明](#-使用说明) • [许可协议](#-许可协议)
+[功能特性](#-功能特性) · [音频引擎](#-音频引擎) · [技术架构](#-技术架构) · [构建](#-从源码构建) · [开源依赖与许可](#-开源依赖与许可)
 
-**[English](../../README.md)** • **[日本語](README_JA.md)** • **[한국어](README_KO.md)** • **[Русский](README_RU.md)** • **[Français](README_FR.md)** • **[Deutsch](README_DE.md)** • **[Español](README_ES.md)** • **[Italiano](README_IT.md)** • **[Português](README_PT.md)**
+[English](../README.md) · **中文（本文件）** · [日本語](README_JA.md) · [한국어](README_KO.md) · [Русский](README_RU.md) · [Français](README_FR.md) · [Deutsch](README_DE.md) · [Español](README_ES.md) · [Italiano](README_IT.md) · [Português](README_PT.md)
 
 </div>
 
 ---
 
-## 📱 应用简介
+## 📖 关于
 
-添空 是一款集白噪音播放与音乐播放于一体的 Android 应用，提供丰富的音频效果和个性化设置，帮助用户放松身心、提高专注力或改善睡眠质量。
+添空 AVIV 将白噪音播放、本地/在线音乐与一套专业级实时音频处理引擎融合于一体。所有效果均在 C++ 层基于 Oboe 低延迟音频流实时计算，不依赖预渲染，参数调节即时生效。适用于助眠、专注、冥想、氛围营造与音乐增强等场景。
 
----
-
-## 📜 使用之前额外的声明
-
-初始使用时应用的日志记录功能是开启状态，为防止在启动状态崩溃但无法记录日志，可能会产生性能影响，请根据自身条件判断是否关闭日志记录功能。
-
-该项目目前仅开放部分源码，请勿解包并植入付费项目以及广告进行二次分发，后面还会再次强调，本项目完全免费，请支持正版，若用于学习用途可联系作者获取授权（虽然该项目完全可以说是屎山代码）。
+> ⚠️ **使用须知**：首次启动时日志捕获默认开启（用于收集崩溃日志），可在设置中关闭。
 
 ---
 
 ## ✨ 功能特性
 
-### 🎵 音乐播放
-
-- **多格式支持**：支持 MP3、WAV、FLAC、AAC 等常见音频格式
-- **3D 环绕声**：支持声向偏移、距离衰减等 3D 音效
-- **均衡器**：12 频段专业均衡器
-- **音质效果**：
-  - Lo-Fi（低保真效果）
-  - 8-bit（复古游戏音效）
-  - 水下效果
-  - 外星信号
-  - 扩音器效果
-  - 失真效果
-- **空间混响**：房间大小、衰减时间、湿信号比例调节
-- **播放列表**：支持创建和管理播放列表
-
 ### 🌊 白噪音
+- 内置多种音源，按分类组织，支持本地与在线音源
+- **散布模式（Scatter）**：随机播放，可自定义间隔与范围，模拟自然声场
+- 每个音轨**独立配置效果**（EQ / 混响 / 空间 / 创意效果），互不干扰
+- 音量增益范围 0–300%
 
-- **多种音源**：内置多种白噪音音源
-- **音频效果配置**：每个音源可独立配置音效参数
-- **散布播放**：支持随机散布播放模式，可设置最小/最大间隔
-- **音量控制**：独立音量控制，支持 0-300% 增益
+### 🎵 音乐播放
+- 多格式支持（MP3 / WAV / FLAC / AAC 等）
+- 播放列表管理
+- 在线流媒体：基于 **QuickJS 音源脚本引擎**，多引擎自动探测与切换，单引擎超时自动降级到下一候选
 
-### 🎨 个性化设置
+### 🎛️ 实时音频效果（C++ 引擎）
+| 效果 | 说明 |
+|------|------|
+| **均衡器 EQ** | 手动多频段 BiQuad 滤波器，每音轨独立曲线，支持 Bypass |
+| **AutoEQ 扬声器补偿** | 12 种设备预设（手机/耳机/蓝牙/车载…），16 个可调参数，全部滤波器参数（增益/频率/Q）可逐频段编辑并持久化 |
+| **空间音频** | 3D 声源定位、距离衰减、环绕轨迹（0.25–10 秒/圈）、随机散布、固定偏移 |
+| **混响 Reverb** | 房间大小、衰减时间、预延迟、干湿混合、隔音 |
+| **限幅器 Limiter** | 砖墙限幅，传递函数曲线 + VU 电平表 + 增益削减量实时可视化 |
+| **创意效果** | Lo-Fi / 8-bit / 水下 / 外星信号 / 扩音器 / 失真 |
+| **伪还原二次处理** | HiFi 音质增强（软膝瞬态、DC 阻挡、增益平滑） |
+| **多段压缩** | MultibandCompressor |
+| **立体声加宽 / 虚拟低音 / 隔音** | StereoWidener / VirtualBass / Insulation |
+| **速率 & 音调** | 基于 **SoundTouch**，速率 0.1–5.0×、音调 ±12 半音，独立解耦调节 |
 
-- **主题颜色**：自定义应用主题颜色
-- **定时关闭**：支持定时关闭功能，最长 23 小时 59 分钟
-- **音效保存**：自动保存音效参数配置
-- **日志记录**：可选的日志记录功能，便于问题排查
+### 🎛️ 调音台面板
+- 一站式效果控制：效果强度、EQ、AutoEQ、空间音频、混响、限幅器、速率/音调
+- 实时预览，参数即时生效
+- 一键重置
 
-### 🎛️ 调音台
+### ⏰ 定时器
+- 定时停止（最长 23h 59m）
+- 贪睡模式
+- 点击定时球即可开始计时
 
-- **效果强度调节**：所有音效支持 0-100% 强度调节
-- **实时预览**：调节时实时预览效果
-- **一键重置**：快速重置所有音效参数
+### 🐾 悬浮萌宠
+- 桌面悬浮宠物，可拖拽、缩放、隐藏
+- 中心锚点缩放，隐藏状态可唤醒
+
+### 🎨 个性化
+- **自定义主题**：HSV 色彩定制 + 预设主题
+- **毛玻璃 / 液态玻璃**效果
+- 效果参数自动持久化
+
+### 🔔 通知系统
+- **应用内通知**：5 种类型（信息/成功/警告/错误/加载），优先级层级，滑动消除，操作按钮
+- **系统媒体通知**：MediaSession 集成，锁屏控制
+
+### 🛡️ 稳定性与保活
+- **音频流维持**：AudioFocus 策略、流断开容错重试、缓冲区优化、Oboe 错误优雅恢复、MediaPlayer 降级兜底
+- **后台保活引导**：电池优化白名单 + 厂商自启动设置引导
+- **内存锁诊断**：异常监控（音频引擎重启 / 缓冲欠载 / 主线程卡顿 / 内存警告）+ 诊断报告
+- **日志系统**：独立进程捕获 Logcat 与崩溃日志
+
+### 🌍 多语言
+支持 10 种语言：中文、英语、日语、韩语、俄语、法语、德语、西班牙语、意大利语、葡萄牙语
 
 ---
 
-## 📥 下载安装
+## 🔊 音频引擎
+
+### 处理管线
+
+```
+解码器 ──► 音量/淡入淡出 ──► 隔音 ──► 空间音频 ──► 混响
+       ──► EQ / AutoEQ ──► 创意效果 ──► 伪还原 ──► 限幅器
+       ──► SoundTouch(速率/音调) ──► 硬钳位 ──► Oboe 输出
+```
+
+### C++ 模块结构
+
+| 目录 | 职责 |
+|------|------|
+| `cpp/AudioPlayFunc/` | `AudioEngine`（Oboe 流管理、多轨混音）、`AudioTrack`（单轨解码与效果链） |
+| `cpp/AudioEffect/` | 12 个效果器 + `AudioEffectManager` + `SoundTouchProcessor` |
+| `cpp/equalizer/` | BiQuad 滤波器实现 |
+| `cpp/reverb/` | 混响算法 |
+| `cpp/spatial_audio/` | 空间音频 HRTF |
+| `cpp/oboe/` | Google Oboe 低延迟音频库 |
+| `cpp/ffmpeg/` | FFmpeg 解码（LGPL） |
+
+### JNI 接口
+`JniInterface.cpp` 暴露全部音频能力（播放控制、效果参数、EQ 曲线、空间音频、AutoEQ、限幅器、SoundTouch 速率音调等），Kotlin 侧由 `OboeAudioEngine` 封装。
+
+---
+
+## 🏗️ 技术架构
+
+| 层 | 技术 |
+|----|------|
+| UI | Kotlin + Jetpack Compose + Material 3 |
+| 音频 | C++ + Oboe + SoundTouch + FFmpeg（JNI） |
+| 网络 | OkHttp |
+| 脚本 | QuickJS-kt（在线音源脚本引擎） |
+| 存储 | Gson（JSON 配置）+ EncryptedSharedPreferences |
+| 媒体 | AndroidX Media（MediaSession） |
+| 其他 | Lottie / Coil / 生物识别 / MTDataFilesProvider |
+
+### 主要 Kotlin 包
+
+```
+com.bicy.whitenoise
+├── audio/          # OboeAudioEngine、空间音频、混响、散布播放管理
+├── music/          # 音乐播放控制
+├── onlinemusic/    # 在线流媒体与音源脚本引擎
+├── storage/        # 配置/白噪音/音乐/主题存储（JSON）
+├── ui/             # Compose 界面与组件
+├── servies/        # MusicService（前台媒体服务）
+├── service/        # MemoryLockService、LogCaptureService（:log 进程）
+├── floatingpet/    # 悬浮萌宠服务
+├── timer/          # 定时器
+├── equalizer/      # 均衡器逻辑
+└── ...             # data / security / utils / playlist 等
+```
+
+---
+
+## 📥 下载与安装
 
 ### 系统要求
+- Android 7.0（API 24）或更高
+- 至少 100MB 可用存储
 
-- Android 10.0 (API 29) 或更高版本
-- 建议至少 100MB 可用存储空间
-
-### 下载方式
-
-前往 [Releases](https://github.com/byxixiaoshao/AVIV/releases) 页面下载最新版本的 APK 安装包。
-
-**安装步骤**：
-1. 下载 APK 文件
-2. 在设备上启用"允许安装未知来源应用"
-3. 打开 APK 文件进行安装
-4. 安装完成后即可使用
+### 安装
+1. 从 [Releases](https://github.com/byxixiaoshao/AVIV/releases) 下载最新 APK
+2. 在设备上启用"安装未知来源应用"
+3. 打开 APK 安装
+4. 启动应用
 
 ---
 
-## 📖 使用说明
+## 🔧 从源码构建
 
-### 音乐播放
+### 环境要求
+- Android Studio（支持 AGP 当前版本）
+- JDK 11
+- Android SDK，compileSdk 36
+- NDK 27.0.12077973，CMake 4.3.0
+- 支持 ABI：`arm64-v8a`、`armeabi-v7a`
 
-1. 向下滑动顶部播放栏打开播放界面
-2. 通过文件选择器添加音乐文件
-3. 使用调音台调节音效参数
-4. 支持创建和管理播放列表
+### 步骤
+```bash
+git clone <仓库地址>
+cd AVIV/Android
+./gradlew :app:assembleRelease
+```
+
+> 构建需要 `keystore.properties` 签名配置文件。SoundTouch 源码位于项目根目录 `soundtouch/`，由 CMake 自动编译为静态库链接。
+
+---
+
+## 📖 使用指南
 
 ### 白噪音
-
-1. 在主界面选择白噪音音源
+1. 主界面选择白噪音分类与音源
 2. 点击音源卡片开始播放
-3. 长按卡片可配置音效参数
-4. 使用散布模式实现随机播放
+3. 长按卡片配置独立效果
+4. 散布模式：随机播放多个音源
 
-### 音效调节
+### 音乐
+1. 下滑顶部播放栏进入播放界面
+2. 通过文件选择器添加音乐
+3. 在调音台面板调节效果
 
-- **均衡器**：点击调音台 → 均衡器面板
-- **创意音效**：点击调音台 → 音质效果面板
-- **空间混响**：点击调音台 → 空间混响面板
-- **声向偏移**：点击调音台 → 声向偏移面板
-
----
-
-## 🎯 应用场景
-
-- 🛌 **睡眠辅助**：使用白噪音帮助入睡
-- 📚 **学习专注**：通过白噪音提高注意力
-- 🧘 **冥想放松**：配合音乐进行冥想
-- 🎧 **音乐欣赏**：使用音效增强音乐体验
-- 💼 **工作背景**：创造舒适的工作环境音
+### 效果调节
+打开**调音台面板**（Mixer）：
+- **均衡器** → Equalizer Panel
+- **AutoEQ 补偿** → Speaker Compensation（可逐频段编辑）
+- **空间音频** → Spatial Audio Panel
+- **混响** → Reverb Panel
+- **限幅器** → Limiter（含传递函数可视化）
+- **速率/音调** → 速度调整（SoundTouch）
 
 ---
 
-## ⚠️ 许可协议
+## 📦 开源依赖与许可
 
-本项目采用 **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)** 许可协议。
+| 依赖 | 许可 | 用途 |
+|------|------|------|
+| [Oboe](https://github.com/google/oboe) | Apache 2.0 | 低延迟音频引擎 |
+| [SoundTouch](https://gitlab.com/soundtouch/soundtouch) | LGPL v2.1 | 速率/音调独立调节 |
+| FFmpeg | LGPL v2.1+ | 音频解码 |
+| Jetpack Compose / AndroidX | Apache 2.0 | UI 框架 |
+| Material Components | Apache 2.0 | UI 组件 |
+| AndroidX Media | Apache 2.0 | MediaSession |
+| AndroidX DataStore | Apache 2.0 | 偏好存储 |
+| AndroidX Security | Apache 2.0 | 加密偏好 |
+| AndroidX Biometric | Apache 2.0 | 生物识别 |
+| Gson | Apache 2.0 | JSON 序列化 |
+| OkHttp | Apache 2.0 | 网络请求 |
+| Lottie | Apache 2.0 | 动画 |
+| Coil | Apache 2.0 | 图片加载 |
+| [QuickJS-kt](https://github.com/dokar3/quickjs-kt) | MIT | 音源脚本引擎 |
+| Liquid Glass Android | Apache 2.0 | 毛玻璃效果 |
+| MTDataFilesProvider | Apache 2.0 | 媒体库数据提供者 |
 
-### ✅ 允许
+> 音源来自 [Pixabay](https://pixabay.com/)，遵循 Pixabay 许可。
 
-- 个人学习、研究
-- 非商业用途
-- 分发未修改的安装包（须保留原作者署名）
+---
 
-### ❌ 禁止
+## ⚠️ 许可
 
-- 商业使用
-- 二次分发修改版本
-- 用于商业产品或服务
-- 去除或修改版权声明
+本项目源码采用 **[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)** 许可。
 
 详见 [LICENSE](../LICENSE) 文件。
 
----
-
-## 💰 支持项目
-
-如果这个项目对你有帮助，欢迎捐赠支持！
-
-<div align="center">
-
-<img src="../img/Pay/wx.png" width="200" alt="微信支付"> &nbsp;&nbsp; <img src="../img/Pay/zfb.png" width="200" alt="支付宝">
-
-**微信支付** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; **支付宝**
-
-</div>
+> 第三方库保留其原始许可（如 SoundTouch — LGPL v2.1，FFmpeg — LGPL v2.1+，QuickJS-kt — MIT）。
 
 ---
 
-## 📧 联系方式
+## 📧 联系
 
 - **Issues**：[GitHub Issues](https://github.com/byxixiaoshao/AVIV/issues)
-- **邮件**：[3139105039@qq.com](mailto:3139105039@qq.com)
-- **作者**：byxixiaoshao
-
-如有问题、建议或反馈，欢迎通过 Issues 联系。
+- **Email**：[3139105039@qq.com](mailto:3139105039@qq.com)
+- **作者**：byxixiaoshao / Bicy Studio
 
 ---
 
-## 🙏 致谢
+## 🙏 特别鸣谢
 
-### 音频资源
+### 音源
+本项目使用的白噪音音源均来自 **[Pixabay](https://pixabay.com/)**。长按声音选项可查看音频作者信息，若条件允许，请支持原创作者。
 
-本项目使用的白噪音音源来自 **[Pixabay](https://pixabay.com/)**。
+### 软件测试
+- 条纹哦里GHT
+- 土豆仙人
+- AAA哈密瓜批发星见雅
 
-- 长按声音选项可查看音频作者信息
-- 如果条件允许，请支持原作者的创作
+### 美术支持
+- AAA哈密瓜批发星见雅
+- ☆雨の日が好き☔
 
-### 开源项目
-
-感谢所有为音频处理技术做出贡献的开源项目。
-
----
-
-## 📸 演示视频
-
-<video src="https://github.com/byxixiaoshao/AVIV/raw/main/video/Demo_Video.mp4" controls="controls" width="100%"></video>
+感谢所有为音频处理技术贡献的开源项目。
 
 ---
 
 <div align="center">
 
-**⭐ 如果这个项目对你有帮助，请浅浅地给一颗小小的 Star ⭐**
+**⭐ 如果本项目对您有帮助，请给个 Star ⭐**
 
 Made with ❤️ by Bicy Studio
 

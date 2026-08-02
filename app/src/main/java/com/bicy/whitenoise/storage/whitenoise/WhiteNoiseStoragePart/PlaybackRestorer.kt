@@ -96,7 +96,7 @@ object PlaybackRestorer {
                         if (sound.spatialAudioConfig.enabled) {
                             OboeAudioEngine.setSpatialEnabled(sound.id, true)
                             OboeAudioEngine.setSpatialOffsetType(sound.id, sound.spatialAudioConfig.offsetType)
-                            OboeAudioEngine.setSpatialFixedOffset(sound.id, 
+                            OboeAudioEngine.setSpatialFixedOffset(sound.id,
                                 sound.spatialAudioConfig.fixedLeftRight,
                                 sound.spatialAudioConfig.fixedUpDown,
                                 sound.spatialAudioConfig.fixedFrontBack,
@@ -115,6 +115,27 @@ object PlaybackRestorer {
                             )
                             Log.d(TAG, "Restored spatial config for ${sound.id}")
                         }
+
+                        // 恢复每音轨均衡器配置
+                        if (sound.eqEnabled) {
+                            val curve = com.bicy.whitenoise.equalizer.PresetStorage.getTrackCurve(sound.id)
+                            val sorted = curve.points
+                            if (sorted.isNotEmpty()) {
+                                val freqs = FloatArray(sorted.size) { sorted[it].frequencyHz }
+                                val gains = FloatArray(sorted.size) { sorted[it].gainDb }
+                                val types = IntArray(sorted.size) { sorted[it].filterType.nativeValue }
+                                val qs = FloatArray(sorted.size) { sorted[it].qOverride }
+                                val cIns = IntArray(sorted.size) { sorted[it].curveIn.nativeValue }
+                                val cOuts = IntArray(sorted.size) { sorted[it].curveOut.nativeValue }
+                                OboeAudioEngine.setEqualizerCurve(sound.id, freqs, gains, types, qs, cIns, cOuts)
+                                OboeAudioEngine.setEqEnabled(sound.id, true)
+                                Log.d(TAG, "Restored EQ config for ${sound.id}: ${sorted.size} points")
+                            }
+                        }
+
+                        // 恢复播放速度/音调（按轨道独立，与音乐速度完全独立）
+                        if (sound.playbackSpeed != 1f) OboeAudioEngine.setPlaybackSpeed(sound.id, sound.playbackSpeed)
+                        if (sound.pitchShift != 0f) OboeAudioEngine.setPitchShift(sound.id, sound.pitchShift)
                     } else {
                         Log.w(TAG, "缓存文件不存在或无效: ${sound.id}")
                     }

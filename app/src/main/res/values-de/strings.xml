@@ -52,6 +52,7 @@
     <string name="text_color">Textfarbe</string>
     <string name="log_recording">Protokollaufzeichnung</string>
     <string name="about_app">Über</string>
+    <string name="github_repository">GitHub-Repository</string>
     
     <string name="scattered_sound_library">Verstreute Sound-Bibliothek</string>
     <string name="select_random_sound_group">Wählen Sie eine zufällige Soundgruppe zum Abspielen</string>
@@ -74,34 +75,13 @@
     <string name="delete">Löschen</string>
     
     <string name="donate_support">Spenden-Unterstützung</string>
-    <string name="unlock_premium">Premium freischalten</string>
-    <string name="thank_you_premium">Danke, dass Sie Premium-Nutzer sind!\n\nWenn Ihnen die App gefällt, können Sie den QR-Code scannen, um zu spenden und den Entwickler zu unterstützen, weitere Funktionen hinzuzufügen.</string>
+    <string name="donate_encourage">Wenn Ihnen die App gefällt, können Sie den QR-Code scannen, um den Entwickler bei der Weiterentwicklung zu unterstützen.</string>
     <string name="wechat_pay">WeChat Pay</string>
     <string name="alipay">Alipay</string>
-    <string name="unlock_premium_hint">Schalten Sie Premium für nur 10 CNY frei und genießen Sie mehr Funktionen:</string>
-    <string name="feature">Funktion</string>
-    <string name="normal_version">Normal</string>
-    <string name="premium_version">Premium</string>
     <string name="music_player">Musikplayer</string>
-    <string name="basic_playback">Basis</string>
-    <string name="full_feature">✓ Vollständig</string>
-    <string name="sound_quality_adjust">Klangqualität anpassen</string>
-    <string name="basic_adjust">Basis</string>
-    <string name="sound_classification">Sound-Klassifizierung</string>
-    <string name="preset_classification">Preset</string>
-    <string name="spatial_audio">Räumliches Audio</string>
-    <string name="basic_function">Basis</string>
-    <string name="import_sounds">Sounds importieren</string>
-    <string name="not_supported">Nicht unterstützt</string>
-    <string name="custom_classification">Benutzerdefinierte Klassifizierung</string>
-    <string name="weekly_usage_limit">Wochenlimit</string>
-    <string name="go_to_payment">Zur Zahlung</string>
-    
-    <string name="thank_you_support">Danke für Ihre Unterstützung</string>
-    <string name="thank_you_message">Ich habe Ihre Freundlichkeit erhalten, behalten Sie dieses Geld für einen Milchtee~</string>
-    <string name="thank_you_hint">Wenn Sie die Mittel haben, können Sie versuchen, den Entwickler durch eine Spende in den Einstellungen zu unterstützen. Natürlich können Sie auch die Weißes Rauschen-Autoren unterstützen.</string>
-    <string name="continue_">Weiter</string>
-    
+    <string name="stereo_widener">Stereo-Expander</string>
+    <string name="virtual_bass">Virtueller Bass</string>
+    <string name="multiband_compressor">Multiband-Kompressor</string>
     <string name="app_icon">App-Symbol</string>
     <string name="open_source_license">Open-Source-Lizenz</string>
     <string name="sound_source_credit">Sound-Quelle Credits</string>
@@ -126,7 +106,6 @@
     <string name="create_new_track">Neue Spur erstellen</string>
     
     <string name="more_adjustments">Weitere Anpassungen</string>
-    <string name="premium_exclusive_feature">Premium-Exklusivfunktion</string>
     <string name="preset">Preset</string>
     <string name="limiter">Limiter</string>
     <string name="flat">Flach</string>
@@ -139,8 +118,7 @@
     <string name="duration">Dauer</string>
     <string name="date_added">Hinzugefügt am</string>
     
-    <string name="music_player_premium_feature">Musikplayer ist eine Premium-Funktion</string>
-    <string name="please_unlock_premium">Bitte Premium freischalten</string>
+
     
     <string name="hours">Stunden</string>
     <string name="minutes">Minuten</string>
@@ -183,13 +161,41 @@
     
     <string name="shining_star">Leuchtender Stern</string>
     <string name="dim_stardust">Schwaches Sternenstaub</string>
-    <string name="premium_user">Premium-Nutzer</string>
-    <string name="free_user">Kostenloser Nutzer</string>
     <string name="donate_author">An Autor spenden</string>
     
     <string name="please_add_music_directory">Bitte fügen Sie zuerst ein Musikverzeichnis hinzu</string>
     
     <string name="personalization">Personalisierung</string>
+    <string name="liquid_glass_mode">Flüssiges Glas Effekt</string>
+    <string name="liquid_glass_off">Aus</string>
+    <string name="liquid_glass_compatible">Kompatibel</string>
+    <string name="liquid_glass_perfect">Perfekt</string>
+    <string name="nav_background_image">Hintergrundbild</string>
+    <string name="nav_background_image_set">Gesetzt (Tippen zum Löschen)</string>
+    <string name="nav_background_image_none">Nicht gesetzt</string>
+    <string name="nav_background_alpha">Hintergrundfarbe Transparenz</string>
+    <string name="rendering_experimental">Rendering (Experimentell)</string>
+    <string name="glass_adjust_params">Parameter anpassen</string>
+    <string name="glass_blur_strength">Weichzeichner-Stärke</string>
+    <string name="glass_scale_effect">Linseneffekt</string>
+    <string name="glass_center_distortion">Mittenverzerrung</string>
+    <string name="glass_edge_darkness">Kantenabdunklung</string>
+    <string name="glass_edge_warp">Kantenverzerrung</string>
+    <string name="glass_shadow_height">Schattenhöhe</string>
+    <string name="glass_compat_opacity">Deckkraft</string>
+    <string name="glass_compat_darkness">Kantenabdunklung</string>
+    <string name="glass_compat_scale">Skalierungseffekt</string>
+    <string name="glass_scope">Anwendungsbereich</string>
+    <string name="glass_scope_bottom_nav">Untere Navigationsleiste</string>
+    <string name="glass_scope_top_bar">Obere Leiste</string>
+    <string name="glass_scope_all">Alle</string>
+    <string name="frosted_glass">Milchglas</string>
+    <string name="frosted_glass_enable">Milchglas aktivieren</string>
+    <string name="frosted_blur">Unschärfe</string>
+    <string name="frosted_darkness">Dunkelheit</string>
+    <string name="frosted_scope_sections">Einklappbare Bereiche</string>
+    <string name="frosted_scope_cards">Karten</string>
+    <string name="frosted_scope_dialogs">Dialoge</string>
     <string name="viz_wn_sensitivity">Weißes Rauschen Visualisierungsempfindlichkeit</string>
     <string name="viz_music_sensitivity">Musik-Visualisierungsempfindlichkeit</string>
     <string name="viz_flash_sensitivity">Musik-Flash-Empfindlichkeit</string>
@@ -301,6 +307,12 @@
     <string name="name">Name</string>
     <string name="enter_group_name">Gruppennamen eingeben</string>
     
+    <string name="go_to_sound_library">Zur Sound-Bibliothek</string>
+    <string name="unsaved_changes">Ungespeicherte Änderungen</string>
+    <string name="unsaved_changes_hint">Sie haben ungespeicherte Änderungen. Möchten Sie speichern vor dem Verlassen?</string>
+    <string name="save_and_continue">Speichern und Fortfahren</string>
+    <string name="discard_changes">Änderungen verwerfen</string>
+    
     <string name="spatial_scatter_warning">Als Klangversatzverarbeitung kann es während der Verwendung zu Ruckeln kommen</string>
     <string name="axis_x">X-Achse (Links/Rechts)</string>
     <string name="axis_y">Y-Achse (Höhe)</string>
@@ -386,6 +398,9 @@
     <string name="spatial_min_distance">Min Distance</string>
     <string name="volume">Volume</string>
     <string name="speed">Speed</string>
+    <string name="speed_adjust_title">Geschwindigkeitsanpassung</string>
+    <string name="effect_order_title">Verarbeitungsreihenfolge</string>
+    <string name="effect_order_desc">Priorität der Audioeffekt-Verarbeitung anpassen</string>
     <string name="limit_effects">Limit Quality Effects</string>
     <string name="audio_effect_config">Audio Effect Config</string>
     <string name="quality_effect_title">Quality Effect</string>
@@ -418,7 +433,24 @@
     <string name="no_scattered_track">No scattered tracks\nPlease create a scattered track first</string>
     <string name="auto_eq_assist">Auto EQ Assist</string>
     <string name="spatial_scatter_range">Spatial Scatter Range</string>
+    <string name="random_radius">Zufälliger Radius</string>
+    <string name="axis_range">Achsenbereich</string>
+    <string name="dynamic_move">Dynamische Bewegung</string>
+    <string name="move_random_value">Bewegung-Zufallswert</string>
+    <string name="direction_random_value">Richtung-Zufallswert</string>
+    <string name="distance_range">Abstandsbereich</string>
+    <string name="random_smoothness">Random-Glättung</string>
+    <string name="move_speed">Bewegungsgeschwindigkeit</string>
     <string name="test">Test</string>
+    <string name="speaker_preset_title">Lautsprecher-Preset</string>
+    <string name="speaker_preset_phone">Telefonlautsprecher</string>
+    <string name="speaker_preset_earphone">Kopfhörer</string>
+    <string name="speaker_preset_bluetooth">Bluetooth-Lautsprecher</string>
+    <string name="speaker_preset_car">Auto-Audio</string>
+    <string name="speaker_preset_flat">Flach (keine Kompensation)</string>
+    <string name="speaker_compensation_intensity">Kompensationsintensität</string>
+    <string name="speaker_compensation_desc">Statische Lautsprecher-Kompensationskurve: Wendet vordefinierte EQ-Verstärkung an, um Lautsprecher-Frequenzgang-Mängel zu kompensieren.</string>
+    <string name="sync_compensation_to_manual_eq">Kompensation mit manualem EQ synchronisieren</string>
     <string name="timer">Timer</string>
     <string name="spatial_offset_title">Spatial Offset</string>
     <string name="spatial_offset_distance">Offset Distance</string>
@@ -432,4 +464,172 @@
     <string name="tone">Tone</string>
     <string name="delete_sound_hint">Are you sure you want to delete this sound? This action cannot be undone.</string>
     <string name="eq_preset_v_shape">V Shape</string>
+
+    <!-- Playlist Operations -->
+    <string name="more_options">Weitere Optionen</string>
+    <string name="add_to_playlist">Zur Playlist hinzufügen</string>
+    <string name="remove_from_playlist">Aus Playlist entfernen</string>
+    <string name="add_to_favorites">Zu Favoriten hinzufügen</string>
+    <string name="remove_from_favorites">Aus Favoriten entfernen</string>
+    <string name="delete_playlist">Playlist löschen</string>
+    <string name="rename_playlist">Playlist umbenennen</string>
+    <string name="delete_playlist_confirm">Playlist \"%1$s\" löschen?</string>
+    <string name="playlist_deleted">Playlist gelöscht</string>
+    <string name="playlist_renamed">Playlist umbenannt</string>
+    <string name="select_target_playlist">Playlist auswählen</string>
+    <string name="track_added">Zur Playlist hinzugefügt</string>
+    <string name="track_removed">Aus Playlist entfernt</string>
+
+    <!-- App Statistics -->
+    <string name="app_statistics">App-Statistik</string>
+    <string name="total_used_days">Gesamt verwendete Tage</string>
+    <string name="total_run_duration">Gesamtlaufzeit</string>
+    <string name="total_white_noise_duration">Gesamt Weißes-Rauschen-Dauer</string>
+    <string name="total_music_duration">Gesamt Musik-Dauer</string>
+    <string name="total_timer_duration">Gesamt Timer-Dauer</string>
+    <string name="today_stats">Heute Statistik</string>
+    <string name="today_white_noise">Heute Weißes Rauschen</string>
+    <string name="today_music">Heute Musik</string>
+    <string name="today_timer">Heute Timer</string>
+    <string name="history_stats">Historie Statistik</string>
+    <string name="view_history">Historie anzeigen</string>
+    <string name="total_timer_starts">Gesamt Timer-Starts</string>
+    <string name="days_unit">Tage</string>
+    <string name="times_unit">Mal</string>
+    <string name="no_history_data">Keine Historie-Daten</string>
+    <string name="history_dialog_title">Nutzungshistorie (letzte 14 Tage)</string>
+    <string name="view">Anzeigen</string>
+
+    <!-- Floating Pet -->
+    <string name="floating_pet">Schwebendes Pet</string>
+    <string name="switch_floating_pet">Pet wechseln</string>
+    <string name="floating_pet_size">Größe</string>
+    <string name="floating_pet_antialias">Antialiasing</string>
+    <string name="floating_pet_hide_delay">Verzögerung（秒）</string>
+    <string name="select_floating_pet">Schwebendes Pet wählen</string>
+    
+    <!-- AI -->
+    <string name="ai">KI</string>
+    <string name="ai_base_url">API-Basis-URL</string>
+    <string name="ai_api_key">API-Schlüssel</string>
+    <string name="ai_model">Modell</string>
+    <string name="ai_max_tokens">Max Tokens</string>
+    <string name="ai_max_tool_calls">Max Werkzeugaufrufe</string>
+    <string name="ai_system_prompt">System-Prompt</string>
+    <string name="ai_system_prompt_default">Du bist ein KI-Assistent für einen White-Noise- und Musikplayer. Du kannst chatten und Tools aufrufen, um Dienste in der App bereitzustellen.</string>
+    <string name="ai_enabled">KI aktivieren</string>
+    <string name="ai_temperature">Temperatur</string>
+    <string name="ai_enable_thinking">Denken aktivieren</string>
+    <string name="ai_test_connection">Verbindung testen</string>
+    <string name="ai_connection_success">Verbindung erfolgreich</string>
+    <string name="ai_connection_failed">Verbindung fehlgeschlagen: %1$s</string>
+    <string name="ai_not_configured">Bitte zuerst API konfigurieren</string>
+    
+    <!-- Floating Pet additional -->
+    <string name="floating_pet_alpha">Deckkraft</string>
+    <string name="floating_pet_hidden_alpha">Deckkraft (versteckt)</string>
+    <string name="floating_pet_window_mode">Schwebe-Fenstermodus</string>
+    
+    <!-- Floating Window -->
+    <string name="floating_window_wn_play">Weißes Rauschen</string>
+    <string name="floating_window_music_prev">Vorheriger</string>
+    <string name="floating_window_music_play">Pause/Play</string>
+    <string name="floating_window_music_next">Nächster</string>
+    <string name="floating_window_chat_hint">Nachricht eingeben...</string>
+    
+    <!-- AI Chat -->
+    <string name="ai_chat">KI-Chat</string>
+    <string name="ai_history">Verlauf</string>
+    <string name="ai_welcome">Wie kann ich helfen?</string>
+    <string name="ai_input_hint">Nachricht eingeben...</string>
+    <string name="ai_send">Senden</string>
+    <string name="ai_token_total">Token-Verbrauch</string>
+    <string name="ai_clear_chat">Chat löschen</string>
+    <string name="ai_loading">Verarbeiten…</string>
+    <string name="ai_thinking">Denken</string>
+    <string name="ai_dismiss">Schließen</string>
+    
+    <!-- Data Migration -->
+    <string name="migration_title">Datenmigration</string>
+    <string name="migration_subtitle">Alte Daten erkannt</string>
+    <string name="migration_button">Migrieren</string>
+    <string name="migration_message">Alte Version-Daten erkannt. Tippen Sie auf OK, um die Migration zu starten. Die App wird danach automatisch neu gestartet.</string>
+    <string name="migration_in_progress">Migration läuft…</string>
+    <string name="migration_complete">Migration abgeschlossen</string>
+    <string name="migration_failed">Migration fehlgeschlagen</string>
+    <string name="migration_failed_message">Bei der Migration ist ein Fehler aufgetreten. Versuchen Sie es später erneut.</string>
+    <string name="migration_restarting">Neustart…</string>
+
+    <!-- Theme Mode -->
+    <string name="theme_mode">Themen-Modus</string>
+    <string name="theme_mode_title">Themen-Modus wählen</string>
+    <string name="theme_mode_off">Aus</string>
+    <string name="theme_mode_off_desc">Immer eine einzige Themenfarbe verwenden</string>
+    <string name="theme_mode_follow_system">System folgen</string>
+    <string name="theme_mode_follow_system_desc">Automatisch zwischen Tag/Nacht-Themen basierend auf Systemeinstellungen wechseln</string>
+    <string name="theme_mode_scheduled">Geplant</string>
+    <string name="theme_mode_scheduled_desc">Themen automatisch nach geplanten Zeiten wechseln</string>
+
+    <!-- Day/Night Theme -->
+    <string name="day_theme">Tag-Thema</string>
+    <string name="night_theme">Nacht-Thema</string>
+
+    <!-- Scheduled Theme -->
+    <string name="schedule_config">Zeitplan-Konfiguration</string>
+    <string name="schedule_default_theme">Standard-Thema</string>
+    <string name="schedule_default_theme_desc">Thema, wenn kein Zeitplan passt</string>
+    <string name="schedule_tasks">Geplante Aufgaben</string>
+    <string name="schedule_no_tasks">Keine geplanten Aufgaben</string>
+    <string name="schedule_add_task">Aufgabe hinzufügen</string>
+    <string name="schedule_task_time">Zeitraum</string>
+    <string name="schedule_task_theme">Thema</string>
+
+    <!-- Add Schedule Task -->
+    <string name="add_schedule_task">Geplante Aufgabe hinzufügen</string>
+    <string name="schedule_start_time">Startzeit</string>
+    <string name="schedule_end_time">Endzeit</string>
+    <string name="schedule_select_theme">Themenfarbe wählen</string>
+    <string name="schedule_task_name">Aufgabenname (Optional)</string>
+    <string name="schedule_time_conflict">Zeitkonflikt</string>
+    <string name="schedule_time_conflict_desc">Zeitraum kollidiert mit existierender Aufgabe, bitte Zeit anpassen</string>
+    <string name="schedule_cross_day">Tagesübergreifend</string>
+    <string name="schedule_cross_day_desc">Endzeit liegt vor Startzeit (z.B. Nacht bis Morgen)</string>
+
+    <!-- Custom Theme -->
+    <string name="create_custom_theme">Benutzerdefiniertes Thema erstellen</string>
+    <string name="custom_theme_name">Themenname</string>
+    <string name="custom_theme_name_hint">Eindeutigen Themenname eingeben</string>
+    <string name="custom_theme_name_exists">Themenname existiert bereits</string>
+    <string name="custom_theme_colors">Farbkonfiguration</string>
+    <string name="custom_theme_preview">Vorschau</string>
+    <string name="delete_custom_theme">Benutzerdefiniertes Thema löschen</string>
+    <string name="delete_custom_theme_confirm">Benutzerdefiniertes Thema \"%1$s\" löschen?</string>
+    <string name="edit_custom_theme">Benutzerdefiniertes Thema bearbeiten</string>
+
+    <!-- Theme Color Dialog -->
+    <string name="theme_color_presets">Presets</string>
+    <string name="theme_color_custom_library">Benutzerdefinierte Bibliothek</string>
+    <string name="theme_color_create_button">Neu erstellen</string>
+    <!-- Search & Script -->
+    <string name="search">Suche</string>
+    <string name="sort">Sortieren</string>
+    <string name="retry">Wiederholen</string>
+    <string name="online_music">Online</string>
+    <string name="search_online_music">Online-Musik suchen</string>
+    <string name="search_channel">Suchkanal</string>
+    <string name="search_channel_all">Alle</string>
+    <string name="search_channel_wy">NetEase</string>
+    <string name="search_channel_kg">Kugou</string>
+    <string name="search_channel_tx">QQ Music</string>
+    <string name="search_channel_kw">Kuwo</string>
+    <string name="search_channel_mg">Migu</string>
+    <string name="searching">Suche...</string>
+    <string name="no_search_results">Keine Ergebnisse</string>
+    <string name="search_online_music_hint">Keywords zur Musiksuche eingeben</string>
+    <string name="source_script_management">Quellenverwaltung</string>
+    <string name="scripts_count">Quellen</string>
+    <string name="no_scripts">Keine Quellen</string>
+    <string name="import_script">Quelle importieren</string>
+    <string name="script_imported">Quelle erfolgreich importiert</string>
+    <string name="script_import_failed">Import fehlgeschlagen</string>
 </resources>

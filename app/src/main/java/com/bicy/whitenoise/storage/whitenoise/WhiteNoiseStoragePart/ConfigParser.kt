@@ -26,6 +26,7 @@ object ConfigParser {
             spatialScatterRange = parseSpatialScatterRange(json.optJSONObject("spatialScatterRange")),
             spatialScatterEnabled = json.optBoolean("spatialScatterEnabled", false),
             overlayMode = json.optBoolean("overlayMode", false),
+            eqEnabled = json.optBoolean("eqEnabled", false),
             filePath = json.optString("filePath").takeIf { it.isNotEmpty() }
         )
     }
@@ -102,12 +103,15 @@ object ConfigParser {
     fun parseSpatialScatterRange(json: JSONObject?): SpatialScatterRangeData {
         if (json == null) return SpatialScatterRangeData()
         return SpatialScatterRangeData(
-            xMin = json.optDouble("xMin", -5.0).toFloat(),
-            xMax = json.optDouble("xMax", 5.0).toFloat(),
-            yMin = json.optDouble("yMin", 0.0).toFloat(),
-            yMax = json.optDouble("yMax", 3.0).toFloat(),
-            zMin = json.optDouble("zMin", -5.0).toFloat(),
-            zMax = json.optDouble("zMax", 5.0).toFloat()
+            minRadius = json.optDouble("minRadius", 0.5).toFloat(),
+            maxRadius = json.optDouble("maxRadius", 5.0).toFloat(),
+            xEnabled = json.optBoolean("xEnabled", true),
+            yEnabled = json.optBoolean("yEnabled", true),
+            zEnabled = json.optBoolean("zEnabled", true),
+            moveEnabled = json.optBoolean("moveEnabled", false),
+            moveRandomValue = json.optDouble("moveRandomValue", 0.5).toFloat(),
+            moveSpeed = json.optDouble("moveSpeed", 1.0).toFloat(),
+            directionRandomValue = json.optDouble("directionRandomValue", 0.3).toFloat()
         )
     }
     
@@ -160,6 +164,7 @@ object ConfigParser {
             put("spatialScatterRange", toJson(config.spatialScatterRange))
             put("spatialScatterEnabled", config.spatialScatterEnabled)
             put("overlayMode", config.overlayMode)
+            put("eqEnabled", config.eqEnabled)
             config.filePath?.let { put("filePath", it) }
         }
     }
@@ -228,12 +233,15 @@ object ConfigParser {
     
     fun toJson(range: SpatialScatterRangeData): JSONObject {
         return JSONObject().apply {
-            put("xMin", range.xMin)
-            put("xMax", range.xMax)
-            put("yMin", range.yMin)
-            put("yMax", range.yMax)
-            put("zMin", range.zMin)
-            put("zMax", range.zMax)
+            put("minRadius", range.minRadius)
+            put("maxRadius", range.maxRadius)
+            put("xEnabled", range.xEnabled)
+            put("yEnabled", range.yEnabled)
+            put("zEnabled", range.zEnabled)
+            put("moveEnabled", range.moveEnabled)
+            put("moveRandomValue", range.moveRandomValue)
+            put("moveSpeed", range.moveSpeed)
+            put("directionRandomValue", range.directionRandomValue)
         }
     }
     

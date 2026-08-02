@@ -14,6 +14,7 @@ import android.view.WindowInsetsController
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -22,13 +23,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
-import com.bicy.whitenoise.music.MusicLibrary
+import com.bicy.whitenoise.music.MusicLibraryPart.MusicLibrary
 import com.bicy.whitenoise.music.MusicPlayerController
+import com.bicy.whitenoise.floatingpet.FloatingPetService
 import com.bicy.whitenoise.servies.MusicService
 import com.bicy.whitenoise.storage.config.ConfigStorage
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStorage
+import com.bicy.whitenoise.ui.components.toast.SmartToastHost
 import com.bicy.whitenoise.ui.MainScreen
-import com.bicy.whitenoise.ui.theme.WhiteNoiseThemeWithPremium
+import com.bicy.whitenoise.utils.UsageStatsManager
+import com.bicy.whitenoise.ui.theme.WhiteNoiseTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -85,13 +89,24 @@ class MainActivity : ComponentActivity() {
         setContent {
             val globalState by ConfigStorage.config.collectAsState()
             
-            WhiteNoiseThemeWithPremium(isPremiumUser = globalState.isPremium) {
+            WhiteNoiseTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScreen()
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        MainScreen()
+                        SmartToastHost()
+                    }
                 }
+            }
+        }
+        
+        if (ConfigStorage.isFloatingPetEnabled()) {
+            try {
+                FloatingPetService.getInstance(this).show()
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Failed to start floating pet", e)
             }
         }
     }
@@ -177,6 +192,7 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         MusicPlayerController.saveCurrentPlaybackState()
+        UsageStatsManager.onAppExit()
         if (isServiceBound) {
             unbindService(serviceConnection)
             isServiceBound = false

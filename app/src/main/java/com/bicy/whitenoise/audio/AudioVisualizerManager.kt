@@ -1,6 +1,8 @@
 package com.bicy.whitenoise.audio
 
 import android.util.Log
+import com.bicy.whitenoise.service.AnomalyType
+import com.bicy.whitenoise.service.MemoryLockService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -70,6 +72,7 @@ object aVzM {
                     delay(33)
                 } catch (e: Exception) {
                     Log.e(TAG, "获取可视化数据失败: ${e.message}")
+                    MemoryLockService.reportAnomaly(AnomalyType.AUDIO_VISUALIZATION_ERROR, "获取可视化数据失败", e.stackTraceToString())
                     delay(100)
                 }
             }

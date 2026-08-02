@@ -22,7 +22,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.airbnb.lottie.LottieAnimationView
 import com.bicy.whitenoise.audio.ReverbManager
-import com.bicy.whitenoise.music.MusicLibrary
+import com.bicy.whitenoise.music.MusicLibraryPart.MusicLibrary
 import com.bicy.whitenoise.wRT1.SecurityManager
 import com.bicy.whitenoise.storage.AppStorage
 import com.bicy.whitenoise.storage.config.ConfigStorage
@@ -247,11 +247,6 @@ class SplashActivity : AppCompatActivity() {
                 AppStorage.init(applicationContext)
                 ConfigStorage.init()
 
-                LogManager.init(applicationContext)
-                if (ConfigStorage.isLogEnabled()) {
-                    LogManager.setLogEnabled(true)
-                }
-
                 ThemeColorManager.initAsync(applicationContext)
                 TimerManager.init(applicationContext)
                 LanguageManager.init(applicationContext)
@@ -264,6 +259,9 @@ class SplashActivity : AppCompatActivity() {
 
                 MusicLibrary.init(applicationContext)
                 MusicLibrary.loadFromCacheOnly()
+
+                // 初始化音源脚本管理器
+                com.bicy.whitenoise.onlinemusic.SourceScriptManager.getInstance(applicationContext).initAsync()
 
                 isAllLoaded = true
 

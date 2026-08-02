@@ -3,10 +3,14 @@ package com.bicy.whitenoise.music
 import android.content.Context
 import android.util.Log
 import com.bicy.whitenoise.audio.OboeAudioEngine
+import com.bicy.whitenoise.equalizer.EqMode
+import com.bicy.whitenoise.equalizer.PresetStorage
 import com.bicy.whitenoise.servies.MusicService
 import com.bicy.whitenoise.storage.config.ConfigStorage
+import com.bicy.whitenoise.ui.components.toast.ToastManager
 import com.bicy.whitenoise.storage.music.MusicStorage
 import com.bicy.whitenoise.storage.music.MusicPlaybackState
+import com.bicy.whitenoise.utils.UsageStatsManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -17,6 +21,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.bicy.whitenoise.music.MusicLibraryPart.*
 
 enum class MusicRepeatMode {
     OFF,
@@ -115,9 +120,18 @@ object MusicPlayerController {
         val trackId = playbackState.trackId ?: return false
         
         val allTracks = MusicLibrary.tracks.value
-        if (allTracks.isEmpty()) return false
+        if (allTracks.isEmpty() && playbackState.onlineTracksJson == "{}") return false
+
+        // 解析保存的在线曲目数据
+        val onlineTrackData = parseOnlineTracks(playbackState.onlineTracksJson)
         
-        val lastTrack = allTracks.find { it.id == trackId } ?: return false
+        // 查找最后播放的曲目：先在本地库找，再在在线数据中找
+        val lastTrack = allTracks.find { it.id == trackId }
+            ?: onlineTrackData[trackId]
+        if (lastTrack == null) {
+            Log.d(TAG, "恢复失败: 找不到 trackId=$trackId")
+            return false
+        }
         
         _state.value = _state.value.copy(
             repeatMode = when (playbackState.repeatMode) {
@@ -130,7 +144,7 @@ object MusicPlayerController {
         
         if (playbackState.playlistTrackIds.isNotEmpty()) {
             val savedPlaylist = playbackState.playlistTrackIds.mapNotNull { id ->
-                allTracks.find { it.id == id }
+                allTracks.find { it.id == id } ?: onlineTrackData[id]
             }
             if (savedPlaylist.isNotEmpty()) {
                 val validIndex = playbackState.playlistIndex.coerceIn(0, savedPlaylist.size - 1)
@@ -151,6 +165,34 @@ object MusicPlayerController {
         Log.d(TAG, "恢复上次播放: ${lastTrack.title}, 位置: ${playbackState.position}")
         return true
     }
+
+    private fun parseOnlineTracks(json: String): Map<String, MusicTrack> {
+        if (json == "{}") return emptyMap()
+        return try {
+            val obj = org.json.JSONObject(json)
+            val result = mutableMapOf<String, MusicTrack>()
+            val keys = obj.keys()
+            while (keys.hasNext()) {
+                val id = keys.next()
+                val data = obj.getJSONObject(id)
+                result[id] = MusicTrack(
+                    id = id,
+                    path = data.optString("path", ""),
+                    title = data.getString("title"),
+                    artist = data.optString("artist").takeIf { it.isNotEmpty() },
+                    album = data.optString("album").takeIf { it.isNotEmpty() },
+                    duration = data.optLong("duration", 0),
+                    isOnline = true,
+                    streamUrl = data.optString("streamUrl").takeIf { it.isNotEmpty() },
+                    source = data.optString("source").takeIf { it.isNotEmpty() }
+                )
+            }
+            result
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to parse onlineTracksJson", e)
+            emptyMap()
+        }
+    }
     
     private fun restoreEffectIntensities() {
         applyEffectIntensitiesToCurrentTrack()
@@ -159,7 +201,11 @@ object MusicPlayerController {
     
     fun saveCurrentPlaybackState() {
         val track = _state.value.currentTrack ?: return
-        
+
+        val playlist = _state.value.playlist
+        val onlineTracks = playlist.filter { it.isOnline }
+        val onlineTracksJson = serializeOnlineTracks(onlineTracks)
+
         MusicStorage.savePlaybackState(
             MusicPlaybackState(
                 trackId = track.id,
@@ -171,27 +217,61 @@ object MusicPlayerController {
                 repeatMode = _state.value.repeatMode.name,
                 shuffleMode = _state.value.shuffleMode.name,
                 playlistIndex = _state.value.playlistIndex,
-                playlistTrackIds = _state.value.playlist.map { it.id }
+                playlistTrackIds = playlist.map { it.id },
+                onlineTracksJson = onlineTracksJson
             )
         )
+    }
+
+    private fun serializeOnlineTracks(tracks: List<MusicTrack>): String {
+        if (tracks.isEmpty()) return "{}"
+        val obj = org.json.JSONObject()
+        tracks.forEach { track ->
+            val data = org.json.JSONObject().apply {
+                put("title", track.title)
+                track.artist?.let { put("artist", it) }
+                track.album?.let { put("album", it) }
+                put("duration", track.duration)
+                put("path", track.path)
+                track.streamUrl?.let { put("streamUrl", it) }
+                track.source?.let { put("source", it) }
+            }
+            obj.put(track.id, data)
+        }
+        return obj.toString()
     }
     
     fun setPlaylist(tracks: List<MusicTrack>, startIndex: Int = 0) {
         if (tracks.isEmpty()) return
         
         val validIndex = startIndex.coerceIn(0, tracks.size - 1)
+        val targetTrack = tracks[validIndex]
+        
         val shuffledPlaylist = if (_state.value.shuffleMode == MusicShuffleMode.ON) {
-            tracks.shuffled()
+            val shuffled = tracks.shuffled()
+            // 确保目标歌曲在正确的位置
+            val targetIndex = shuffled.indexOf(targetTrack)
+            if (targetIndex >= 0) {
+                _state.value = _state.value.copy(
+                    playlist = shuffled,
+                    playlistIndex = targetIndex
+                )
+                loadTrack(shuffled[targetIndex])
+            } else {
+                // 如果找不到目标歌曲（不应该发生），使用第一个
+                _state.value = _state.value.copy(
+                    playlist = shuffled,
+                    playlistIndex = 0
+                )
+                loadTrack(shuffled[0])
+            }
         } else {
-            tracks
+            _state.value = _state.value.copy(
+                playlist = tracks,
+                playlistIndex = validIndex
+            )
+            loadTrack(targetTrack)
         }
-        
-        _state.value = _state.value.copy(
-            playlist = shuffledPlaylist,
-            playlistIndex = validIndex
-        )
-        
-        loadTrack(shuffledPlaylist[validIndex])
     }
     
     private fun loadTrack(track: MusicTrack) {
@@ -269,10 +349,16 @@ object MusicPlayerController {
         OboeAudioEngine.setCreativeEffectIntensity(soundId, 402, effectIntensities.underwater)
         OboeAudioEngine.setCreativeEffectIntensity(soundId, 403, effectIntensities.alienSignal)
         OboeAudioEngine.setCreativeEffectIntensity(soundId, 404, effectIntensities.megaphone)
-        OboeAudioEngine.setCreativeEffectIntensity(soundId, 500, effectIntensities.pitch)
-        OboeAudioEngine.setCreativeEffectIntensity(soundId, 501, effectIntensities.speed)
+        // pitch / speed 由 SoundTouch 独立管线处理（time-stretch + pitch-shift 解耦）
+        OboeAudioEngine.setPitchShift(soundId, effectIntensities.pitch)
+        OboeAudioEngine.setPlaybackSpeed(soundId, effectIntensities.speed)
         OboeAudioEngine.setCreativeEffectIntensity(soundId, 502, effectIntensities.hifi)
         OboeAudioEngine.setCreativeEffectIntensity(soundId, 503, effectIntensities.distortion)
+        // 音质增强类效果器：立体声扩展 / 虚拟低音 / 多段压缩
+        // 之前缺失这三行，导致音乐播放时虚拟低频与多段压缩无效果（构造函数默认值会被后续 setEnabled(false) 覆盖）
+        OboeAudioEngine.setCreativeEffectIntensity(soundId, 700, effectIntensities.stereoWidener)
+        OboeAudioEngine.setCreativeEffectIntensity(soundId, 701, effectIntensities.virtualBass)
+        OboeAudioEngine.setCreativeEffectIntensity(soundId, 702, effectIntensities.multibandCompressor)
         
         val reverbConfig = MusicStorage.getReverbConfig()
         OboeAudioEngine.setReverbParams(soundId, reverbConfig.roomSize, reverbConfig.damping, reverbConfig.wetLevel)
@@ -285,11 +371,23 @@ object MusicPlayerController {
         val volume = MusicStorage.getVolume()
         OboeAudioEngine.setVolume(soundId, volume)
 
-        val eqConfig = MusicStorage.getEqualizerConfig()
-        OboeAudioEngine.setEqGains(soundId, eqConfig.gains)
-        OboeAudioEngine.setEqEnabled(soundId, eqConfig.enabled)
-
+        val eqCurve = if (PresetStorage.eqMode.value == EqMode.GLOBAL) {
+            PresetStorage.getGlobalCurve()
+        } else {
+            PresetStorage.getTrackCurve(soundId)
+        }
+        val sorted = eqCurve.points.sortedBy { it.frequencyHz }
+        val freqs = FloatArray(sorted.size) { sorted[it].frequencyHz }
+        val gains = FloatArray(sorted.size) { sorted[it].gainDb }
+        val types = IntArray(sorted.size) { sorted[it].filterType.nativeValue }
+        val qs = FloatArray(sorted.size) { sorted[it].qOverride }
+        val cIns = IntArray(sorted.size) { sorted[it].curveIn.nativeValue }
+        val cOuts = IntArray(sorted.size) { sorted[it].curveOut.nativeValue }
+        OboeAudioEngine.setEqualizerCurve(soundId, freqs, gains, types, qs, cIns, cOuts)
         val autoEqEnabled = ConfigStorage.isAutoEqEnabled()
+        // 手动 EQ 模式下尊重 Bypass 状态；AutoEQ 模式下 Bypass 不生效（EQ 始终启用）
+        OboeAudioEngine.setEqEnabled(soundId, autoEqEnabled || !ConfigStorage.isEqBypassEnabled())
+
         if (autoEqEnabled) {
             // Static compensation mode: use EQ with compensation curve gains
             val intensity = ConfigStorage.getAutoEqIntensity()
@@ -301,6 +399,18 @@ object MusicPlayerController {
             OboeAudioEngine.setAutoEqTrebleBias(soundId, ConfigStorage.getAutoEqTrebleBias())
             OboeAudioEngine.setAutoEqBrightnessTarget(soundId, ConfigStorage.getAutoEqProBrightnessTarget())
             OboeAudioEngine.setAutoEqLoudnessTarget(soundId, ConfigStorage.getAutoEqProLoudnessTarget())
+            // Pro parameters
+            OboeAudioEngine.setAutoEqAttack(soundId, ConfigStorage.getAutoEqProAttack())
+            OboeAudioEngine.setAutoEqRelease(soundId, ConfigStorage.getAutoEqProRelease())
+            OboeAudioEngine.setAutoEqMaxSlope(soundId, ConfigStorage.getAutoEqProMaxSlope())
+            OboeAudioEngine.setAutoEqMaxBoost(soundId, ConfigStorage.getAutoEqProMaxBoost())
+            OboeAudioEngine.setAutoEqMaxCut(soundId, ConfigStorage.getAutoEqProMaxCut())
+            OboeAudioEngine.setAutoEqCouplingCoeff(soundId, ConfigStorage.getAutoEqProCouplingCoeff())
+            OboeAudioEngine.setAutoEqHysteresis(soundId, ConfigStorage.getAutoEqProHysteresisDb())
+            OboeAudioEngine.setAutoEqDynamicQEnabled(soundId, ConfigStorage.getAutoEqProDynamicQEnabled())
+            // Band configuration
+            OboeAudioEngine.setAutoEqBandCount(soundId, ConfigStorage.getAutoEqBandCount())
+            OboeAudioEngine.setAutoEqBandRatios(soundId, ConfigStorage.getAutoEqLowRatio(), ConfigStorage.getAutoEqMidRatio())
             val filePath = MusicCacheManager.getFilePath(soundId)
             Log.d(TAG, "AutoEQ triggered on track load: $soundId, filePath=$filePath")
             OboeAudioEngine.setAutoEqEnabled(soundId, true, filePath ?: "")
@@ -392,6 +502,8 @@ object MusicPlayerController {
         _state.value = _state.value.copy(isPlaying = true)
         startProgressUpdates()
         
+        UsageStatsManager.onMusicStart()
+        
         Log.d(TAG, "Playing: ${track.title}")
     }
     
@@ -404,6 +516,8 @@ object MusicPlayerController {
         
         _state.value = _state.value.copy(isPlaying = false)
         stopProgressUpdates()
+        
+        UsageStatsManager.onMusicStop()
         
         Log.d(TAG, "Paused (fading out): ${track.title}")
     }
@@ -427,6 +541,10 @@ object MusicPlayerController {
             position = 0
         )
         stopProgressUpdates()
+        
+        if (_state.value.isPlaying) {
+            UsageStatsManager.onMusicStop()
+        }
         
         Log.d(TAG, "Stopped: ${track.title}")
     }
@@ -586,6 +704,13 @@ object MusicPlayerController {
         }
         
         Log.d(TAG, "Repeat mode: $newMode")
+        ToastManager.info(
+            when (newMode) {
+                MusicRepeatMode.OFF -> "顺序播放"
+                MusicRepeatMode.ALL -> "列表循环"
+                MusicRepeatMode.ONE -> "单曲循环"
+            }
+        )
     }
     
     fun toggleShuffleMode() {
@@ -612,6 +737,7 @@ object MusicPlayerController {
         }
         
         Log.d(TAG, "Shuffle mode: $newMode")
+        ToastManager.info(if (newMode == MusicShuffleMode.ON) "随机播放" else "顺序播放")
     }
     
     fun playTrack(track: MusicTrack) {
@@ -623,6 +749,7 @@ object MusicPlayerController {
         val currentPlaylist = _state.value.playlist.toMutableList()
         currentPlaylist.add(track)
         _state.value = _state.value.copy(playlist = currentPlaylist)
+        ToastManager.success("「${track.title}」已添加到队列")
     }
     
     private fun startProgressUpdates() {

@@ -7,22 +7,29 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewOutlineProvider
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bicy.whitenoise.R
-import com.bicy.whitenoise.music.MusicTrack
+import com.bicy.whitenoise.music.MusicLibraryPart.MusicTrack
 
 class PlaylistAdapter(
-    initialOnTrackClick: (Int) -> Unit
+    initialOnTrackClick: (Int) -> Unit,
+    initialOnMoreClick: ((MusicTrack) -> Unit)? = null
 ) : ListAdapter<PlaylistAdapter.TrackItem, PlaylistAdapter.ViewHolder>(DiffCallback) {
 
     private var onTrackClick: (Int) -> Unit = initialOnTrackClick
-    
+    private var onMoreClick: ((MusicTrack) -> Unit)? = initialOnMoreClick
+
     fun updateOnTrackClick(newOnTrackClick: (Int) -> Unit) {
         onTrackClick = newOnTrackClick
+    }
+
+    fun updateOnMoreClick(newOnMoreClick: (MusicTrack) -> Unit) {
+        onMoreClick = newOnMoreClick
     }
 
     data class TrackItem(
@@ -50,6 +57,7 @@ class PlaylistAdapter(
         val root: View = view.findViewById(R.id.root)
         val content: View = view.findViewById(R.id.content)
         val shadow: View = view.findViewById(R.id.shadow)
+        val moreButton: ImageButton = view.findViewById(R.id.moreButton)
     }
 
     private var surfaceColor: Int = 0xFFFFFFFF.toInt()
@@ -115,13 +123,15 @@ class PlaylistAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = getItem(position)
-        
+
         holder.title.text = item.track.title
         holder.artist.text = item.track.artist ?: "未知艺术家"
-        
+
         val density = holder.itemView.context.resources.displayMetrics.density
         val offsetX = if (item.isPlaying) (-8 * density) else 0f
-        
+
+        val iconColor = if (item.isPlaying) onPrimaryColor else onSurfaceColor
+
         if (item.isPlaying) {
             holder.title.setTypeface(null, Typeface.BOLD)
             holder.title.setTextColor(onPrimaryColor)
@@ -131,18 +141,23 @@ class PlaylistAdapter(
             holder.title.setTextColor(onSurfaceColor)
             holder.content.background = createBackgroundDrawable(surfaceColor, strokeColor)
         }
-        
+
         holder.artist.setTextColor(secondaryTextColor)
-        
+        holder.moreButton.drawable?.setTint(iconColor)
+
         holder.root.post {
             holder.root.animate()
                 .translationX(offsetX)
                 .setDuration(200)
                 .start()
         }
-        
+
         holder.content.setOnClickListener {
             onTrackClick(item.index)
+        }
+
+        holder.moreButton.setOnClickListener {
+            onMoreClick?.invoke(item.track)
         }
     }
     

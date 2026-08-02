@@ -12,15 +12,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -30,13 +31,14 @@ import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.AlertDialog
+import com.bicy.whitenoise.ui.components.glass.GlassAlertDialogSimple
+import com.bicy.whitenoise.ui.components.ExpandableNavBarPart.BottomNavTotalHeight
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -49,25 +51,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bicy.whitenoise.R
+import com.bicy.whitenoise.ui.PageTopPadding
+import com.bicy.whitenoise.StMb.ScatteredTrackDataPart.*
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStoragePart.ScatteredAudioClipData
 import com.bicy.whitenoise.subPage.scattered.model.ScatteredCategoryWithTypes
 import com.bicy.whitenoise.subPage.scattered.model.ScatteredSoundTypeWithSounds
 import com.bicy.whitenoise.subPage.scattered.model.ScatteredSoundWithType
+import com.bicy.whitenoise.ui.PageBottomPadding
 import com.bicy.whitenoise.ui.theme.ShadowConfig
 import com.bicy.whitenoise.ui.theme.dropShadow
+import com.bicy.whitenoise.ui.components.glass.GlassCategorySection
 import com.bicy.whitenoise.ui.viewmodel.MainViewModel
 import com.bicy.whitenoise.utils.DownloadManager
 import com.bicy.whitenoise.utils.LanguageManager
 import com.bicy.whitenoise.utils.ScatteredStorageManager
-
-private val ContentPaddingTop = 8.dp
 
 @Composable
 fun ScatteredScreen(
@@ -76,28 +79,33 @@ fun ScatteredScreen(
     val context = LocalContext.current
     val categories = ScatteredStorageManager.getCategoriesWithTypes()
     
+    // 大分类展开状态
     var expandedCategoryId by remember { mutableStateOf<String?>(null) }
-    var selectedType by remember { mutableStateOf<ScatteredSoundTypeWithSounds?>(null) }
-    var showSoundListDialog by remember { mutableStateOf(false) }
+    // 小分类展开状态（独立于大分类）
+    var expandedTypeId by remember { mutableStateOf<String?>(null) }
     
+    // 声音添加对话框状态
     var selectedSound by remember { mutableStateOf<ScatteredSoundWithType?>(null) }
-    var showSoundDetailDialog by remember { mutableStateOf(false) }
+    var showAddToTrackDialog by remember { mutableStateOf(false) }
     
+    // 创建散点组对话框状态
     var showCreateGroupDialog by remember { mutableStateOf(false) }
     var newGroupName by remember { mutableStateOf("") }
     
+    // 下载状态
     val downloadProgress = remember { mutableStateOf<Map<String, Float>>(emptyMap()) }
     val downloadingSounds = remember { mutableStateOf<Set<String>>(emptySet()) }
     
     Box(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = ContentPaddingTop)
         ) {
+            Spacer(modifier = Modifier.height(PageTopPadding))
+
+            // 标题区域
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -121,26 +129,12 @@ fun ScatteredScreen(
                     )
                 }
                 
-                Row {
-                    IconButton(onClick = {
-                        // TODO: 添加功能
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = stringResource(R.string.add),
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                    
-                    IconButton(onClick = {
-                        showCreateGroupDialog = true
-                    }) {
-                        Icon(
+                IconButton(onClick = { showCreateGroupDialog = true }) {
+                    Icon(
                         imageVector = Icons.AutoMirrored.Filled.VolumeUp,
                         contentDescription = stringResource(R.string.create_player),
                         tint = MaterialTheme.colorScheme.onBackground
                     )
-                    }
                 }
             }
             
@@ -153,9 +147,7 @@ fun ScatteredScreen(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = stringResource(R.string.still_empty),
                             style = MaterialTheme.typography.bodyLarge,
@@ -173,104 +165,60 @@ fun ScatteredScreen(
                 ScatteredCategoryList(
                     categories = categories,
                     expandedCategoryId = expandedCategoryId,
+                    expandedTypeId = expandedTypeId,
                     onCategoryClick = { categoryId ->
-                        expandedCategoryId = if (expandedCategoryId == categoryId) {
-                            null
-                        } else {
-                            categoryId
-                        }
+                        expandedCategoryId = if (expandedCategoryId == categoryId) null else categoryId
                     },
-                    onTypeClick = { type ->
-                        selectedType = type
-                        showSoundListDialog = true
-                    }
+                    onTypeClick = { typeId ->
+                        expandedTypeId = if (expandedTypeId == typeId) null else typeId
+                    },
+                    onSoundClick = { sound ->
+                        handleSoundClick(
+                            context = context,
+                            sound = sound,
+                            downloadingSounds = downloadingSounds,
+                            downloadProgress = downloadProgress,
+                            onShowDialog = {
+                                selectedSound = sound
+                                showAddToTrackDialog = true
+                            }
+                        )
+                    },
+                    downloadProgress = downloadProgress.value,
+                    downloadingSounds = downloadingSounds.value
                 )
             }
         }
     }
     
-    if (showSoundListDialog && selectedType != null) {
-        SoundListDialog(
-            soundType = selectedType!!,
-            downloadProgress = downloadProgress.value,
-            downloadingSounds = downloadingSounds.value,
-            onDismiss = {
-                showSoundListDialog = false
-                selectedType = null
-            },
-            onSoundClick = { sound ->
-                val isDownloaded = ScatteredStorageManager.getSoundAudioFile(
-                    context,
-                    sound.categoryName,
-                    sound.typeName,
-                    sound.name
-                ) != null
-                
-                if (!isDownloaded && !downloadingSounds.value.contains(sound.id)) {
-                    val currentDownloading = downloadingSounds.value.toMutableSet()
-                    currentDownloading.add(sound.id)
-                    downloadingSounds.value = currentDownloading
-                    
-                    DownloadManager.downloadScatteredAudio(
-                        context = context,
-                        sound = sound,
-                        onProgress = { progress ->
-                            val currentProgress = downloadProgress.value.toMutableMap()
-                            currentProgress[sound.id] = progress
-                            downloadProgress.value = currentProgress
-                        },
-                        onComplete = { success ->
-                            val currentDownloading = downloadingSounds.value.toMutableSet()
-                            currentDownloading.remove(sound.id)
-                            downloadingSounds.value = currentDownloading
-                            
-                            val currentProgress = downloadProgress.value.toMutableMap()
-                            currentProgress.remove(sound.id)
-                            downloadProgress.value = currentProgress
-                            
-                            if (success) {
-                                selectedSound = sound
-                                showSoundDetailDialog = true
-                            }
-                        }
-                    )
-                } else if (isDownloaded) {
-                    selectedSound = sound
-                    showSoundDetailDialog = true
-                }
-            }
-        )
-    }
-    
-    if (showSoundDetailDialog && selectedSound != null) {
-        SoundDetailDialog(
+    // 添加到轨道对话框
+    if (showAddToTrackDialog && selectedSound != null) {
+        AddToTrackDialog(
             sound = selectedSound!!,
-            scatteredTracks = viewModel.playingSounds.value.filter { it.trackType == com.bicy.whitenoise.StMb.TrackType.SCATTERED },
+            scatteredTracks = viewModel.playingSounds.value.filter { 
+                it.trackType == TrackType.SCATTERED 
+            },
             onDismiss = {
-                showSoundDetailDialog = false
+                showAddToTrackDialog = false
                 selectedSound = null
             },
             onAddToTrack = { trackId ->
-                val sound = selectedSound!!
-                val clip = ScatteredAudioClipData(
-                    id = sound.id,
-                    name = com.bicy.whitenoise.utils.LanguageManager.translate(sound.name, sound.translations),
-                    filePath = sound.remoteUrl ?: "",
-                    durationMs = 0
-                )
-                com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStorage.addAudioClipToTrack(trackId, clip)
-                
-                val track = com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStorage.getPlaybackState().sounds.find { it.id == trackId }
-                if (track != null) {
-                    com.bicy.whitenoise.servies.MusicService.getInstance()?.updateScatteredTrackClips(trackId, track.audioClips)
-                }
-                
-                showSoundDetailDialog = false
+                addSoundToTrack(selectedSound!!, trackId)
+                showAddToTrackDialog = false
+                selectedSound = null
+            },
+            onCreateNewTrack = { name ->
+                viewModel.createEmptyScatteredGroup(name)
+                // 创建后自动添加
+                val newTrackId = "scattered_${System.currentTimeMillis()}"
+                addSoundToTrack(selectedSound!!, newTrackId)
+                showAddToTrackDialog = false
                 selectedSound = null
             }
         )
     }
     
+    // 创建散点组对话框
     if (showCreateGroupDialog) {
         CreateScatteredGroupDialog(
             name = newGroupName,
@@ -290,30 +238,94 @@ fun ScatteredScreen(
     }
 }
 
+private fun handleSoundClick(
+    context: android.content.Context,
+    sound: ScatteredSoundWithType,
+    downloadingSounds: androidx.compose.runtime.MutableState<Set<String>>,
+    downloadProgress: androidx.compose.runtime.MutableState<Map<String, Float>>,
+    onShowDialog: () -> Unit
+) {
+    val isDownloaded = ScatteredStorageManager.getSoundAudioFile(
+        context, sound.categoryName, sound.typeName, sound.name
+    ) != null
+    
+    if (!isDownloaded && !downloadingSounds.value.contains(sound.id)) {
+        val currentDownloading = downloadingSounds.value.toMutableSet()
+        currentDownloading.add(sound.id)
+        downloadingSounds.value = currentDownloading
+        
+        DownloadManager.downloadScatteredAudio(
+            context = context,
+            sound = sound,
+            onProgress = { progress ->
+                val currentProgress = downloadProgress.value.toMutableMap()
+                currentProgress[sound.id] = progress
+                downloadProgress.value = currentProgress
+            },
+            onComplete = { success ->
+                val currentDownloading = downloadingSounds.value.toMutableSet()
+                currentDownloading.remove(sound.id)
+                downloadingSounds.value = currentDownloading
+                
+                val currentProgress = downloadProgress.value.toMutableMap()
+                currentProgress.remove(sound.id)
+                downloadProgress.value = currentProgress
+                
+                if (success) onShowDialog()
+            }
+        )
+    } else if (isDownloaded) {
+        onShowDialog()
+    }
+}
+
+private fun addSoundToTrack(sound: ScatteredSoundWithType, trackId: String) {
+    val clip = ScatteredAudioClipData(
+        id = sound.id,
+        name = LanguageManager.translate(sound.name, sound.translations),
+        filePath = sound.remoteUrl ?: "",
+        durationMs = 0
+    )
+    com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStorage.addAudioClipToTrack(trackId, clip)
+    
+    val track = com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStorage.getPlaybackState().sounds.find { it.id == trackId }
+    if (track != null) {
+        com.bicy.whitenoise.servies.MusicService.getInstance()?.updateScatteredTrackClips(trackId, track.audioClips)
+    }
+}
+
 @Composable
 private fun ScatteredCategoryList(
     categories: List<ScatteredCategoryWithTypes>,
     expandedCategoryId: String?,
+    expandedTypeId: String?,
     onCategoryClick: (String) -> Unit,
-    onTypeClick: (ScatteredSoundTypeWithSounds) -> Unit
+    onTypeClick: (String) -> Unit,
+    onSoundClick: (ScatteredSoundWithType) -> Unit,
+    downloadProgress: Map<String, Float>,
+    downloadingSounds: Set<String>
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(
+            bottom = PageBottomPadding
+        )
     ) {
-        items(
-            items = categories,
-            key = { it.categoryId }
-        ) { category ->
-            val isExpanded = remember(expandedCategoryId, category.categoryId) {
+        items(categories, key = { it.categoryId }) { category ->
+            val isCategoryExpanded = remember(expandedCategoryId, category.categoryId) {
                 expandedCategoryId == category.categoryId
             }
             
             ScatteredCategoryItem(
                 category = category,
-                isExpanded = isExpanded,
+                isCategoryExpanded = isCategoryExpanded,
+                expandedTypeId = expandedTypeId,
                 onCategoryClick = { onCategoryClick(category.categoryId) },
-                onTypeClick = onTypeClick
+                onTypeClick = onTypeClick,
+                onSoundClick = onSoundClick,
+                downloadProgress = downloadProgress,
+                downloadingSounds = downloadingSounds
             )
         }
     }
@@ -322,12 +334,16 @@ private fun ScatteredCategoryList(
 @Composable
 private fun ScatteredCategoryItem(
     category: ScatteredCategoryWithTypes,
-    isExpanded: Boolean,
+    isCategoryExpanded: Boolean,
+    expandedTypeId: String?,
     onCategoryClick: () -> Unit,
-    onTypeClick: (ScatteredSoundTypeWithSounds) -> Unit
+    onTypeClick: (String) -> Unit,
+    onSoundClick: (ScatteredSoundWithType) -> Unit,
+    downloadProgress: Map<String, Float>,
+    downloadingSounds: Set<String>
 ) {
     val rotationAngle by animateFloatAsState(
-        targetValue = if (isExpanded) 0f else -90f,
+        targetValue = if (isCategoryExpanded) 0f else -90f,
         label = "arrowRotation"
     )
     
@@ -341,158 +357,144 @@ private fun ScatteredCategoryItem(
                 clip = false
             )
             .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f))
     ) {
+        // 使用GlassCategorySection包装内容（液态玻璃效果）
+        GlassCategorySection(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // 大分类标题
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onCategoryClick() }
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = LanguageManager.translate(category.categoryName, category.translations),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = if (isCategoryExpanded) stringResource(R.string.collapse) else stringResource(R.string.expand),
+                        modifier = Modifier.rotate(rotationAngle),
+                        tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                    )
+                }
+                
+                // 小分类列表
+                AnimatedVisibility(
+                    visible = isCategoryExpanded,
+                    enter = expandVertically(),
+                    exit = shrinkVertically()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        category.soundTypes.forEach { type ->
+                            val isTypeExpanded = remember(expandedTypeId, type.typeId) {
+                                expandedTypeId == type.typeId
+                            }
+                            
+                            ScatteredTypeItem(
+                                type = type,
+                                isExpanded = isTypeExpanded,
+                                onClick = { onTypeClick(type.typeId) },
+                                onSoundClick = onSoundClick,
+                                downloadProgress = downloadProgress,
+                                downloadingSounds = downloadingSounds
+                            )
+                            
+                            if (type != category.soundTypes.last()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScatteredTypeItem(
+    type: ScatteredSoundTypeWithSounds,
+    isExpanded: Boolean,
+    onClick: () -> Unit,
+    onSoundClick: (ScatteredSoundWithType) -> Unit,
+    downloadProgress: Map<String, Float>,
+    downloadingSounds: Set<String>
+) {
+    val rotationAngle by animateFloatAsState(
+        targetValue = if (isExpanded) 0f else -90f,
+        label = "typeArrowRotation"
+    )
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
+    ) {
+        // 小分类标题
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onCategoryClick() }
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .clickable { onClick() }
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = LanguageManager.translate(category.categoryName, category.translations),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground,
+                text = LanguageManager.translate(type.typeName, type.translations),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
             )
             
+            Text(
+                text = "(${type.sounds.size})",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            )
+            
+            Spacer(modifier = Modifier.width(8.dp))
+            
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = if (isExpanded) stringResource(R.string.collapse) else stringResource(R.string.expand),
-                modifier = Modifier.rotate(rotationAngle),
-                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                contentDescription = null,
+                modifier = Modifier
+                    .size(20.dp)
+                    .rotate(rotationAngle),
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
         }
         
+        // 声音列表（直接显示）
         AnimatedVisibility(
             visible = isExpanded,
             enter = expandVertically(),
             exit = shrinkVertically()
         ) {
-            TypeList(
-                types = category.soundTypes,
-                onTypeClick = onTypeClick
-            )
-        }
-    }
-}
-
-@Composable
-private fun TypeList(
-    types: List<ScatteredSoundTypeWithSounds>,
-    onTypeClick: (ScatteredSoundTypeWithSounds) -> Unit
-) {
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        items(
-            items = types,
-            key = { it.typeId }
-        ) { type ->
-            TypeChip(
-                type = type,
-                onClick = { onTypeClick(type) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun TypeChip(
-    type: ScatteredSoundTypeWithSounds,
-    onClick: () -> Unit
-) {
-    val chipSize = 72.dp
-    val cornerRadius = 12.dp
-    
-    Box(
-        modifier = Modifier
-            .size(chipSize)
-            .clip(RoundedCornerShape(cornerRadius))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            )
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = LanguageManager.translate(type.typeName, type.translations),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun SoundListDialog(
-    soundType: ScatteredSoundTypeWithSounds,
-    downloadProgress: Map<String, Float>,
-    downloadingSounds: Set<String>,
-    onDismiss: () -> Unit,
-    onSoundClick: (ScatteredSoundWithType) -> Unit
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp)),
-            color = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(16.dp)
-        ) {
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = LanguageManager.translate(soundType.typeName, soundType.translations),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface
+                type.sounds.forEach { sound ->
+                    SoundListItem(
+                        sound = sound,
+                        isDownloading = downloadingSounds.contains(sound.id),
+                        downloadProgress = downloadProgress[sound.id] ?: 0f,
+                        onClick = { onSoundClick(sound) }
                     )
                     
-                    IconButton(onClick = onDismiss) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.close),
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-                
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                        start = 16.dp,
-                        end = 16.dp,
-                        bottom = 16.dp
-                    )
-                ) {
-                    items(soundType.sounds, key = { it.id }) { sound ->
-                        SoundItem(
-                            sound = sound,
-                            isDownloading = downloadingSounds.contains(sound.id),
-                            downloadProgress = downloadProgress[sound.id] ?: 0f,
-                            onClick = { onSoundClick(sound) }
+                    if (sound != type.sounds.last()) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 2.dp),
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
                         )
                     }
                 }
@@ -502,7 +504,7 @@ private fun SoundListDialog(
 }
 
 @Composable
-private fun SoundItem(
+private fun SoundListItem(
     sound: ScatteredSoundWithType,
     isDownloading: Boolean,
     downloadProgress: Float,
@@ -512,99 +514,132 @@ private fun SoundItem(
     
     val isDownloaded = remember(sound.id) {
         ScatteredStorageManager.getSoundAudioFile(
-            context,
-            sound.categoryName,
-            sound.typeName,
-            sound.name
+            context, sound.categoryName, sound.typeName, sound.name
         ) != null
     }
     
-    Surface(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        shape = RoundedCornerShape(8.dp)
+            .clip(RoundedCornerShape(6.dp))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            )
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = LanguageManager.translate(sound.name, sound.translations),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                Text(
-                    text = sound.author ?: "",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+        // 声音名称
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = LanguageManager.translate(sound.name, sound.translations),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
             
-            if (isDownloading) {
-                if (downloadProgress in 0.01f..0.99f) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight(downloadProgress)
-                            .align(Alignment.BottomCenter)
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-                    )
-                }
-                
-                CircularProgressIndicator(
-                    progress = { downloadProgress.coerceIn(0f, 1f) },
-                    modifier = Modifier
-                        .size(24.dp)
-                        .align(Alignment.CenterEnd),
-                    color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 2.dp
-                )
-            } else if (!isDownloaded) {
+            if (!sound.author.isNullOrEmpty()) {
                 Text(
-                    text = stringResource(R.string.click_to_download),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.align(Alignment.CenterEnd)
+                    text = sound.author,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
+        }
+        
+        // 下载状态/添加按钮
+        if (isDownloading) {
+            CircularProgressIndicator(
+                progress = { downloadProgress.coerceIn(0f, 1f) },
+                modifier = Modifier.size(20.dp),
+                color = MaterialTheme.colorScheme.primary,
+                strokeWidth = 2.dp
+            )
+        } else if (!isDownloaded) {
+            Text(
+                text = stringResource(R.string.click_to_download),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = stringResource(R.string.add),
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }
 
 @Composable
-private fun SoundDetailDialog(
+private fun AddToTrackDialog(
     sound: ScatteredSoundWithType,
     scatteredTracks: List<com.bicy.whitenoise.ui.viewmodel.PlayingSound>,
     onDismiss: () -> Unit,
-    onAddToTrack: (String) -> Unit
+    onAddToTrack: (String) -> Unit,
+    onCreateNewTrack: (String) -> Unit
 ) {
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
+    var showCreateDialog by remember { mutableStateOf(false) }
+    var newTrackName by remember { mutableStateOf("") }
+
+    // 使用GlassAlertDialogSimple包装（液态玻璃效果）
+    GlassAlertDialogSimple(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp)),
-            color = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(16.dp)
+                .padding(20.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp)
-            ) {
+            if (showCreateDialog) {
+                // 创建新track对话框
+                Text(
+                    text = stringResource(R.string.create_scattered_group),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = newTrackName,
+                    onValueChange = { newTrackName = it },
+                    label = { Text(stringResource(R.string.name)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = { showCreateDialog = false }) {
+                        Text(stringResource(R.string.cancel))
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    TextButton(
+                        onClick = {
+                            if (newTrackName.isNotBlank()) {
+                                onCreateNewTrack(newTrackName)
+                                showCreateDialog = false
+                            }
+                        }
+                    ) {
+                        Text(stringResource(R.string.confirm))
+                    }
+                }
+            } else {
+                // 主对话框内容
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -615,7 +650,7 @@ private fun SoundDetailDialog(
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    
+
                     IconButton(onClick = onDismiss) {
                         Icon(
                             imageVector = Icons.Default.Close,
@@ -624,62 +659,131 @@ private fun SoundDetailDialog(
                         )
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 if (scatteredTracks.isEmpty()) {
-                    Text(
-                        text = stringResource(R.string.no_scattered_tracks_hint),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
+                    Column {
+                        Text(
+                            text = stringResource(R.string.no_scattered_tracks_hint),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // 快速创建按钮
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                                .clickable { showCreateDialog = true }
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.create_scattered_group),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                 } else {
                     Text(
                         text = stringResource(R.string.select_scattered_track_hint),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
-                    
+
                     Spacer(modifier = Modifier.height(12.dp))
-                    
-                    scatteredTracks.forEach { track ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable { onAddToTrack(track.id) }
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AudioFile,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            
-                            Spacer(modifier = Modifier.width(12.dp))
-                            
-                            Column {
-                                Text(
-                                    text = LanguageManager.translate(track.name, track.translations),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurface
+
+                    // 轨道列表
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        items(scatteredTracks) { track ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { onAddToTrack(track.id) }
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AudioFile,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
                                 )
-                                
-                                Text(
-                                    text = stringResource(R.string.added_audio_count, track.audioClipCount),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = LanguageManager.translate(track.name, track.translations),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+
+                                    Text(
+                                        text = stringResource(R.string.added_audio_count, track.audioClipCount),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                    )
+                                }
+
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+
+                            if (track != scatteredTracks.last()) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = 2.dp),
+                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                                 )
                             }
                         }
-                        
-                        if (track != scatteredTracks.last()) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 4.dp),
-                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                            )
+
+                        // 创建新组按钮
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                                    .clickable { showCreateDialog = true }
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = stringResource(R.string.create_scattered_group),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
                     }
                 }

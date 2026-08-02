@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewOutlineProvider
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
@@ -18,17 +19,24 @@ data class CategoryItem(
     val title: String,
     val subtitle: String? = null,
     val iconRes: Int? = null,
-    val showArrow: Boolean = false
+    val showArrow: Boolean = false,
+    val showMoreButton: Boolean = false
 )
 
 class CategoryAdapter(
-    initialOnItemClick: (CategoryItem) -> Unit
+    initialOnItemClick: (CategoryItem) -> Unit,
+    initialOnMoreClick: ((CategoryItem) -> Unit)? = null
 ) : ListAdapter<CategoryItem, CategoryAdapter.ViewHolder>(DiffCallback) {
 
     private var onItemClick: (CategoryItem) -> Unit = initialOnItemClick
-    
+    private var onMoreClick: ((CategoryItem) -> Unit)? = initialOnMoreClick
+
     fun updateOnItemClick(newOnItemClick: (CategoryItem) -> Unit) {
         onItemClick = newOnItemClick
+    }
+
+    fun updateOnMoreClick(newOnMoreClick: (CategoryItem) -> Unit) {
+        onMoreClick = newOnMoreClick
     }
 
     object DiffCallback : DiffUtil.ItemCallback<CategoryItem>() {
@@ -46,6 +54,7 @@ class CategoryAdapter(
         val title: TextView = view.findViewById(R.id.title)
         val subtitle: TextView = view.findViewById(R.id.subtitle)
         val arrow: ImageView = view.findViewById(R.id.arrow)
+        val moreButton: ImageButton = view.findViewById(R.id.moreButton)
         val content: View = view.findViewById(R.id.content)
         val shadow: View = view.findViewById(R.id.shadow)
     }
@@ -103,10 +112,10 @@ class CategoryAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = getItem(position)
-        
+
         holder.title.text = item.title
         holder.title.setTextColor(onSurfaceColor)
-        
+
         if (item.subtitle != null) {
             holder.subtitle.text = item.subtitle
             holder.subtitle.setTextColor(secondaryTextColor)
@@ -114,25 +123,37 @@ class CategoryAdapter(
         } else {
             holder.subtitle.visibility = View.GONE
         }
-        
+
         if (item.iconRes != null) {
             holder.icon.setImageResource(item.iconRes)
             holder.icon.visibility = View.VISIBLE
+            holder.icon.drawable?.setTint(onSurfaceColor)
         } else {
             holder.icon.visibility = View.GONE
         }
-        
-        if (item.showArrow) {
-            holder.arrow.setImageResource(R.drawable.ic_arrow_right)
-            holder.arrow.visibility = View.VISIBLE
-        } else {
+
+        if (item.showMoreButton) {
+            holder.moreButton.visibility = View.VISIBLE
+            holder.moreButton.drawable?.setTint(onSurfaceColor)
             holder.arrow.visibility = View.GONE
+        } else {
+            holder.moreButton.visibility = View.GONE
+            if (item.showArrow) {
+                holder.arrow.setImageResource(R.drawable.ic_arrow_right)
+                holder.arrow.visibility = View.VISIBLE
+            } else {
+                holder.arrow.visibility = View.GONE
+            }
         }
-        
+
         holder.content.background = createBackgroundDrawable(surfaceColor, strokeColor)
-        
+
         holder.content.setOnClickListener {
             onItemClick(item)
+        }
+
+        holder.moreButton.setOnClickListener {
+            onMoreClick?.invoke(item)
         }
     }
 }

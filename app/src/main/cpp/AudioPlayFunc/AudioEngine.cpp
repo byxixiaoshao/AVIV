@@ -77,6 +77,21 @@ bool AudioEngine::openStream() {
     channelCount_ = audioStream_->getChannelCount();
     mixBuffer_.resize(4096 * channelCount_);
 
+    // P0-3: 增大音频缓冲区到 2x burstSize，减少后台/锁屏时的 underrun
+    // 原因：LowLatency 模式下默认缓冲较小，CPU 调度抖动（尤其是后台被限制时）易导致欠载
+    // 2x burstSize 在延迟与稳定性之间取得平衡（约 2 倍延迟，但 underrun 显著减少）
+    // 注意：必须在 openStream 之后、requestStart 之前调用 setBufferSizeInFrames
+    int32_t burstSize = audioStream_->getFramesPerBurst();
+    if (burstSize > 0) {
+        int32_t targetBufferSize = burstSize * 2;
+        auto setSizeResult = audioStream_->setBufferSizeInFrames(targetBufferSize);
+        if (setSizeResult == oboe::Result::OK) {
+            LOGI("Buffer size set to %d frames (2x burstSize=%d)", setSizeResult.value(), burstSize);
+        } else {
+            LOGW("Failed to set buffer size to %d: %s", targetBufferSize, oboe::convertToText(setSizeResult.error()));
+        }
+    }
+
     result = audioStream_->requestStart();
     if (result != oboe::Result::OK) {
         LOGE("Failed to start stream: %s", oboe::convertToText(result));
@@ -84,6 +99,10 @@ bool AudioEngine::openStream() {
     }
 
     needsRestart_.store(false);
+    xrunCount_.store(0);
+    lastCheckedXrunCount_.store(0);
+    needsUnderrunReport_.store(false);
+    audioThreadStalled_.store(false);
     LOGI("Oboe stream opened: rate=%d, channels=%d", sampleRate_, channelCount_);
     return true;
 }
@@ -94,6 +113,34 @@ void AudioEngine::closeStream() {
         audioStream_->close();
         audioStream_.reset();
     }
+}
+
+bool AudioEngine::recreateStream() {
+    // P2-7: 轻量重建音频流，保留已加载的 tracks
+    // 用于 onErrorAfterClose (ErrorDisconnected) 后的优雅恢复
+    // 相比 release()+init()，避免了重新加载所有音轨文件，恢复延迟从秒级降到毫秒级
+
+    // 加锁防止 onErrorAfterClose 与上层 audioStreamCheckRunnable 并发重建
+    std::lock_guard<std::mutex> lock(streamMutex_);
+
+    // 先关闭旧流（onErrorAfterClose 后流可能已关闭，但 audioStream_ 仍持有引用）
+    closeStream();
+
+    // 重置状态标志，让 openStream() 干净启动
+    needsRestart_.store(false);
+    needsUnderrunReport_.store(false);
+    audioThreadStalled_.store(false);
+
+    if (!openStream()) {
+        LOGE("recreateStream: Failed to open new stream");
+        // 重新标记需要重启，让上层走全量 release+init 路径
+        needsRestart_.store(true);
+        return false;
+    }
+
+    LOGI("recreateStream: Stream recreated successfully, tracks preserved (%zu tracks)",
+         tracks_.size());
+    return true;
 }
 
 int AudioEngine::loadTrack(const std::string& trackId, const std::string& filePath) {
@@ -135,6 +182,38 @@ int AudioEngine::loadTrackFromFd(const std::string& trackId, int fd, int64_t off
     }
 
     LOGI("Track loaded from fd: %s, engine rate=%d, channels=%d, path: %s", trackId.c_str(), sampleRate_, channelCount_, filePath.c_str());
+    return 0;
+}
+
+int AudioEngine::loadTrackFromStream(const std::string& trackId, const std::string& streamId) {
+    ffmpeg::StreamContext* streamCtx = nullptr;
+    {
+        std::lock_guard<std::mutex> sLock(streamsMutex_);
+        auto it = streams_.find(streamId);
+        if (it == streams_.end()) {
+            LOGE("Stream not found: %s", streamId.c_str());
+            return -1;
+        }
+        streamCtx = it->second.get();
+    }
+
+    std::unique_lock<std::shared_mutex> lock(tracksMutex_);
+
+    auto it = tracks_.find(trackId);
+    if (it != tracks_.end()) {
+        it->second->unload();
+    } else {
+        auto track = std::make_unique<AudioTrack>(trackId, sampleRate_, channelCount_);
+        tracks_[trackId] = std::move(track);
+    }
+
+    if (!tracks_[trackId]->loadFromStream(streamCtx)) {
+        tracks_.erase(trackId);
+        LOGE("Failed to load track from stream: %s, stream: %s", trackId.c_str(), streamId.c_str());
+        return -1;
+    }
+
+    LOGI("Track loaded from stream: %s, stream: %s", trackId.c_str(), streamId.c_str());
     return 0;
 }
 
@@ -335,6 +414,24 @@ void AudioEngine::setTrackCreativeEffectIntensity(const std::string& trackId, in
     }
 }
 
+void AudioEngine::setTrackPlaybackSpeed(const std::string& trackId, float speed) {
+    // 仅查找 track 并调用其无锁 atomic 方法，不修改 tracks_ 容器，
+    // 用 shared_lock 避免与音频回调的 shared_lock 互斥阻塞，消除拖动卡顿
+    std::shared_lock<std::shared_mutex> lock(tracksMutex_);
+    auto it = tracks_.find(trackId);
+    if (it != tracks_.end()) {
+        it->second->setPlaybackSpeed(speed);
+    }
+}
+
+void AudioEngine::setTrackPitchShift(const std::string& trackId, float semitones) {
+    std::shared_lock<std::shared_mutex> lock(tracksMutex_);
+    auto it = tracks_.find(trackId);
+    if (it != tracks_.end()) {
+        it->second->setPitchShift(semitones);
+    }
+}
+
 void AudioEngine::setTrackEqBandGain(const std::string& trackId, int bandIndex, float gain) {
     std::unique_lock<std::shared_mutex> lock(tracksMutex_);
     auto it = tracks_.find(trackId);
@@ -368,21 +465,21 @@ void AudioEngine::setTrackEqLimiterEnabled(const std::string& trackId, bool enab
     }
 }
 
-void AudioEngine::setTrackEqGains(const std::string& trackId, const std::array<float, EQ_BAND_COUNT>& gains) {
+void AudioEngine::setTrackEqualizerCurve(const std::string& trackId, const std::vector<ControlPoint>& points) {
     std::unique_lock<std::shared_mutex> lock(tracksMutex_);
     auto it = tracks_.find(trackId);
     if (it != tracks_.end()) {
-        it->second->setEqGains(gains);
+        it->second->setEqualizerCurve(points);
     }
 }
 
-std::array<float, EQ_BAND_COUNT> AudioEngine::getTrackEqGains(const std::string& trackId) {
+float AudioEngine::getTrackFilterResponse(const std::string& trackId, float frequency) {
     std::shared_lock<std::shared_mutex> lock(tracksMutex_);
     auto it = tracks_.find(trackId);
     if (it != tracks_.end()) {
-        return it->second->getEqGains();
+        return it->second->getFilterResponse(frequency);
     }
-    return {};
+    return 0.0f;
 }
 
 void AudioEngine::setTrackSpatialEnabled(const std::string& trackId, bool enabled) {
@@ -417,11 +514,11 @@ void AudioEngine::setTrackSpatialFixedOffset(const std::string& trackId, float l
     }
 }
 
-void AudioEngine::setTrackSpatialSurroundParams(const std::string& trackId, int mode, float radius, float speed) {
+void AudioEngine::setTrackSpatialSurroundParams(const std::string& trackId, int mode, float radius, float periodSeconds) {
     std::unique_lock<std::shared_mutex> lock(tracksMutex_);
     auto it = tracks_.find(trackId);
     if (it != tracks_.end()) {
-        it->second->setSpatialSurroundParams(mode, radius, speed);
+        it->second->setSpatialSurroundParams(mode, radius, periodSeconds);
     }
 }
 
@@ -430,6 +527,23 @@ void AudioEngine::setTrackSpatialRandomParams(const std::string& trackId, float 
     auto it = tracks_.find(trackId);
     if (it != tracks_.end()) {
         it->second->setSpatialRandomParams(maxDistance, minDistance, randomValue, speed);
+    }
+}
+
+void AudioEngine::setTrackSpatialScatterParams(
+    const std::string& trackId,
+    float minRadius, float maxRadius,
+    bool xEnabled, bool yEnabled, bool zEnabled,
+    bool moveEnabled, float moveRandomValue, float moveSpeed, float directionRandom
+) {
+    std::unique_lock<std::shared_mutex> lock(tracksMutex_);
+    auto it = tracks_.find(trackId);
+    if (it != tracks_.end()) {
+        it->second->setSpatialScatterParams(
+            minRadius, maxRadius,
+            xEnabled, yEnabled, zEnabled,
+            moveEnabled, moveRandomValue, moveSpeed, directionRandom
+        );
     }
 }
 
@@ -524,14 +638,6 @@ void AudioEngine::setTrackAutoEqMaxCut(const std::string& trackId, float db) {
     }
 }
 
-void AudioEngine::setTrackAutoEqSmoothing(const std::string& trackId, float s) {
-    std::unique_lock<std::shared_mutex> lock(tracksMutex_);
-    auto it = tracks_.find(trackId);
-    if (it != tracks_.end()) {
-        it->second->setAutoEqSmoothing(s);
-    }
-}
-
 void AudioEngine::setTrackAutoEqBrightnessTarget(const std::string& trackId, float db) {
     std::unique_lock<std::shared_mutex> lock(tracksMutex_);
     auto it = tracks_.find(trackId);
@@ -556,13 +662,63 @@ void AudioEngine::setTrackAutoEqDynamicQEnabled(const std::string& trackId, bool
     }
 }
 
-std::array<float, audiofx::AUTO_EQ_BANDS> AudioEngine::getTrackAutoEqGains(const std::string& trackId) {
+void AudioEngine::setTrackAutoEqBandCount(const std::string& trackId, int count) {
+    std::unique_lock<std::shared_mutex> lock(tracksMutex_);
+    auto it = tracks_.find(trackId);
+    if (it != tracks_.end()) {
+        it->second->setAutoEqBandCount(count);
+    }
+}
+
+void AudioEngine::setTrackAutoEqBandRatios(const std::string& trackId, float low, float mid) {
+    std::unique_lock<std::shared_mutex> lock(tracksMutex_);
+    auto it = tracks_.find(trackId);
+    if (it != tracks_.end()) {
+        it->second->setAutoEqBandRatios(low, mid);
+    }
+}
+
+std::vector<float> AudioEngine::getTrackAutoEqGains(const std::string& trackId) {
     std::shared_lock<std::shared_mutex> lock(tracksMutex_);
     auto it = tracks_.find(trackId);
     if (it != tracks_.end()) {
         return it->second->getAutoEqGains();
     }
     return {};
+}
+
+std::vector<float> AudioEngine::getTrackAutoEqFrequencies(const std::string& trackId) {
+    std::shared_lock<std::shared_mutex> lock(tracksMutex_);
+    auto it = tracks_.find(trackId);
+    if (it != tracks_.end()) {
+        return it->second->getAutoEqFrequencies();
+    }
+    return {};
+}
+
+void AudioEngine::setTrackAutoEqFilterOverride(const std::string& trackId, int bandIndex,
+                                                float gainDb, float freqHz, float q) {
+    std::unique_lock<std::shared_mutex> lock(tracksMutex_);
+    auto it = tracks_.find(trackId);
+    if (it != tracks_.end()) {
+        it->second->setAutoEqFilterOverride(bandIndex, gainDb, freqHz, q);
+    }
+}
+
+void AudioEngine::clearTrackAutoEqFilterOverride(const std::string& trackId, int bandIndex) {
+    std::unique_lock<std::shared_mutex> lock(tracksMutex_);
+    auto it = tracks_.find(trackId);
+    if (it != tracks_.end()) {
+        it->second->clearAutoEqFilterOverride(bandIndex);
+    }
+}
+
+void AudioEngine::clearAllTrackAutoEqFilterOverrides(const std::string& trackId) {
+    std::unique_lock<std::shared_mutex> lock(tracksMutex_);
+    auto it = tracks_.find(trackId);
+    if (it != tracks_.end()) {
+        it->second->clearAllAutoEqFilterOverrides();
+    }
 }
 
 void AudioEngine::seekTrack(const std::string& trackId, int64_t positionMs) {
@@ -610,32 +766,57 @@ AudioTrack* AudioEngine::getTrack(const std::string& trackId) {
 }
 
 oboe::DataCallbackResult AudioEngine::onAudioReady(oboe::AudioStream* stream, void* audioData, int32_t numFrames) {
+    // 每 ~50 次回调检查一次 XRun 计数（约每秒~5次，避免过度检查）
+    callbackCounter_++;
+    if (callbackCounter_ % 50 == 0) {
+        if (stream) {
+            auto xrunResult = stream->getXRunCount();
+            int32_t currentXRun = (xrunResult == oboe::Result::OK) ? xrunResult.value() : 0;
+            int32_t prevXRun = lastCheckedXrunCount_.exchange(currentXRun);
+            if (currentXRun > prevXRun) {
+                int32_t newUnderruns = currentXRun - prevXRun;
+                xrunCount_.store(currentXRun);
+                if (newUnderruns >= 3) {
+                    needsUnderrunReport_.store(true);
+                    LOGW("Audio buffer underrun detected: %d new XRuns (total: %d)", newUnderruns, currentXRun);
+                }
+            }
+        }
+        // 检测回调延迟：numFrames 为0意味着被空回调唤醒（异常信号）
+        if (numFrames == 0) {
+            audioThreadStalled_.store(true);
+            needsUnderrunReport_.store(true);
+            LOGW("Audio callback with zero frames - possible thread stall");
+        }
+    }
+    
     float* output = static_cast<float*>(audioData);
     int32_t totalSamples = numFrames * channelCount_;
 
     std::fill(output, output + totalSamples, 0.0f);
 
     std::shared_lock<std::shared_mutex> lock(tracksMutex_);
-    
-    std::vector<float> whiteNoiseBuffer(totalSamples, 0.0f);
-    std::vector<float> musicBuffer(totalSamples, 0.0f);
+
+    // 复用预分配缓冲（首次分配后 assign 仅覆写、无堆分配），消除实时回调中的堆分配抖动。
+    whiteNoiseBuffer_.assign(static_cast<size_t>(totalSamples), 0.0f);
+    musicBuffer_.assign(static_cast<size_t>(totalSamples), 0.0f);
 
     for (auto& pair : tracks_) {
         auto& track = pair.second;
         const std::string& trackId = pair.first;
-        
+
         if (track->isPlaying()) {
             track->process(mixBuffer_.data(), numFrames);
 
             bool isMusic = trackId.find("music_") == 0;
-            
+
             for (int32_t i = 0; i < totalSamples; ++i) {
                 output[i] += mixBuffer_[i];
-                
+
                 if (isMusic) {
-                    musicBuffer[i] += mixBuffer_[i];
+                    musicBuffer_[i] += mixBuffer_[i];
                 } else {
-                    whiteNoiseBuffer[i] += mixBuffer_[i];
+                    whiteNoiseBuffer_[i] += mixBuffer_[i];
                 }
             }
         }
@@ -666,8 +847,8 @@ oboe::DataCallbackResult AudioEngine::onAudioReady(oboe::AudioStream* stream, vo
                 
                 for (int i = start; i < end; ++i) {
                     sum += std::abs(output[i]);
-                    wnSum += std::abs(whiteNoiseBuffer[i]);
-                    musicSum += std::abs(musicBuffer[i]);
+                    wnSum += std::abs(whiteNoiseBuffer_[i]);
+                    musicSum += std::abs(musicBuffer_[i]);
                 }
                 
                 // Calculate values and ensure they are valid (not NaN, not negative)
@@ -701,9 +882,32 @@ void AudioEngine::onErrorBeforeClose(oboe::AudioStream* stream, oboe::Result err
 
 void AudioEngine::onErrorAfterClose(oboe::AudioStream* stream, oboe::Result error) {
     LOGE("Audio stream error after close: %s", oboe::convertToText(error));
-    
+
+    // P2-7: 优雅恢复策略
+    // 仅对 ErrorDisconnected（耳机拔出、音频服务重启等）尝试立即轻量重建
+    // 其他错误（如 ErrorInternal、ErrorTimeout）交由上层 audioStreamCheckRunnable 处理
     if (error == oboe::Result::ErrorDisconnected) {
-        LOGW("Audio stream disconnected, needs restart");
+        LOGW("Audio stream disconnected, attempting immediate lightweight recreate");
+
+        // 立即尝试重建流一次（保留 tracks）
+        // 即使失败也设置 needsRestart_，让 Kotlin 侧的 audioStreamCheckRunnable
+        // 走带退避的重试逻辑，多次失败后才全量 release+init
+        bool recreated = false;
+        {
+            // 注意：onErrorAfterClose 在 Oboe 内部线程调用，此处不复用 tracksMutex_
+            // recreateStream 内部只操作 audioStream_，不触碰 tracks_
+            recreated = recreateStream();
+        }
+
+        if (!recreated) {
+            LOGW("Immediate recreate failed, flag needsRestart for Kotlin-side retry");
+            needsRestart_.store(true);
+        } else {
+            LOGI("Stream recreated immediately after disconnect, no user-visible disruption");
+        }
+    } else {
+        // 非断开错误：标记需要重启，让上层处理
+        LOGW("Non-disconnect error, flagging needsRestart for upper-layer handling");
         needsRestart_.store(true);
     }
 }
@@ -765,4 +969,48 @@ void AudioEngine::setGlobalLimiterEnabled(bool enabled) {
 
 bool AudioEngine::isGlobalLimiterEnabled() const {
     return globalLimiter_.isEnabled();
+}
+
+bool AudioEngine::createStream(const std::string& streamId, size_t bufferSize) {
+    std::lock_guard<std::mutex> lock(streamsMutex_);
+    if (streams_.find(streamId) != streams_.end()) {
+        LOGW("Stream already exists: %s", streamId.c_str());
+        return false;
+    }
+    size_t size = bufferSize > 0 ? bufferSize : ffmpeg::StreamContext::DEFAULT_BUFFER_SIZE;
+    streams_[streamId] = std::make_unique<ffmpeg::StreamContext>(size);
+    LOGI("Stream created: %s, buffer=%zu bytes", streamId.c_str(), size);
+    return true;
+}
+
+bool AudioEngine::writeStreamData(const std::string& streamId, const uint8_t* data, size_t len, size_t& written) {
+    std::lock_guard<std::mutex> lock(streamsMutex_);
+    auto it = streams_.find(streamId);
+    if (it == streams_.end()) {
+        LOGE("Stream not found: %s", streamId.c_str());
+        written = 0;
+        return false;
+    }
+    written = it->second->write(data, len);
+    return written > 0;
+}
+
+void AudioEngine::setStreamComplete(const std::string& streamId) {
+    std::lock_guard<std::mutex> lock(streamsMutex_);
+    auto it = streams_.find(streamId);
+    if (it != streams_.end()) {
+        it->second->markComplete();
+        LOGI("Stream marked complete: %s", streamId.c_str());
+    }
+}
+
+void AudioEngine::destroyStream(const std::string& streamId) {
+    std::lock_guard<std::mutex> lock(streamsMutex_);
+    streams_.erase(streamId);
+    LOGI("Stream destroyed: %s", streamId.c_str());
+}
+
+bool AudioEngine::hasStream(const std::string& streamId) const {
+    std::lock_guard<std::mutex> lock(streamsMutex_);
+    return streams_.find(streamId) != streams_.end();
 }

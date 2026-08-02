@@ -3,8 +3,8 @@ package com.bicy.whitenoise.utils
 import android.content.Context
 import android.util.Log
 import com.bicy.whitenoise.R
-import com.bicy.whitenoise.music.MusicScanner
-import com.bicy.whitenoise.music.MusicLibrary
+import com.bicy.whitenoise.music.MusicScannerPart.MusicScanner
+import com.bicy.whitenoise.music.MusicLibraryPart.MusicLibrary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

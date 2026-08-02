@@ -2,9 +2,10 @@ package com.bicy.whitenoise.utils
 
 import android.content.Context
 import android.content.res.Configuration
-import com.bicy.whitenoise.subPage.home.model.SoundsManifest
+import com.bicy.whitenoise.subPage.home.model.SoundMetadataPart.SoundsManifest
 import com.google.gson.Gson
 import java.util.Locale
+import com.bicy.whitenoise.subPage.home.model.SoundMetadataPart.*
 
 object LanguageManager {
     
@@ -41,7 +42,7 @@ object LanguageManager {
             }
             manifestCache = gson.fromJson(json, SoundsManifest::class.java)
         } catch (e: Exception) {
-            android.util.Log.e("LanguageManager", "加载语言清单失败: ${e.message}")
+            android.util.Log.e("LanguageManager", "鍔犺浇璇█娓呭崟澶辫触: ${e.message}")
         }
     }
     
@@ -85,3 +86,4 @@ object LanguageManager {
     
     fun getCurrentLanguage(): String = currentLanguage
 }
+

@@ -3,6 +3,7 @@ package com.bicy.whitenoise.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,7 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.AlertDialog
+import com.bicy.whitenoise.ui.components.glass.GlassAlertDialogSimple
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,8 +56,7 @@ import com.bicy.whitenoise.audio.ReverbManager
 import com.bicy.whitenoise.ui.utils.ResponsiveDimensions
 import com.bicy.whitenoise.audio.CreativeEffectManager
 import com.bicy.whitenoise.audio.CreativeEffectType
-import com.bicy.whitenoise.StMb.ScatteredAudioClip
-import com.bicy.whitenoise.StMb.SpatialScatterRange
+import com.bicy.whitenoise.StMb.ScatteredTrackDataPart.*
 import com.bicy.whitenoise.storage.config.ConfigStorage
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStoragePart.CreativeEffectConfig
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStoragePart.SpatialAudioConfig
@@ -89,11 +89,10 @@ fun ScatteredConfigDialog(
         reverbConfig: ReverbConfig,
         creativeConfig: CreativeEffectConfig
     ) -> Unit,
-    onAddAudioClip: () -> Unit = {},
-    onRemoveAudioClip: (String) -> Unit = {}
+    onRemoveAudioClip: (String) -> Unit = {},
+    onGoToSoundLibrary: () -> Unit = {}
 ) {
     val globalState by ConfigStorage.config.collectAsState()
-    val isPremiumUser = globalState.isPremium
     
     var spatialRange by remember { mutableStateOf(currentRange) }
     var minInterval by remember { mutableStateOf(currentMinInterval.toFloat()) }
@@ -151,7 +150,7 @@ fun ScatteredConfigDialog(
     
     val applyCreativeEffect: (Int, Float) -> Unit = { effectType, intensity ->
         saveCreativeConfig()
-        val currentClipId = com.bicy.whitenoise.audio.ScatteredPlayerManager.getTrackState(trackId)?.currentClipId
+        val currentClipId = com.bicy.whitenoise.audio.ScatteredPlayerManagerPart.ScatteredPlayerManager.getTrackState(trackId)?.currentClipId
         if (currentClipId != null) {
             OboeAudioEngine.setCreativeEffectIntensity(currentClipId, effectType, intensity)
         }
@@ -176,7 +175,7 @@ fun ScatteredConfigDialog(
         WhiteNoiseStorage.updatePlayingSoundReverb(trackId, config)
         com.bicy.whitenoise.audio.ReverbManager.setConfig(trackId, config)
         
-        val currentClipId = com.bicy.whitenoise.audio.ScatteredPlayerManager.getTrackState(trackId)?.currentClipId
+        val currentClipId = com.bicy.whitenoise.audio.ScatteredPlayerManagerPart.ScatteredPlayerManager.getTrackState(trackId)?.currentClipId
         if (currentClipId != null) {
             OboeAudioEngine.setReverbParams(currentClipId, roomSize, damping, wetLevel)
             OboeAudioEngine.setInsulation(currentClipId, insulation)
@@ -206,11 +205,115 @@ fun ScatteredConfigDialog(
     }
     
     var isApplied by remember { mutableStateOf(false) }
+    var showUnsavedDialog by remember { mutableStateOf(false) }
+    
+    // 检测是否有未保存的配置更改
+    val hasUnsavedChanges = remember(
+        spatialRange, minInterval, maxInterval, spatialScatterEnabled, overlayMode,
+        roomSize, decayTime, damping, wetLevel, dryLevel, preDelay, insulation,
+        reflectionDensity, reflectionSpread, highpassCutoff, earlyReflectionLevel,
+        loFiIntensity, eightBitIntensity, underwaterIntensity, alienSignalIntensity, megaphoneIntensity, hifiIntensity
+    ) {
+        spatialRange != currentRange ||
+        minInterval != currentMinInterval.toFloat() ||
+        maxInterval != currentMaxInterval.toFloat() ||
+        spatialScatterEnabled != currentSpatialScatterEnabled ||
+        overlayMode != currentOverlayMode ||
+        roomSize != savedConfig.roomSize ||
+        decayTime != savedConfig.decayTime ||
+        damping != savedConfig.damping ||
+        wetLevel != savedConfig.wetLevel ||
+        dryLevel != savedConfig.dryLevel ||
+        preDelay != savedConfig.preDelay ||
+        insulation != savedConfig.insulation ||
+        loFiIntensity != savedCreativeConfig.loFi ||
+        eightBitIntensity != savedCreativeConfig.eightBit ||
+        underwaterIntensity != savedCreativeConfig.underwater ||
+        alienSignalIntensity != savedCreativeConfig.alienSignal ||
+        megaphoneIntensity != savedCreativeConfig.megaphone ||
+        hifiIntensity != savedCreativeConfig.hifi
+    }
+    
+    if (showUnsavedDialog) {
+        GlassAlertDialogSimple(
+            onDismissRequest = { showUnsavedDialog = false }
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.unsaved_changes),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    text = stringResource(R.string.unsaved_changes_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 24.dp)
+                ) {
+                    TextButton(
+                        onClick = {
+                            showUnsavedDialog = false
+                            onGoToSoundLibrary()
+                        },
+                        modifier = Modifier.align(Alignment.BottomStart)
+                    ) { 
+                        Text(stringResource(R.string.discard_changes)) 
+                    }
+                    
+                    TextButton(
+                        onClick = {
+                            // 保存并跳转
+                            val reverbConfig = ReverbConfig(
+                                enabled = true,
+                                preset = selectedPreset,
+                                roomSize = roomSize,
+                                decayTime = decayTime,
+                                damping = damping,
+                                wetLevel = wetLevel,
+                                dryLevel = dryLevel,
+                                preDelay = preDelay,
+                                insulation = insulation,
+                                reflectionDensity = reflectionDensity,
+                                reflectionSpread = reflectionSpread,
+                                highpassCutoff = highpassCutoff,
+                                earlyReflectionLevel = earlyReflectionLevel
+                            )
+                            val creativeConfig = CreativeEffectConfig(
+                                loFi = loFiIntensity,
+                                eightBit = eightBitIntensity,
+                                underwater = underwaterIntensity,
+                                alienSignal = alienSignalIntensity,
+                                megaphone = megaphoneIntensity,
+                                hifi = hifiIntensity
+                            )
+                            onApply(spatialRange, minInterval.toLong(), maxInterval.toLong(), spatialScatterEnabled, overlayMode, reverbConfig, creativeConfig)
+                            isApplied = true
+                            showUnsavedDialog = false
+                            onGoToSoundLibrary()
+                        },
+                        modifier = Modifier.align(Alignment.BottomEnd)
+                    ) { 
+                        Text(stringResource(R.string.save_and_continue)) 
+                    }
+                }
+            }
+        }
+    }
     
     val restoreOriginal: () -> Unit = {
         WhiteNoiseStorage.updatePlayingSoundReverb(trackId, originalConfig)
         
-        val currentClipId = com.bicy.whitenoise.audio.ScatteredPlayerManager.getTrackState(trackId)?.currentClipId
+        val currentClipId = com.bicy.whitenoise.audio.ScatteredPlayerManagerPart.ScatteredPlayerManager.getTrackState(trackId)?.currentClipId
         if (currentClipId != null) {
             OboeAudioEngine.setReverbParams(currentClipId, originalConfig.roomSize, originalConfig.damping, originalConfig.wetLevel)
             OboeAudioEngine.setInsulation(currentClipId, originalConfig.insulation)
@@ -232,18 +335,12 @@ fun ScatteredConfigDialog(
         }
     }
     
-    @Suppress("DEPRECATION")
-    AlertDialog(
+    GlassAlertDialogSimple(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-        modifier = Modifier
-            .fillMaxWidth(ResponsiveDimensions.dialogMaxWidth() / LocalConfiguration.current.screenWidthDp.dp)
-            .clip(RoundedCornerShape(16.dp))
+        modifier = Modifier.fillMaxWidth(ResponsiveDimensions.dialogMaxWidth() / LocalConfiguration.current.screenWidthDp.dp)
     ) {
         Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(20.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
             Text(
                 text = stringResource(R.string.audio_group_config),
@@ -277,19 +374,25 @@ fun ScatteredConfigDialog(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                        .clickable { onAddAudioClip() }
+                        .clickable {
+                            if (hasUnsavedChanges) {
+                                showUnsavedDialog = true
+                            } else {
+                                onGoToSoundLibrary()
+                            }
+                        }
                         .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = stringResource(R.string.add_audio),
+                        contentDescription = stringResource(R.string.go_to_sound_library),
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = stringResource(R.string.tap_to_add_audio),
+                        text = stringResource(R.string.go_to_sound_library),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -721,36 +824,128 @@ fun ScatteredConfigDialog(
                 if (spatialScatterEnabled) {
                     Spacer(modifier = Modifier.height(12.dp))
                     
-                    RangeSlider(
-                        label = stringResource(R.string.axis_x),
-                        minValue = spatialRange.xMin,
-                        maxValue = spatialRange.xMax,
+                    // 随机半径范围
+                    RangeSliderPositive(
+                        label = stringResource(R.string.random_radius),
+                        minValue = spatialRange.minRadius,
+                        maxValue = spatialRange.maxRadius,
                         onValueChange = { min, max ->
-                            spatialRange = spatialRange.copy(xMin = min, xMax = max)
+                            spatialRange = spatialRange.copy(minRadius = min, maxRadius = max)
                         }
                     )
                     
                     Spacer(modifier = Modifier.height(12.dp))
                     
-                    RangeSlider(
-                        label = stringResource(R.string.axis_y),
-                        minValue = spatialRange.yMin,
-                        maxValue = spatialRange.yMax,
-                        onValueChange = { min, max ->
-                            spatialRange = spatialRange.copy(yMin = min, yMax = max)
-                        }
+                    // 范围轴开关
+                    Text(
+                        text = stringResource(R.string.axis_range),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // X轴开关
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(R.string.axis_x),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Checkbox(
+                                checked = spatialRange.xEnabled,
+                                onCheckedChange = { spatialRange = spatialRange.copy(xEnabled = it) },
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        // Y轴开关
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(R.string.axis_y),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Checkbox(
+                                checked = spatialRange.yEnabled,
+                                onCheckedChange = { spatialRange = spatialRange.copy(yEnabled = it) },
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        // Z轴开关
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(R.string.axis_z),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Checkbox(
+                                checked = spatialRange.zEnabled,
+                                onCheckedChange = { spatialRange = spatialRange.copy(zEnabled = it) },
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
                     
                     Spacer(modifier = Modifier.height(12.dp))
                     
-                    RangeSlider(
-                        label = stringResource(R.string.axis_z),
-                        minValue = spatialRange.zMin,
-                        maxValue = spatialRange.zMax,
-                        onValueChange = { min, max ->
-                            spatialRange = spatialRange.copy(zMin = min, zMax = max)
-                        }
-                    )
+                    // 动态移动开关
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.dynamic_move),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Checkbox(
+                            checked = spatialRange.moveEnabled,
+                            onCheckedChange = { spatialRange = spatialRange.copy(moveEnabled = it) }
+                        )
+                    }
+                    
+                    // 动态移动参数（仅在开启时显示）
+                    if (spatialRange.moveEnabled) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        // 移动随机值
+                        SingleSlider(
+                            label = stringResource(R.string.move_random_value),
+                            value = spatialRange.moveRandomValue,
+                            onValueChange = { spatialRange = spatialRange.copy(moveRandomValue = it) },
+                            valueRange = 0.1f..1.0f
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        // 移动速度
+                        SingleSlider(
+                            label = stringResource(R.string.move_speed),
+                            value = spatialRange.moveSpeed,
+                            onValueChange = { spatialRange = spatialRange.copy(moveSpeed = it) },
+                            valueRange = 0.1f..5f
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        // 方向随机值
+                        SingleSlider(
+                            label = stringResource(R.string.direction_random_value),
+                            value = spatialRange.directionRandomValue,
+                            onValueChange = { spatialRange = spatialRange.copy(directionRandomValue = it) },
+                            valueRange = 0f..1f
+                        )
+                    }
                 }
             }
             }
@@ -839,5 +1034,75 @@ private fun RangeSlider(
                 )
             )
         }
+    }
+}
+
+@Composable
+private fun RangeSliderPositive(
+    label: String,
+    minValue: Float,
+    maxValue: Float,
+    onValueChange: (Float, Float) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "$label: [${String.format("%.1f", minValue)}m ~ ${String.format("%.1f", maxValue)}m]",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        )
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            InteractiveSlider(
+                value = minValue,
+                onValueChange = { onValueChange(it, maxValue) },
+                modifier = Modifier.weight(1f),
+                valueRange = 0.1f..10f,
+                colors = SliderDefaults.colors(
+                    thumbColor = MaterialTheme.colorScheme.primary,
+                    activeTrackColor = MaterialTheme.colorScheme.primary
+                )
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            InteractiveSlider(
+                value = maxValue,
+                onValueChange = { onValueChange(minValue, it) },
+                modifier = Modifier.weight(1f),
+                valueRange = 0.1f..10f,
+                colors = SliderDefaults.colors(
+                    thumbColor = MaterialTheme.colorScheme.primary,
+                    activeTrackColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun SingleSlider(
+    label: String,
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    valueRange: ClosedFloatingPointRange<Float>
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "$label: ${String.format("%.2f", value)}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        )
+        
+        InteractiveSlider(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            valueRange = valueRange,
+            colors = SliderDefaults.colors(
+                thumbColor = MaterialTheme.colorScheme.primary,
+                activeTrackColor = MaterialTheme.colorScheme.primary
+            )
+        )
     }
 }

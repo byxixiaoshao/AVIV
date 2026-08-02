@@ -6,15 +6,16 @@ import android.util.Log
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.bicy.whitenoise.StMb.TrackType
+import com.bicy.whitenoise.StMb.ScatteredTrackDataPart.TrackType
 import com.bicy.whitenoise.servies.MusicService
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStorage
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStoragePart.SoundPlayConfig
+import com.bicy.whitenoise.ui.components.toast.ToastManager
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStoragePart.SpatialScatterRangeData
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStoragePart.ScatteredAudioClipData
 import com.bicy.whitenoise.subPage.home.Function
-import com.bicy.whitenoise.subPage.home.model.SoundCategory
-import com.bicy.whitenoise.subPage.home.model.SoundMetadata
+import com.bicy.whitenoise.subPage.home.model.SoundMetadataPart.SoundCategory
+import com.bicy.whitenoise.subPage.home.model.SoundMetadataPart.*
 import com.bicy.whitenoise.utils.DownloadManager
 import com.bicy.whitenoise.utils.SoundStorageManager
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
 @Stable
@@ -121,9 +123,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     
     private fun syncPlayListState() {
         val servicePlayingIds = MusicService.getInstance()?.getPlayingSounds() ?: emptySet()
-        _playingStates.value = servicePlayingIds
-        
         val playListSounds = WhiteNoiseStorage.getPlaybackState().sounds
+        
+        // 服务有播放状态时优先使用（最准确）
+        // 服务无状态但存储有声音时保留当前状态（音频引擎可能还未启动）
+        // 服务和存储都为空时才清空
+        if (servicePlayingIds.isNotEmpty()) {
+            _playingStates.value = servicePlayingIds
+        } else if (playListSounds.isEmpty()) {
+            _playingStates.value = emptySet()
+        }
+        
         if (playListSounds.isEmpty()) {
             if (_isPaused.value) {
                 WhiteNoiseStorage.setPlaybackPaused(false)
@@ -221,10 +231,104 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         
         if (isCurrentlyPlaying) {
             stopSound(sound.id)
-        } else if (Function.isCached(context, sound.id)) {
+        } else if (Function.isCached(context, sound.id, sound.categoryName, sound.name)) {
             playSound(sound)
         } else {
             downloadAndPlaySound(sound)
+        }
+    }
+
+    /**
+     * Agent 工具专用：等待声音下载完成后再播放。
+     * 如果已缓存则立即播放；如果正在下载则等待；否则启动下载并等待。
+     */
+    suspend fun ensureSoundPlayable(sound: SoundMetadata): Result<String> {
+        // 已在播放中 → 直接返回
+        val isCurrentlyPlaying = MusicService.getInstance()?.isSoundPlaying(sound.id) ?: false
+        if (isCurrentlyPlaying) {
+            return Result.success(sound.name)
+        }
+
+        // 已缓存 → 立即播放
+        if (Function.isCached(context, sound.id, sound.categoryName, sound.name)) {
+            playSound(sound)
+            return Result.success(sound.name)
+        }
+
+        // 正在下载中 → 等待完成
+        if (Function.isDownloading(sound.id)) {
+            return waitForDownload(sound)
+        }
+
+        // 未下载 → 启动下载并等待
+        return downloadAndWait(sound)
+    }
+
+    private suspend fun waitForDownload(sound: SoundMetadata): Result<String> {
+        return suspendCancellableCoroutine { continuation ->
+            // 轮询等待下载完成
+            val job = viewModelScope.launch {
+                val startTime = System.currentTimeMillis()
+                val timeoutMs = 60_000L
+                while (Function.isDownloading(sound.id)) {
+                    if (System.currentTimeMillis() - startTime > timeoutMs) {
+                        if (continuation.isActive) {
+                            continuation.resumeWith(
+                                Result.failure(Exception("下载超时：${sound.name}"))
+                            )
+                        }
+                        return@launch
+                    }
+                    kotlinx.coroutines.delay(200)
+                }
+                // 下载完成
+                if (continuation.isActive) {
+                    if (Function.isCached(context, sound.id, sound.categoryName, sound.name)) {
+                        playSound(sound)
+                        continuation.resumeWith(Result.success(Result.success(sound.name)))
+                    } else {
+                        continuation.resumeWith(Result.failure(Exception("下载失败：${sound.name}")))
+                    }
+                }
+            }
+            continuation.invokeOnCancellation { job.cancel() }
+        }
+    }
+
+    private suspend fun downloadAndWait(sound: SoundMetadata): Result<String> {
+        return suspendCancellableCoroutine { continuation ->
+            var completed = false
+            Function.downloadAudio(
+                context = context,
+                sound = sound,
+                onProgress = { progress ->
+                    viewModelScope.launch {
+                        _downloadProgress.value = _downloadProgress.value + (sound.id to progress)
+                    }
+                },
+                onComplete = { success ->
+                    viewModelScope.launch {
+                        val currentProgress = _downloadProgress.value.toMutableMap()
+                        currentProgress.remove(sound.id)
+                        _downloadProgress.value = currentProgress
+                        if (completed) return@launch
+                        completed = true
+                        if (continuation.isActive) {
+                            if (success) {
+                                playSound(sound)
+                                continuation.resumeWith(Result.success(Result.success(sound.name)))
+                            } else {
+                                continuation.resumeWith(Result.failure(Exception("下载失败：${sound.name}")))
+                            }
+                        }
+                    }
+                }
+            )
+            continuation.invokeOnCancellation {
+                if (!completed) {
+                    DownloadManager.cancelDownload(sound.id)
+                }
+            }
         }
     }
     
@@ -238,6 +342,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val soundConfig = SoundPlayConfig(
             id = sound.id,
             name = sound.name,
+            categoryName = sound.categoryName,
             volume = volume,
             reverbConfig = reverbConfig,
             spatialAudioConfig = spatialConfig,
@@ -246,6 +351,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         )
         WhiteNoiseStorage.addPlayingSound(soundConfig)
         Function.playSound(context, sound)
+        ToastManager.success("已加入播放：${sound.name}")
         
         val currentStates = _playingStates.value.toMutableSet()
         currentStates.add(sound.id)
@@ -316,7 +422,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     
     fun removePlayingSound(soundId: String) {
         val sound = _playingSounds.value.find { it.id == soundId }
-        if (sound?.trackType == com.bicy.whitenoise.StMb.TrackType.SCATTERED) {
+        if (sound?.trackType == TrackType.SCATTERED) {
             MusicService.getInstance()?.unregisterScatteredTrack(soundId)
         } else {
             MusicService.getInstance()?.stopSound(soundId)
@@ -328,6 +434,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _playingStates.value = currentStates
         
         updatePlayingSounds()
+        ToastManager.info("已从播放中移除")
     }
     
     fun setVolume(soundId: String, volume: Float) {
@@ -354,19 +461,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val service = MusicService.getInstance()
         if (service != null) {
             if (newPausedState) {
+                // 暂停：清除播放状态
+                _playingStates.value = emptySet()
                 playingSounds.forEach { sound ->
                     if (sound.trackType == "scattered") {
-                        com.bicy.whitenoise.audio.ScatteredPlayerManager.pauseTrack(sound.id)
+                        com.bicy.whitenoise.audio.ScatteredPlayerManagerPart.ScatteredPlayerManager.pauseTrack(sound.id)
                     } else {
                         service.pauseSound(sound.id)
                     }
                 }
             } else {
+                // 恢复：逐声播放并记录状态
+                val resumingIds = mutableSetOf<String>()
                 playingSounds.forEach { sound ->
                     if (sound.trackType == "scattered") {
-                        com.bicy.whitenoise.audio.ScatteredPlayerManager.resumeTrack(sound.id)
+                        com.bicy.whitenoise.audio.ScatteredPlayerManagerPart.ScatteredPlayerManager.resumeTrack(sound.id)
+                        resumingIds.add(sound.id)
                     } else {
-                        val cachedFile = com.bicy.whitenoise.utils.DownloadManager.getCachedFile(context, sound.id)
+                        val cachedFile = com.bicy.whitenoise.utils.DownloadManager.getCachedFile(
+                            context, sound.id, sound.categoryName, sound.name)
                         if (cachedFile != null && cachedFile.exists()) {
                             if (service.isSoundPlaying(sound.id)) {
                                 service.resumeSound(sound.id)
@@ -374,9 +487,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                 service.playSound(sound.id, cachedFile, sound.name)
                                 service.setVolume(sound.id, sound.volume)
                             }
+                            resumingIds.add(sound.id)
                         }
                     }
                 }
+                _playingStates.value = resumingIds
             }
         }
         
@@ -524,5 +639,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         Function.clearDownloadProgressListener()
         MusicService.onPlaybackStateChangeListener = null
         WhiteNoiseStorage.removeListener(storageListener)
+    }
+
+    fun getCurrentSoundConfigs(): List<SoundPlayConfig> {
+        return WhiteNoiseStorage.getPlaybackState().sounds
+    }
+
+    fun loadPresetSounds(sounds: List<SoundPlayConfig>, onComplete: () -> Unit) {
+        // 停止所有正在播放的音频
+        MusicService.getInstance()?.stopAllSounds()
+        
+        WhiteNoiseStorage.clearPlayback()
+        sounds.forEach { sound ->
+            WhiteNoiseStorage.addPlayingSound(sound)
+        }
+        syncPlayListState()
+        onComplete()
+    }
+
+    fun restorePlaybackAfterLoad() {
+        val sounds = WhiteNoiseStorage.getPlaybackState().sounds
+        val service = MusicService.getInstance() ?: return
+        sounds.forEach { sound ->
+            val cachedFile = com.bicy.whitenoise.utils.DownloadManager.getCachedFile(
+                context, sound.id, sound.categoryName, sound.name)
+            if (cachedFile != null && cachedFile.exists() && !service.isSoundPlaying(sound.id)) {
+                service.playSound(sound.id, cachedFile, sound.name)
+                service.setVolume(sound.id, sound.volume)
+            }
+        }
     }
 }

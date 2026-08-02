@@ -17,6 +17,7 @@ object StorageManager {
     private const val WHITE_NOISE_DIR = "white_noise"
     private const val MUSIC_DIR = "music"
     private const val CONFIG_DIR = "config"
+    private const val FLOATING_PETS_DIR = "floating_pets"
     
     private const val LIBRARY_DIR = "library"
     private const val SCATTERED_DIR = "scattered"
@@ -39,6 +40,7 @@ object StorageManager {
         File(filesDir, WHITE_NOISE_DIR).apply { mkdirs() }
         File(filesDir, MUSIC_DIR).apply { mkdirs() }
         File(filesDir, CONFIG_DIR).apply { mkdirs() }
+        File(filesDir, FLOATING_PETS_DIR).apply { mkdirs() }
         
         File(filesDir, "$WHITE_NOISE_DIR/$LIBRARY_DIR").apply { mkdirs() }
         File(filesDir, "$WHITE_NOISE_DIR/$SCATTERED_DIR").apply { mkdirs() }
@@ -64,6 +66,10 @@ object StorageManager {
     
     fun getConfigDir(): File? {
         return contextRef?.get()?.filesDir?.let { File(it, CONFIG_DIR) }
+    }
+    
+    fun getFloatingPetsDir(): File? {
+        return contextRef?.get()?.filesDir?.let { File(it, FLOATING_PETS_DIR) }
     }
     
     fun getFile(vararg pathParts: String): File? {

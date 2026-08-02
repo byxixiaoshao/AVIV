@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <external-files-path name="logs" path="AddSky/Log/" />
+    <external-files-path name="exported_logs" path="AddSky/ExportedLogs/" />
+    <cache-path name="cache" path="/" />
+</paths>

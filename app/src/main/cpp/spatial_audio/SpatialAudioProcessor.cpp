@@ -1,8 +1,21 @@
 #include "SpatialAudioProcessor.h"
 #include <algorithm>
+#include <random>
 #include <android/log.h>
 
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "SpatialAudioProcessor", __VA_ARGS__)
+
+// 高质量随机数生成器（替代 rand()）
+namespace {
+    std::mt19937& rng() {
+        static thread_local std::mt19937 gen(std::random_device{}());
+        return gen;
+    }
+    inline float randf() {
+        static thread_local std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+        return dist(rng());
+    }
+}
 
 SpatialAudioProcessor::SpatialAudioProcessor() {
     leftDelayBuffer_.resize(MAX_ITD_DELAY_SAMPLES, 0.0f);
@@ -64,6 +77,8 @@ void SpatialAudioProcessor::clearBuffers() {
     
     frontBackFilterState_[0] = 0.0f;
     frontBackFilterState_[1] = 0.0f;
+    frontBackFilterState_[2] = 0.0f;
+    frontBackFilterState_[3] = 0.0f;
     
     LOGI("SpatialAudioProcessor buffers cleared");
 }
@@ -87,10 +102,11 @@ void SpatialAudioProcessor::setFixedOffset(float leftRight, float upDown, float 
     params_.multiplier.store(multiplier);
 }
 
-void SpatialAudioProcessor::setSurroundParams(int mode, float radius, float speed) {
+void SpatialAudioProcessor::setSurroundParams(int mode, float radius, float periodSeconds) {
     params_.surroundMode.store(mode);
     params_.surroundRadius.store(radius);
-    params_.surroundSpeed.store(speed);
+    // periodSeconds 语义为"秒/圈"（数值越大转得越慢）
+    params_.surroundPeriodSeconds.store(periodSeconds);
 }
 
 void SpatialAudioProcessor::setRandomParams(float maxDistance, float minDistance, float randomValue, float speed) {
@@ -98,6 +114,22 @@ void SpatialAudioProcessor::setRandomParams(float maxDistance, float minDistance
     params_.randomMinDistance.store(minDistance);
     params_.randomValue.store(randomValue);
     params_.randomSpeed.store(speed);
+}
+
+void SpatialAudioProcessor::setScatterParams(
+    float minRadius, float maxRadius,
+    bool xEnabled, bool yEnabled, bool zEnabled,
+    bool moveEnabled, float moveRandomValue, float moveSpeed, float directionRandom
+) {
+    params_.scatterMinRadius.store(minRadius);
+    params_.scatterMaxRadius.store(maxRadius);
+    params_.scatterXEnabled.store(xEnabled);
+    params_.scatterYEnabled.store(yEnabled);
+    params_.scatterZEnabled.store(zEnabled);
+    params_.scatterMoveEnabled.store(moveEnabled);
+    params_.scatterMoveRandomValue.store(moveRandomValue);
+    params_.scatterMoveSpeed.store(moveSpeed);
+    params_.scatterDirectionRandom.store(directionRandom);
 }
 
 void SpatialAudioProcessor::getCurrentPosition(float& azimuth, float& elevation, float& distance) const {
@@ -152,15 +184,23 @@ void SpatialAudioProcessor::calculateHrtf(float azimuth, float elevation, float 
 void SpatialAudioProcessor::updateSurroundPosition() {
     int mode = params_.surroundMode.load();
     float radius = params_.surroundRadius.load();
-    float speed = params_.surroundSpeed.load();
+    // 参数语义为"秒/圈"（periodSeconds）：数值越大转得越慢
+    float periodSeconds = params_.surroundPeriodSeconds.load();
     
-    if (speed > 0.001f) {
-        float angleIncrement = (2.0f * 3.14159265f / speed) * 
-                               static_cast<float>(framesPerBuffer_.load()) / 
-                               static_cast<float>(sampleRate_.load());
+    // 角速度 ω = 2π / T（T 为周期秒数）。periodSeconds 必须为正数，
+    // 过小会导致角速度爆炸，这里钳制到 0.05s（即最快 20 圈/秒）。
+    constexpr float kTwoPi = 2.0f * 3.14159265f;
+    constexpr float kMinPeriodSeconds = 0.05f;
+    if (periodSeconds > 0.001f) {
+        if (periodSeconds < kMinPeriodSeconds) {
+            periodSeconds = kMinPeriodSeconds;
+        }
+        float deltaTime = static_cast<float>(framesPerBuffer_.load()) /
+                          static_cast<float>(sampleRate_.load());
+        float angleIncrement = (kTwoPi / periodSeconds) * deltaTime;
         currentAngle_ += angleIncrement;
-        if (currentAngle_ > 2.0f * 3.14159265f) {
-            currentAngle_ -= 2.0f * 3.14159265f;
+        if (currentAngle_ > kTwoPi) {
+            currentAngle_ -= kTwoPi;
         }
     }
     
@@ -194,9 +234,9 @@ void SpatialAudioProcessor::updateRandomPosition() {
     if (randomTimeAccumulator_ > 1.0f) {
         randomTimeAccumulator_ = 0.0f;
         
-        float theta = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 2.0f * 3.14159265f;
-        float phi = static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * 3.14159265f;
-        float r = minDistance + static_cast<float>(rand()) / static_cast<float>(RAND_MAX) * (maxDistance - minDistance);
+        float theta = randf() * 2.0f * 3.14159265f;
+        float phi = randf() * 3.14159265f;
+        float r = minDistance + randf() * (maxDistance - minDistance);
         
         randomTargetX_ = r * std::sin(phi) * std::cos(theta);
         randomTargetY_ = r * std::sin(phi) * std::sin(theta);
@@ -204,6 +244,85 @@ void SpatialAudioProcessor::updateRandomPosition() {
     }
     
     float smoothing = 0.01f * randomValue;
+    randomCurrentX_ += (randomTargetX_ - randomCurrentX_) * smoothing;
+    randomCurrentY_ += (randomTargetY_ - randomCurrentY_) * smoothing;
+    randomCurrentZ_ += (randomTargetZ_ - randomCurrentZ_) * smoothing;
+    
+    lastX_ = randomCurrentX_;
+    lastY_ = randomCurrentY_;
+    lastZ_ = randomCurrentZ_;
+}
+
+void SpatialAudioProcessor::updateScatterPosition() {
+    float minRadius = params_.scatterMinRadius.load();
+    float maxRadius = params_.scatterMaxRadius.load();
+    bool xEnabled = params_.scatterXEnabled.load();
+    bool yEnabled = params_.scatterYEnabled.load();
+    bool zEnabled = params_.scatterZEnabled.load();
+    bool moveEnabled = params_.scatterMoveEnabled.load();
+    float moveRandomValue = params_.scatterMoveRandomValue.load();
+    float moveSpeed = params_.scatterMoveSpeed.load();
+    float directionRandom = params_.scatterDirectionRandom.load();
+    
+    // 如果位置未初始化，先设置一次随机位置
+    if (!scatterPositionInitialized_) {
+        float r = minRadius + randf() * (maxRadius - minRadius);
+        float theta = randf() * 2.0f * 3.14159265f;
+        float phi = randf() * 3.14159265f;
+        
+        randomCurrentX_ = xEnabled ? (r * std::sin(phi) * std::cos(theta)) : 0.0f;
+        randomCurrentY_ = yEnabled ? (r * std::sin(phi) * std::sin(theta)) : 0.0f;
+        randomCurrentZ_ = zEnabled ? (r * std::cos(phi)) : r;
+        
+        randomTargetX_ = randomCurrentX_;
+        randomTargetY_ = randomCurrentY_;
+        randomTargetZ_ = randomCurrentZ_;
+        
+        scatterPositionInitialized_ = true;
+    }
+    
+    // 如果动态移动未启用，保持位置固定
+    if (!moveEnabled) {
+        lastX_ = randomCurrentX_;
+        lastY_ = randomCurrentY_;
+        lastZ_ = randomCurrentZ_;
+        return;
+    }
+    
+    // 动态移动启用时，执行移动逻辑
+    randomTimeAccumulator_ += moveSpeed * 0.001f;
+    
+    // 判断是否需要移动（基于移动随机值）
+    bool shouldMove = randf() <= moveRandomValue;
+    
+    if (randomTimeAccumulator_ > 1.0f || shouldMove) {
+        randomTimeAccumulator_ = 0.0f;
+        
+        float r = minRadius + randf() * (maxRadius - minRadius);
+        
+        float theta = randf() * 2.0f * 3.14159265f;
+        float phi = randf() * 3.14159265f;
+        
+        // 根据轴启用状态设置目标位置
+        float targetX = xEnabled ? (r * std::sin(phi) * std::cos(theta)) : 0.0f;
+        float targetY = yEnabled ? (r * std::sin(phi) * std::sin(theta)) : 0.0f;
+        float targetZ = zEnabled ? (r * std::cos(phi)) : r;  // 如果Z禁用，保持固定距离
+        
+        // 方向随机值影响目标位置的偏移
+        if (directionRandom > 0.0f) {
+            float dirOffset = directionRandom * (randf() - 0.5f) * 2.0f;
+            if (xEnabled) targetX += dirOffset * r * 0.2f;
+            if (yEnabled) targetY += dirOffset * r * 0.2f;
+            if (zEnabled) targetZ += dirOffset * r * 0.1f;
+        }
+        
+        randomTargetX_ = targetX;
+        randomTargetY_ = targetY;
+        randomTargetZ_ = targetZ;
+    }
+    
+    // 平滑过渡
+    float smoothing = 0.02f * moveSpeed;
     randomCurrentX_ += (randomTargetX_ - randomCurrentX_) * smoothing;
     randomCurrentY_ += (randomTargetY_ - randomCurrentY_) * smoothing;
     randomCurrentZ_ += (randomTargetZ_ - randomCurrentZ_) * smoothing;
@@ -290,6 +409,19 @@ void SpatialAudioProcessor::process(float* input, float* output, int numFrames) 
             }
             break;
         }
+            
+        case static_cast<int>(OffsetType::Scatter): {
+            updateScatterPosition();
+            float x = lastX_;
+            float y = lastY_;
+            float z = lastZ_;
+            distance = std::sqrt(x * x + y * y + z * z);
+            if (distance > 0.001f) {
+                azimuth = std::atan2(x, -z) * 180.0f / 3.14159265f;
+                elevation = std::asin(y / distance) * 180.0f / 3.14159265f;
+            }
+            break;
+        }
     }
     
     float azimuthDiff = azimuth - lastAzimuth_;
@@ -329,17 +461,18 @@ void SpatialAudioProcessor::process(float* input, float* output, int numFrames) 
     float leftDelayFloat = itdSamples > 0 ? itdSamples : 0.0f;
     float rightDelayFloat = itdSamples < 0 ? -itdSamples : 0.0f;
     
-    float filterCoeff = frontBackFactor * 0.3f;
+    float filterCoeff = std::tan(3.14159265f * frontBackFactor * 6000.0f / sampleRate_.load());
+    filterCoeff = filterCoeff / (1.0f + filterCoeff);
     
     for (int i = 0; i < numFrames; ++i) {
         float inLeft = input[i * 2];
         float inRight = input[i * 2 + 1];
         
-        float mono = (inLeft + inRight) * 0.5f;
+        // 保留立体声：左右声道独立写入延迟缓冲区
+        leftDelayBuffer_[delayWriteIndex_] = inLeft;
+        rightDelayBuffer_[delayWriteIndex_] = inRight;
         
-        leftDelayBuffer_[delayWriteIndex_] = mono;
-        rightDelayBuffer_[delayWriteIndex_] = mono;
-        
+        // 4点 Hermite 插值（替代线性插值，减少高频频谱畸变）
         float leftDelayInt = 0.0f, leftDelayFrac = 0.0f;
         float rightDelayInt = 0.0f, rightDelayFrac = 0.0f;
         
@@ -352,24 +485,46 @@ void SpatialAudioProcessor::process(float* input, float* output, int numFrames) 
             rightDelayFrac = rightDelayFloat - rightDelayInt;
         }
         
-        int leftReadIndex0 = (delayWriteIndex_ - static_cast<int>(leftDelayInt) + MAX_ITD_DELAY_SAMPLES) % MAX_ITD_DELAY_SAMPLES;
-        int leftReadIndex1 = (leftReadIndex0 - 1 + MAX_ITD_DELAY_SAMPLES) % MAX_ITD_DELAY_SAMPLES;
+        int leftIdx0 = (delayWriteIndex_ - static_cast<int>(leftDelayInt) + MAX_ITD_DELAY_SAMPLES) % MAX_ITD_DELAY_SAMPLES;
+        int leftIdx1 = (leftIdx0 - 1 + MAX_ITD_DELAY_SAMPLES) % MAX_ITD_DELAY_SAMPLES;
+        int leftIdxM1 = (leftIdx0 + 1) % MAX_ITD_DELAY_SAMPLES;
+        int leftIdx2 = (leftIdx1 - 1 + MAX_ITD_DELAY_SAMPLES) % MAX_ITD_DELAY_SAMPLES;
         
-        int rightReadIndex0 = (delayWriteIndex_ - static_cast<int>(rightDelayInt) + MAX_ITD_DELAY_SAMPLES) % MAX_ITD_DELAY_SAMPLES;
-        int rightReadIndex1 = (rightReadIndex0 - 1 + MAX_ITD_DELAY_SAMPLES) % MAX_ITD_DELAY_SAMPLES;
+        int rightIdx0 = (delayWriteIndex_ - static_cast<int>(rightDelayInt) + MAX_ITD_DELAY_SAMPLES) % MAX_ITD_DELAY_SAMPLES;
+        int rightIdx1 = (rightIdx0 - 1 + MAX_ITD_DELAY_SAMPLES) % MAX_ITD_DELAY_SAMPLES;
+        int rightIdxM1 = (rightIdx0 + 1) % MAX_ITD_DELAY_SAMPLES;
+        int rightIdx2 = (rightIdx1 - 1 + MAX_ITD_DELAY_SAMPLES) % MAX_ITD_DELAY_SAMPLES;
         
-        float delayedLeft = leftDelayBuffer_[leftReadIndex0] * (1.0f - leftDelayFrac) + 
-                           leftDelayBuffer_[leftReadIndex1] * leftDelayFrac;
-        float delayedRight = rightDelayBuffer_[rightReadIndex0] * (1.0f - rightDelayFrac) + 
-                            rightDelayBuffer_[rightReadIndex1] * rightDelayFrac;
+        // Hermite 4点插值: c0=idxM1, c1=idx0, c2=idx1, c3=idx2
+        auto hermiteInterp = [](float c0, float c1, float c2, float c3, float t) {
+            float t2 = t * t, t3 = t2 * t;
+            return 0.5f * ((2.0f * c1) + (-c0 + c2) * t +
+                           (2.0f * c0 - 5.0f * c1 + 4.0f * c2 - c3) * t2 +
+                           (-c0 + 3.0f * c1 - 3.0f * c2 + c3) * t3);
+        };
+        
+        float delayedLeft = hermiteInterp(
+            leftDelayBuffer_[leftIdxM1], leftDelayBuffer_[leftIdx0],
+            leftDelayBuffer_[leftIdx1], leftDelayBuffer_[leftIdx2], leftDelayFrac);
+        float delayedRight = hermiteInterp(
+            rightDelayBuffer_[rightIdxM1], rightDelayBuffer_[rightIdx0],
+            rightDelayBuffer_[rightIdx1], rightDelayBuffer_[rightIdx2], rightDelayFrac);
         
         float outLeft = delayedLeft * leftGain;
         float outRight = delayedRight * rightGain;
         
-        outLeft = outLeft + filterCoeff * (frontBackFilterState_[0] - outLeft);
-        outRight = outRight + filterCoeff * (frontBackFilterState_[1] - outRight);
-        frontBackFilterState_[0] = outLeft;
-        frontBackFilterState_[1] = outRight;
+        // 前后遮蔽：级联二阶 IIR 低通（替代一阶，后方音色更真实）
+        {
+            float tmpL = outLeft + filterCoeff * (frontBackFilterState_[0] - outLeft);
+            frontBackFilterState_[0] = tmpL;
+            outLeft = tmpL + filterCoeff * (frontBackFilterState_[2] - tmpL);
+            frontBackFilterState_[2] = outLeft;
+            
+            float tmpR = outRight + filterCoeff * (frontBackFilterState_[1] - outRight);
+            frontBackFilterState_[1] = tmpR;
+            outRight = tmpR + filterCoeff * (frontBackFilterState_[3] - tmpR);
+            frontBackFilterState_[3] = outRight;
+        }
         
         output[i * 2] = outLeft * wetGain + inLeft * dryGain;
         output[i * 2 + 1] = outRight * wetGain + inRight * dryGain;

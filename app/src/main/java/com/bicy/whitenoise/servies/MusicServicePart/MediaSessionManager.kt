@@ -78,7 +78,9 @@ object mS7k {
         } else {
             PlaybackStateCompat.STATE_PAUSED
         }
-        
+
+        // P1-4: 完整的 PlaybackState，包含位置、速率、缓冲位置等
+        // 让系统识别为活跃的媒体播放器，降低后台被杀概率
         val playbackState = PlaybackStateCompat.Builder()
             .setActions(
                 PlaybackStateCompat.ACTION_PLAY or
@@ -86,11 +88,12 @@ object mS7k {
                 PlaybackStateCompat.ACTION_PLAY_PAUSE or
                 PlaybackStateCompat.ACTION_STOP or
                 PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
-                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
+                PlaybackStateCompat.ACTION_SEEK_TO
             )
-            .setState(state, 0, if (isPlaying) 1.0f else 0f)
+            .setState(state, PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, if (isPlaying) 1.0f else 0f)
             .build()
-        
+
         mediaSession?.setPlaybackState(playbackState)
     }
 

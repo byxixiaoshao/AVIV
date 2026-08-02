@@ -2,23 +2,50 @@ package com.bicy.whitenoise.utils
 
 import android.content.Context
 import android.util.Log
+import com.bicy.whitenoise.storage.core.JsonStorageManager
 import com.bicy.whitenoise.subPage.scattered.model.*
 import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import java.io.File
+import kotlinx.coroutines.runBlocking
+
+data class ScatteredCategoryEntity(
+    val id: String,
+    val name: String,
+    val isCustom: Boolean = false,
+    val translationsJson: String? = null
+)
+
+data class ScatteredTypeEntity(
+    val id: String,
+    val name: String,
+    val categoryId: String,
+    val translationsJson: String? = null
+)
+
+data class ScatteredSoundEntity(
+    val id: String,
+    val name: String,
+    val typeId: String,
+    val categoryId: String,
+    val remoteUrl: String? = null,
+    val author: String? = null,
+    val authorUrl: String? = null,
+    val translationsJson: String? = null,
+    val downloadDate: String? = null,
+    val fileSize: Long? = null
+)
 
 object ScatteredStorageManager {
     
     private const val TAG = "ScatteredStorageManager"
     private const val SCATTERED_DIR = "white_noise/scattered"
-    private const val CATEGORIES_FILE = "categories.json"
-    private const val TYPES_SUFFIX = "_types_list.json"
-    private const val SOUNDS_SUFFIX = "_sounds_list.json"
-    private const val METADATA_FILE = "metadata.json"
     private const val AUDIO_FILE = "audio"
+    private const val CATEGORIES_FILE = "scattered_categories.json"
+    private const val TYPES_FILE = "scattered_types.json"
+    private const val SOUNDS_FILE = "scattered_sounds.json"
     
-    private val gson = GsonBuilder().setPrettyPrinting().create()
+    private val gson = Gson()
     
     data class ScatteredCategory(
         val id: String,
@@ -47,6 +74,35 @@ object ScatteredStorageManager {
         val fileSize: Long? = null
     )
     
+    // ===== JSON helpers =====
+    
+    private fun readCategories(): List<ScatteredCategoryEntity> = runBlocking {
+        JsonStorageManager.read(CATEGORIES_FILE, Array<ScatteredCategoryEntity>::class.java)?.toList()
+            ?: emptyList()
+    }
+    
+    private fun writeCategories(entities: List<ScatteredCategoryEntity>) = runBlocking {
+        JsonStorageManager.write(CATEGORIES_FILE, entities)
+    }
+    
+    private fun readTypes(): List<ScatteredTypeEntity> = runBlocking {
+        JsonStorageManager.read(TYPES_FILE, Array<ScatteredTypeEntity>::class.java)?.toList()
+            ?: emptyList()
+    }
+    
+    private fun writeTypes(entities: List<ScatteredTypeEntity>) = runBlocking {
+        JsonStorageManager.write(TYPES_FILE, entities)
+    }
+    
+    private fun readSounds(): List<ScatteredSoundEntity> = runBlocking {
+        JsonStorageManager.read(SOUNDS_FILE, Array<ScatteredSoundEntity>::class.java)?.toList()
+            ?: emptyList()
+    }
+    
+    private fun writeSounds(entities: List<ScatteredSoundEntity>) = runBlocking {
+        JsonStorageManager.write(SOUNDS_FILE, entities)
+    }
+    
     private fun getScatteredDir(context: Context): File {
         val dir = File(context.filesDir, SCATTERED_DIR)
         if (!dir.exists()) {
@@ -55,37 +111,16 @@ object ScatteredStorageManager {
         return dir
     }
     
-    private fun getCategoriesFile(context: Context): File {
-        return File(getScatteredDir(context), CATEGORIES_FILE)
-    }
-    
-    private fun getCategoryDir(context: Context, categoryName: String): File {
-        return File(getScatteredDir(context), categoryName)
-    }
-    
-    private fun getTypesListFile(context: Context, categoryName: String): File {
-        return File(getCategoryDir(context, categoryName), "${categoryName}$TYPES_SUFFIX")
-    }
-    
-    private fun getTypeDir(context: Context, categoryName: String, typeName: String): File {
-        return File(getCategoryDir(context, categoryName), typeName)
-    }
-    
-    private fun getSoundsListFile(context: Context, categoryName: String, typeName: String): File {
-        return File(getTypeDir(context, categoryName, typeName), "${typeName}$SOUNDS_SUFFIX")
-    }
-    
     private fun getSoundDir(context: Context, categoryName: String, typeName: String, soundName: String): File {
-        return File(getTypeDir(context, categoryName, typeName), soundName)
-    }
-    
-    private fun getMetadataFile(context: Context, categoryName: String, typeName: String, soundName: String): File {
-        return File(getSoundDir(context, categoryName, typeName, soundName), METADATA_FILE)
+        val categoryDir = File(getScatteredDir(context), categoryName)
+        val typeDir = File(categoryDir, typeName)
+        return File(typeDir, soundName)
     }
     
     fun init(context: Context) {
-        val categoriesFile = getCategoriesFile(context)
-        if (!categoriesFile.exists()) {
+        JsonStorageManager.init(AppInitializer.getContext())
+        val existingCategories = readCategories()
+        if (existingCategories.isEmpty()) {
             initializeFromAsset(context)
         }
     }
@@ -100,214 +135,117 @@ object ScatteredStorageManager {
             
             val manifest = Gson().fromJson(json, ScatteredSoundsManifest::class.java)
             
-            val categories = manifest.categories.map { category ->
+            val categoryEntities = manifest.categories.map { category ->
                 val categoryTranslations = mutableMapOf<String, String>()
                 manifest.Language.forEach { (langCode, langTranslations) ->
                     langTranslations[category.name]?.let { categoryTranslations[langCode] = it }
                 }
                 
-                ScatteredCategory(
+                ScatteredCategoryEntity(
                     id = category.id,
                     name = category.name,
                     isCustom = false,
-                    translations = categoryTranslations.ifEmpty { null }
+                    translationsJson = if (categoryTranslations.isNotEmpty()) gson.toJson(categoryTranslations) else null
                 )
             }
             
-            saveCategories(context, categories)
-            Log.d(TAG, "保存分类清单成功: ${categories.size}个分类")
-            
-            manifest.categories.forEach { category ->
-                Log.d(TAG, "处理分类: ${category.id} -> ${category.name}")
-                
-                val categoryDir = getCategoryDir(context, category.name)
-                if (!categoryDir.exists()) {
-                    categoryDir.mkdirs()
+            val typeEntities = manifest.soundTypes.map { soundType ->
+                val typeTranslations = mutableMapOf<String, String>()
+                manifest.Language.forEach { (langCode, langTranslations) ->
+                    langTranslations[soundType.name]?.let { typeTranslations[langCode] = it }
                 }
                 
-                val typesInCategory = manifest.soundTypes.filter { it.category == category.id }
-                
-                val scatteredTypes = typesInCategory.map { soundType ->
-                    val typeTranslations = mutableMapOf<String, String>()
-                    manifest.Language.forEach { (langCode, langTranslations) ->
-                        langTranslations[soundType.name]?.let { typeTranslations[langCode] = it }
-                    }
-                    
-                    ScatteredType(
-                        id = soundType.id,
-                        name = soundType.name,
-                        categoryId = category.id,
-                        translations = typeTranslations.ifEmpty { null }
-                    )
-                }
-                
-                saveTypesList(context, category.name, scatteredTypes)
-                
-                scatteredTypes.forEach { scatteredType ->
-                    val typeDir = getTypeDir(context, category.name, scatteredType.name)
-                    if (!typeDir.exists()) {
-                        typeDir.mkdirs()
-                    }
-                    
-                    val soundsInType = manifest.sounds.filter { it.type == scatteredType.id }
-                    
-                    val scatteredSounds = soundsInType.map { sound ->
-                        val soundTranslations = mutableMapOf<String, String>()
-                        manifest.Language.forEach { (langCode, langTranslations) ->
-                            langTranslations[sound.name]?.let { soundTranslations[langCode] = it }
-                        }
-                        
-                        ScatteredSound(
-                            id = sound.id,
-                            name = sound.name,
-                            typeId = scatteredType.id,
-                            categoryId = category.id,
-                            remoteUrl = sound.remoteUrl,
-                            author = sound.author,
-                            authorUrl = sound.authorUrl,
-                            translations = soundTranslations.ifEmpty { null }
-                        )
-                    }
-                    
-                    saveSoundsList(context, category.name, scatteredType.name, scatteredSounds)
-                    
-                    scatteredSounds.forEach { scatteredSound ->
-                        val soundDir = getSoundDir(context, category.name, scatteredType.name, scatteredSound.name)
-                        if (!soundDir.exists()) {
-                            soundDir.mkdirs()
-                        }
-                        
-                        saveSoundMetadata(context, category.name, scatteredType.name, scatteredSound.name, scatteredSound)
-                    }
-                }
+                ScatteredTypeEntity(
+                    id = soundType.id,
+                    name = soundType.name,
+                    categoryId = soundType.category,
+                    translationsJson = if (typeTranslations.isNotEmpty()) gson.toJson(typeTranslations) else null
+                )
             }
             
-            Log.d(TAG, "从scattered_sounds.json初始化完成")
+            val soundEntities = manifest.sounds.map { sound ->
+                val soundType = manifest.soundTypes.find { it.id == sound.type }
+                val categoryId = soundType?.category ?: ""
+                
+                val soundTranslations = mutableMapOf<String, String>()
+                manifest.Language.forEach { (langCode, langTranslations) ->
+                    langTranslations[sound.name]?.let { soundTranslations[langCode] = it }
+                }
+                
+                ScatteredSoundEntity(
+                    id = sound.id,
+                    name = sound.name,
+                    typeId = sound.type,
+                    categoryId = categoryId,
+                    remoteUrl = sound.remoteUrl,
+                    author = sound.author,
+                    authorUrl = sound.authorUrl,
+                    translationsJson = if (soundTranslations.isNotEmpty()) gson.toJson(soundTranslations) else null
+                )
+            }
+            
+            writeCategories(categoryEntities)
+            writeTypes(typeEntities)
+            writeSounds(soundEntities)
+            
+            Log.d(TAG, "从scattered_sounds.json初始化完成: categories=${categoryEntities.size}, types=${typeEntities.size}, sounds=${soundEntities.size}")
         } catch (e: Exception) {
             Log.e(TAG, "初始化散点白噪音清单失败", e)
-            createDefaultCategories(context)
+            createDefaultCategories()
         }
     }
     
-    private fun createDefaultCategories(context: Context) {
-        val defaultCategories = listOf(
-            ScatteredCategory(id = "objects", name = "objects", isCustom = false)
-        )
-        saveCategories(context, defaultCategories)
-        
-        val objectsDir = getCategoryDir(context, "objects")
-        if (!objectsDir.exists()) {
-            objectsDir.mkdirs()
-        }
-        
-        saveTypesList(context, "objects", emptyList())
-        
+    private fun createDefaultCategories() {
+        writeCategories(listOf(
+            ScatteredCategoryEntity(
+                id = "objects",
+                name = "objects",
+                isCustom = false
+            )
+        ))
         Log.d(TAG, "创建默认分类清单")
     }
     
-    private fun saveCategories(context: Context, categories: List<ScatteredCategory>) {
-        val file = getCategoriesFile(context)
-        file.writeText(gson.toJson(categories))
-    }
-    
-    private fun saveTypesList(context: Context, categoryName: String, types: List<ScatteredType>) {
-        val file = getTypesListFile(context, categoryName)
-        file.writeText(gson.toJson(types))
-    }
-    
-    private fun saveSoundsList(context: Context, categoryName: String, typeName: String, sounds: List<ScatteredSound>) {
-        val file = getSoundsListFile(context, categoryName, typeName)
-        file.writeText(gson.toJson(sounds))
-    }
-    
-    private fun saveSoundMetadata(context: Context, categoryName: String, typeName: String, soundName: String, sound: ScatteredSound) {
-        val file = getMetadataFile(context, categoryName, typeName, soundName)
-        file.writeText(gson.toJson(sound))
-    }
-    
-    private fun loadCategories(context: Context): List<ScatteredCategory> {
-        val file = getCategoriesFile(context)
-        if (!file.exists()) return emptyList()
-        
-        return try {
-            gson.fromJson(file.readText(), object : TypeToken<List<ScatteredCategory>>() {}.type)
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-    
-    private fun loadTypesList(context: Context, categoryName: String): List<ScatteredType> {
-        val file = getTypesListFile(context, categoryName)
-        if (!file.exists()) return emptyList()
-        
-        return try {
-            gson.fromJson(file.readText(), object : TypeToken<List<ScatteredType>>() {}.type)
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-    
-    private fun loadSoundsList(context: Context, categoryName: String, typeName: String): List<ScatteredSound> {
-        val file = getSoundsListFile(context, categoryName, typeName)
-        if (!file.exists()) return emptyList()
-        
-        return try {
-            gson.fromJson(file.readText(), object : TypeToken<List<ScatteredSound>>() {}.type)
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-    
-    private fun loadSoundMetadata(context: Context, categoryName: String, typeName: String, soundName: String): ScatteredSound? {
-        val file = getMetadataFile(context, categoryName, typeName, soundName)
-        if (!file.exists()) return null
-        
-        return try {
-            gson.fromJson(file.readText(), ScatteredSound::class.java)
-        } catch (e: Exception) {
-            null
-        }
-    }
-    
     fun getCategoriesWithTypes(): List<ScatteredCategoryWithTypes> {
-        val context = com.bicy.whitenoise.WhiteNoiseApp.context ?: return emptyList()
-        val categories = loadCategories(context)
+        val categoryEntities = readCategories()
+        val typeEntities = readTypes()
+        val soundEntities = readSounds()
         
-        return categories.map { category ->
-            val types = loadTypesList(context, category.name)
+        return categoryEntities.map { catEntity ->
+            val typesInCategory = typeEntities.filter { it.categoryId == catEntity.id }
             
-            val typesWithSounds = types.map { type ->
-                val sounds = loadSoundsList(context, category.name, type.name)
+            val typesWithSounds = typesInCategory.map { typeEntity ->
+                val soundsInType = soundEntities.filter { it.typeId == typeEntity.id }
                 
-                val soundsWithType = sounds.map { sound ->
+                val soundsWithType = soundsInType.map { soundEntity ->
                     ScatteredSoundWithType(
-                        id = sound.id,
-                        name = sound.name,
-                        typeId = sound.typeId,
-                        typeName = type.name,
-                        categoryId = sound.categoryId,
-                        categoryName = category.name,
-                        remoteUrl = sound.remoteUrl,
-                        author = sound.author,
-                        authorUrl = sound.authorUrl,
-                        translations = sound.translations
+                        id = soundEntity.id,
+                        name = soundEntity.name,
+                        typeId = soundEntity.typeId,
+                        typeName = typeEntity.name,
+                        categoryId = soundEntity.categoryId,
+                        categoryName = catEntity.name,
+                        remoteUrl = soundEntity.remoteUrl,
+                        author = soundEntity.author,
+                        authorUrl = soundEntity.authorUrl,
+                        translations = deserializeTranslations(soundEntity.translationsJson)
                     )
                 }
                 
                 ScatteredSoundTypeWithSounds(
-                    typeId = type.id,
-                    typeName = type.name,
-                    categoryId = category.id,
-                    categoryName = category.name,
-                    translations = type.translations,
+                    typeId = typeEntity.id,
+                    typeName = typeEntity.name,
+                    categoryId = catEntity.id,
+                    categoryName = catEntity.name,
+                    translations = deserializeTranslations(typeEntity.translationsJson),
                     sounds = soundsWithType
                 )
             }
             
             ScatteredCategoryWithTypes(
-                categoryId = category.id,
-                categoryName = category.name,
-                translations = category.translations,
+                categoryId = catEntity.id,
+                categoryName = catEntity.name,
+                translations = deserializeTranslations(catEntity.translationsJson),
                 soundTypes = typesWithSounds
             )
         }
@@ -339,20 +277,21 @@ object ScatteredStorageManager {
         downloadDate: String,
         fileSize: Long
     ) {
-        val metadata = loadSoundMetadata(context, categoryName, typeName, soundName) ?: return
+        val allSounds = readSounds()
+        val allTypes = readTypes()
         
-        val updatedMetadata = metadata.copy(
+        val targetType = allTypes.find { it.name == typeName } ?: return
+        val targetSound = allSounds.find { it.name == soundName && it.typeId == targetType.id } ?: return
+        
+        val updatedSound = targetSound.copy(
             downloadDate = downloadDate,
             fileSize = fileSize
         )
         
-        saveSoundMetadata(context, categoryName, typeName, soundName, updatedMetadata)
-        
-        val sounds = loadSoundsList(context, categoryName, typeName)
-        val updatedSounds = sounds.map {
-            if (it.id == metadata.id) updatedMetadata else it
+        val updatedAllSounds = allSounds.map {
+            if (it.id == updatedSound.id) updatedSound else it
         }
-        saveSoundsList(context, categoryName, typeName, updatedSounds)
+        writeSounds(updatedAllSounds)
     }
     
     fun isSoundDownloaded(context: Context, categoryName: String, typeName: String, soundName: String): Boolean {
@@ -374,6 +313,15 @@ object ScatteredStorageManager {
         return formats.firstNotNullOfOrNull { format ->
             val audioFile = File(soundDir, "$AUDIO_FILE.$format")
             if (audioFile.exists() && audioFile.length() > 0) audioFile else null
+        }
+    }
+    
+    private fun deserializeTranslations(translationsJson: String?): Map<String, String>? {
+        if (translationsJson.isNullOrEmpty()) return null
+        return try {
+            gson.fromJson(translationsJson, object : TypeToken<Map<String, String>>() {}.type)
+        } catch (e: Exception) {
+            null
         }
     }
 }

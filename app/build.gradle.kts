@@ -23,7 +23,7 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = 1
-        versionName = "Bicy V1.260628"
+        versionName = "Bicy V2.260802"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -98,6 +98,12 @@ dependencies {
     implementation("com.airbnb.android:lottie:6.1.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("androidx.media:media:1.6.0")
+    implementation("io.github.dokar3:quickjs-kt-android:1.0.5")
+
+    // MTDataFilesProvider - 允许MT管理器访问应用内部存储
+    implementation("com.github.L-JINBIN:MTDataFilesProvider:v1.0.0")
+
+
     
 //    implementation("io.github.jamaismagic.ffmpeg:ffmpeg-kit-main-full-gpl-16kb:6.1.4")
     
@@ -111,6 +117,18 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
     debugImplementation(libs.androidx.ui.tooling)
+
+    // Coil - Image loading
+    implementation("io.coil-kt:coil-compose:2.7.0")
+    
+    // DataStore (already unused but kept for future)
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // Security - EncryptedSharedPreferences for AI API Key
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
+    // Biometric
+    implementation("androidx.biometric:biometric:1.1.0")
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

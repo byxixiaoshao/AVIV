@@ -1,197 +1,270 @@
-# AVIV - Bruit Blanc & Lecteur de Musique
+# AVIV — Lecteur de bruit blanc & musique
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![Platform](https://img.shields.io/badge/platform-Android-green.svg)
-![License](https://img.shields.io/badge/license-CC%20BY--NC%204.0-red.svg)
+![Platform](https://img.shields.io/badge/platform-Android%207.0%2B-green.svg)
+![Language](https://img.shields.io/badge/Kotlin%20%2B%20C%2B%2B-Compose%20%2F%20Oboe-blue.svg)
+![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 
-**Une application puissante de bruit blanc et lecteur de musique**
+**Un lecteur Android de bruit blanc et de musique construit autour d'un moteur audio C++ en temps réel, intégrant une dizaine d'effets professionnels, l'audio spatial, AutoEQ et le streaming en ligne.**
 
-[Fonctionnalités](#-fonctionnalités) • [Télécharger](#-télécharger) • [Utilisation](#-utilisation) • [Licence](#-licence)
+[Fonctionnalités](#-fonctionnalités) · [Moteur audio](#-moteur-audio) · [Architecture](#-architecture) · [Compilation](#-compiler-depuis-les-sources) · [Dépendances & licences](#-dépendances-open-source--licences)
 
-**[中文](../README_ZH.md)** • **[English](../../README.md)** • **[日本語](README_JA.md)** • **[한국어](README_KO.md)** • **[Русский](README_RU.md)** • **[Deutsch](README_DE.md)** • **[Español](README_ES.md)** • **[Italiano](README_IT.md)** • **[Português](README_PT.md)**
+[English](../README.md) · [中文](README_ZH.md) · [日本語](README_JA.md) · [한국어](README_KO.md) · [Русский](README_RU.md) · **Français(ce fichier)** · [Deutsch](README_DE.md) · [Español](README_ES.md) · [Italiano](README_IT.md) · [Português](README_PT.md)
 
 </div>
 
 ---
 
-## 📱 À propos
+## 📖 À propos
 
-AVIV est une application Android combinant la lecture de bruit blanc et un lecteur de musique, offrant des effets audio riches et des paramètres personnalisés pour aider les utilisateurs à se détendre, à améliorer leur concentration ou la qualité de leur sommeil.
+AVIV fusionne lecture de bruit blanc, musique locale/en ligne et un moteur professionnel de traitement audio en temps réel. Chaque effet est calculé en temps réel dans la couche C++ sur les flux audio à faible latence Oboe — sans pré-rendu, les réglages sont appliqués instantanément. Idéal pour l'aide au sommeil, la concentration, la méditation, l'ambiance et l'amélioration musicale.
 
----
-
-## 📜 Avis important avant utilisation
-
-Par défaut, la fonction de journalisation est activée lors de la première utilisation pour capturer les journaux de plantage au démarrage. Cela peut avoir un impact mineur sur les performances. Vous pouvez la désactiver dans les paramètres.
-
-Ce projet publie actuellement uniquement une partie du code source. Veuillez ne pas décompiler, injecter des fonctionnalités payantes ou redistribuer avec des publicités. Ce projet est entièrement gratuit - veuillez soutenir la version officielle. Pour des fins d'apprentissage, vous pouvez contacter l'auteur pour obtenir une autorisation.
+> ⚠️ **Note :** au premier lancement, la capture de logs est activée par défaut (pour collecter les logs de crash) et peut être désactivée dans les Paramètres.
 
 ---
 
 ## ✨ Fonctionnalités
 
-### 🎵 Lecteur de musique
-
-- **Support multi-formats**: MP3, WAV, FLAC, AAC et plus
-- **Audio spatial 3D**: Positionnement sonore, atténuation de distance
-- **Égaliseur 12 bandes**: Égaliseur professionnel
-- **Effets créatifs**:
-  - Lo-Fi (Basse fidélité)
-  - 8-bit (Son de jeu rétro)
-  - Effet sous-marin
-  - Signal alien
-  - Effet mégaphone
-  - Distorsion
-- **Réverbération spatiale**: Taille de pièce, temps de décroissance, mix humide/sec
-- **Gestion des playlists**: Créer et gérer des playlists
-
 ### 🌊 Bruit blanc
+- Plusieurs sources intégrées organisées par catégorie, locales et en ligne
+- **Mode Scatter** : lecture aléatoire avec intervalle et plage personnalisables, simulant un champ sonore naturel
+- **Chaîne d'effets indépendante** par piste (EQ / réverb / spatial / créatifs), sans interférence
+- Plage de gain de volume 0–300 %
 
-- **Sources multiples**: Diverses sources de bruit blanc intégrées
-- **Effets audio**: Configuration indépendante des effets pour chaque source
-- **Mode dispersé**: Lecture aléatoire avec intervalles personnalisables
-- **Contrôle du volume**: Plage de gain 0-300%
+### 🎵 Lecture musicale
+- Multi-format (MP3 / WAV / FLAC / AAC, etc.)
+- Gestion des listes de lecture
+- Streaming en ligne via le **moteur de scripts QuickJS**, détection automatique multi-moteurs et basculement automatique en cas de timeout
 
-### 🎨 Personnalisation
-
-- **Thèmes personnalisés**: Personnalisation des couleurs HSV
-- **Minuteur**: Minuteur d'arrêt automatique (jusqu'à 23h 59m)
-- **Persistance des paramètres**: Sauvegarde automatique des paramètres d'effets
-- **Journalisation**: Journalisation optionnelle pour le dépannage
+### 🎛️ Effets audio en temps réel (moteur C++)
+| Effet | Description |
+|------|------|
+| **Égaliseur (EQ)** | Filtres BiQuad multibandes manuels, courbes indépendantes par piste, avec Bypass |
+| **AutoEQ compensation haut-parleur** | 12 presets d'appareils, 16 paramètres réglables, tous les paramètres de filtre (gain/fréquence/Q) éditables par bande et persistés |
+| **Audio spatial** | Positionnement 3D de la source, atténuation de distance, trajectoire surround (0,25–10 s/tr), dispersion aléatoire, offset fixe |
+| **Réverb** | Taille de salle, temps de décroissance, pré-délai, mix wet/dry, isolation |
+| **Limiteur** | Limitation brick-wall, courbe de fonction de transfert + VU-mètre + mètre GR, visualisation en temps réel |
+| **Effets créatifs** | Lo-Fi / 8-bit / Sous-marin / Signal alien / Mégaphone / Distorsion |
+| **Pseudo-restauration** | Amélioration HiFi (transitoire soft-knee, blocage DC, lissage du gain) |
+| **Compresseur multibande** | MultibandCompressor |
+| **Élargisseur stéréo / Basse virtuelle / Isolation** | StereoWidener / VirtualBass / Insulation |
+| **Vitesse & hauteur** | Propulsé par **SoundTouch**, vitesse 0,1–5,0×, hauteur ±12 demi-tons, réglage indépendant |
 
 ### 🎛️ Panneau de mixage
+- Contrôle des effets en un point : intensité, EQ, AutoEQ, audio spatial, réverb, limiteur, vitesse/hauteur
+- Aperçu en temps réel, application instantanée des paramètres
+- Réinitialisation en une touche
 
-- **Intensité des effets**: Ajustement 0-100% pour tous les effets
-- **Aperçu en temps réel**: Aperçu instantané des effets
-- **Réinitialisation rapide**: Réinitialisation des paramètres en un clic
+### ⏰ Minuteur
+- Minuteur de sommeil (jusqu'à 23h 59m)
+- Mode snooze
+- Touchez la bille du minuteur pour démarrer
+
+### 🐾 Animal flottant
+- Animal flottant sur le bureau, déplaçable / redimensionnable / masquable
+- Mise à l'échelle ancrée au centre, réveil depuis l'état masqué
+
+### 🎨 Personnalisation
+- **Thèmes personnalisés** : personnalisation couleur HSV + presets
+- **Effets verre dépoli / verre liquide**
+- Persistance automatique des paramètres d'effet
+
+### 🔔 Système de notifications
+- **Notifications in-app** : 5 types (Info/Succès/Avertissement/Erreur/Chargement), niveaux de priorité, balayage pour fermer, boutons d'action
+- **Notifications média système** : intégration MediaSession, contrôle écran verrouillé
+
+### 🛡️ Stabilité & maintien
+- **Maintien du flux audio** : stratégie AudioFocus, tolérance aux déconnexions et retry, optimisation du buffer, récupération gracieuse des erreurs Oboe, repli MediaPlayer
+- **Guide de maintien en arrière-plan** : liste blanche d'optimisation batterie + guide des paramètres de démarrage auto constructeur
+- **Diagnostics de verrouillage mémoire** : surveillance d'exceptions (redémarrage du moteur audio / under-run buffer / blocage thread principal / avertissements mémoire) + rapports de diagnostic
+- **Système de logs** : processus indépendant capturant Logcat & logs de crash
+
+### 🌍 Multilingue
+10 langues : chinois, anglais, japonais, coréen, russe, français, allemand, espagnol, italien, portugais
 
 ---
 
-## 📥 Télécharger
+## 🔊 Moteur audio
+
+### Pipeline de traitement
+
+```
+Décodeur ──► Volume/Fondu ──► Isolation ──► Audio spatial ──► Réverb
+         ──► EQ / AutoEQ ──► Créatifs ──► Pseudo-restauration ──► Limiteur
+         ──► SoundTouch(Vitesse/Hauteur) ──► Clip dur ──► Sortie Oboe
+```
+
+### Structure des modules C++
+
+| Répertoire | Responsabilité |
+|------|------|
+| `cpp/AudioPlayFunc/` | `AudioEngine` (gestion flux Oboe, mixage multipiste), `AudioTrack` (décodage et chaîne d'effets par piste) |
+| `cpp/AudioEffect/` | 12 processeurs d'effets + `AudioEffectManager` + `SoundTouchProcessor` |
+| `cpp/equalizer/` | Implémentation des filtres BiQuad |
+| `cpp/reverb/` | Algorithme de réverb |
+| `cpp/spatial_audio/` | HRTF audio spatial |
+| `cpp/oboe/` | Bibliothèque audio faible latence Google Oboe |
+| `cpp/ffmpeg/` | Décodage FFmpeg (LGPL) |
+
+### Interface JNI
+`JniInterface.cpp` expose toutes les capacités audio (contrôle de lecture, paramètres d'effets, courbes EQ, audio spatial, AutoEQ, limiteur, vitesse/hauteur SoundTouch, etc.) ; côté Kotlin, encapsulé par `OboeAudioEngine`.
+
+---
+
+## 🏗️ Architecture
+
+| Couche | Technologie |
+|----|------|
+| UI | Kotlin + Jetpack Compose + Material 3 |
+| Audio | C++ + Oboe + SoundTouch + FFmpeg (JNI) |
+| Réseau | OkHttp |
+| Script | QuickJS-kt (moteur de scripts sources en ligne) |
+| Stockage | Gson (config JSON) + EncryptedSharedPreferences |
+| Média | AndroidX Media (MediaSession) |
+| Autre | Lottie / Coil / Biométrie / MTDataFilesProvider |
+
+### Principaux packages Kotlin
+
+```
+com.bicy.whitenoise
+├── audio/          # OboeAudioEngine, audio spatial, réverb, gestion scatter
+├── music/          # Contrôle de lecture musicale
+├── onlinemusic/    # Streaming en ligne & moteur de scripts sources
+├── storage/        # Stockage config/bruit blanc/musique/thèmes (JSON)
+├── ui/             # UI Compose & composants
+├── servies/        # MusicService (service média premier plan)
+├── service/        # MemoryLockService, LogCaptureService (processus :log)
+├── floatingpet/    # Service animal flottant
+├── timer/          # Minuteur
+├── equalizer/      # Logique égaliseur
+└── ...             # data / security / utils / playlist etc.
+```
+
+---
+
+## 📥 Téléchargement & installation
 
 ### Configuration requise
-
-- Android 10.0 (API 29) ou supérieur
-- Au moins 100 Mo d'espace de stockage libre
+- Android 7.0 (API 24) ou supérieur
+- Au moins 100 Mo de stockage libre
 
 ### Installation
-
-Téléchargez le dernier APK depuis la page [Releases](https://github.com/byxixiaoshao/AVIV/releases).
-
-**Étapes**:
-1. Télécharger le fichier APK
-2. Activer "Installer à partir de sources inconnues" sur votre appareil
-3. Ouvrir le fichier APK pour installer
-4. Lancer l'application après l'installation
+1. Téléchargez le dernier APK depuis [Releases](https://github.com/byxixiaoshao/AVIV/releases)
+2. Activez « Installer des applications inconnues » sur votre appareil
+3. Ouvrez l'APK pour installer
+4. Lancez l'application
 
 ---
 
-## 📖 Utilisation
+## 🔧 Compiler depuis les sources
 
-### Lecture de musique
+### Prérequis
+- Android Studio (supportant la version AGP actuelle)
+- JDK 11
+- Android SDK, compileSdk 36
+- NDK 27.0.12077973, CMake 4.3.0
+- ABI supportés : `arm64-v8a`, `armeabi-v7a`
 
-1. Balayez vers le bas la barre de lecture supérieure pour ouvrir l'interface du lecteur
-2. Ajoutez des fichiers musicaux via le sélecteur de fichiers
-3. Ajustez les effets audio avec le panneau de mixage
-4. Créez et gérez des playlists
+### Étapes
+```bash
+git clone <url-du-dépôt>
+cd AVIV/Android
+./gradlew :app:assembleRelease
+```
+
+> La compilation nécessite une config de signature `keystore.properties`. Les sources SoundTouch sont dans `soundtouch/` à la racine du projet, compilées en bibliothèque statique par CMake automatiquement.
+
+---
+
+## 📖 Guide d'utilisation
 
 ### Bruit blanc
+1. Sur l'écran principal, choisissez une catégorie et une source
+2. Touchez une carte source pour lancer la lecture
+3. Appui long sur une carte pour configurer ses effets indépendants
+4. Mode Scatter : lecture aléatoire de plusieurs sources
 
-1. Sélectionnez une source de bruit blanc sur l'écran principal
-2. Appuyez sur la carte de source pour démarrer la lecture
-3. Appui long sur la carte pour configurer les effets
-4. Utilisez le mode dispersé pour la lecture aléatoire
+### Musique
+1. Glissez vers le bas la barre de lecture supérieure pour entrer dans le lecteur
+2. Ajoutez de la musique via le sélecteur de fichiers
+3. Ajustez les effets dans le panneau de mixage
 
-### Effets audio
-
-- **Égaliseur**: Mixeur → Panneau d'égaliseur
-- **Effets créatifs**: Mixeur → Panneau de qualité audio
-- **Réverbération spatiale**: Mixeur → Panneau de réverbération
-- **Positionnement sonore**: Mixeur → Panneau audio spatial
+### Réglage des effets
+Ouvrez le **panneau de mixage** :
+- **Égaliseur** → Equalizer Panel
+- **Compensation AutoEQ** → Speaker Compensation (édition par bande)
+- **Audio spatial** → Spatial Audio Panel
+- **Réverb** → Reverb Panel
+- **Limiteur** → Limiter (avec visualisation de la fonction de transfert)
+- **Vitesse/hauteur** → Réglage de vitesse (SoundTouch)
 
 ---
 
-## 🎯 Cas d'utilisation
+## 📦 Dépendances open source & licences
 
-- 🛌 **Aide au sommeil**: Utilisez le bruit blanc pour vous endormir
-- 📚 **Amélioration de la concentration**: Améliorez l'attention avec le bruit blanc
-- 🧘 **Méditation**: Combinez avec de la musique pour la méditation
-- 🎧 **Appréciation musicale**: Améliorez la musique avec des effets audio
-- 💼 **Ambiance de travail**: Créez un environnement de travail confortable
+| Dépendance | Licence | Usage |
+|------|------|------|
+| [Oboe](https://github.com/google/oboe) | Apache 2.0 | Moteur audio faible latence |
+| [SoundTouch](https://gitlab.com/soundtouch/soundtouch) | LGPL v2.1 | Réglage indépendant vitesse/hauteur |
+| FFmpeg | LGPL v2.1+ | Décodage audio |
+| Jetpack Compose / AndroidX | Apache 2.0 | Framework UI |
+| Material Components | Apache 2.0 | Composants UI |
+| AndroidX Media | Apache 2.0 | MediaSession |
+| AndroidX DataStore | Apache 2.0 | Stockage préférences |
+| AndroidX Security | Apache 2.0 | Préférences chiffrées |
+| AndroidX Biometric | Apache 2.0 | Authentification biométrique |
+| Gson | Apache 2.0 | Sérialisation JSON |
+| OkHttp | Apache 2.0 | Réseau HTTP |
+| Lottie | Apache 2.0 | Animation |
+| Coil | Apache 2.0 | Chargement d'images |
+| [QuickJS-kt](https://github.com/dokar3/quickjs-kt) | MIT | Moteur de scripts sources |
+| Liquid Glass Android | Apache 2.0 | Effets glassmorphism |
+| MTDataFilesProvider | Apache 2.0 | Fournisseur de données média |
+
+> Les sources sonores proviennent de [Pixabay](https://pixabay.com/) sous licence Pixabay License.
 
 ---
 
 ## ⚠️ Licence
 
-Ce projet est sous licence **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)**.
+Sous licence **[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)**.
 
-### ✅ Autorisé
+Voir le fichier [LICENSE](../LICENSE) pour le texte complet.
 
-- Apprentissage et recherche personnels
-- Utilisation non commerciale
-- Distribution de l'APK non modifié (avec attribution appropriée)
-
-### ❌ Interdit
-
-- Utilisation commerciale
-- Redistribution de versions modifiées
-- Utilisation dans des produits ou services commerciaux
-- Suppression ou modification des avis de droit d'auteur
-
-Voir le fichier [LICENSE](../LICENSE) pour plus de détails.
-
----
-
-## 💰 Soutenir le projet
-
-Si ce projet vous aide, envisagez de faire un don!
-
-<div align="center">
-
-<img src="../img/Pay/wx.png" width="200" alt="WeChat Pay"> &nbsp;&nbsp; <img src="../img/Pay/zfb.png" width="200" alt="Alipay">
-
-**WeChat Pay** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; **Alipay**
-
-</div>
+> Les bibliothèques tierces conservent leurs licences d'origine (ex. SoundTouch — LGPL v2.1, FFmpeg — LGPL v2.1+, QuickJS-kt — MIT).
 
 ---
 
 ## 📧 Contact
 
-- **Issues**: [GitHub Issues](https://github.com/byxixiaoshao/AVIV/issues)
-- **Email**: [3139105039@qq.com](mailto:3139105039@qq.com)
-- **Author**: byxixiaoshao
-
-Pour les questions, suggestions ou commentaires, veuillez utiliser GitHub Issues.
+- **Issues** : [GitHub Issues](https://github.com/byxixiaoshao/AVIV/issues)
+- **Email** : [3139105039@qq.com](mailto:3139105039@qq.com)
+- **Auteur** : byxixiaoshao / Bicy Studio
 
 ---
 
-## 🙏 Remerciements
+## 🙏 Remerciements spéciaux
 
-### Ressources audio
+### Source sonore
+Tous les sons de bruit blanc proviennent de **[Pixabay](https://pixabay.com/)**. Un appui long sur une option sonore affiche les informations de l'auteur — soutenez les créateurs originaux si possible.
 
-Les sources de bruit blanc utilisées dans ce projet proviennent de **[Pixabay](https://pixabay.com/)**.
+### Tests logiciels
+- 条纹哦里GHT
+- 土豆仙人
+- AAA哈密瓜批发星见雅
 
-- Appui long sur l'option sonore pour voir les informations sur l'auteur audio
-- Veuillez soutenir les créateurs originaux si possible
+### Support artistique
+- AAA哈密瓜批发星见雅
+- ☆雨の日が好き☔
 
-### Projets open source
-
-Merci à tous les projets open source contribuant aux technologies de traitement audio.
-
----
-
-## 📸 Vidéo de démonstration
-
-<video src="https://github.com/byxixiaoshao/AVIV/raw/main/video/Demo_Video.mp4" controls="controls" width="100%"></video>
+Merci à tous les projets open source qui contribuent aux technologies de traitement audio.
 
 ---
 
 <div align="center">
 
-**⭐ Si ce projet vous aide, veuillez lui donner une étoile ⭐**
+**⭐ Si ce projet vous aide, merci de mettre une Star ⭐**
 
 Made with ❤️ by Bicy Studio
 

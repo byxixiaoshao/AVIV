@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.bicy.whitenoise.R
 import com.bicy.whitenoise.ui.theme.NavItemUnselected
 import com.bicy.whitenoise.ui.theme.ThemeColorManager
+import com.bicy.whitenoise.ui.navigation.ScreenPart.*
 
 @Composable
 fun BottomNavBar(
@@ -98,3 +99,4 @@ private fun NavItem(
         )
     }
 }
+

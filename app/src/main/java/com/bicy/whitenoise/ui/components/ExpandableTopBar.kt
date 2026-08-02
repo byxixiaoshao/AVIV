@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -58,6 +59,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -68,8 +70,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -81,18 +85,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.bicy.whitenoise.R
-import com.bicy.whitenoise.music.MusicLibrary
+import com.bicy.whitenoise.music.MusicLibraryPart.MusicLibrary
 import com.bicy.whitenoise.music.MusicPlayerController
 import com.bicy.whitenoise.music.MusicPlayerState
 import com.bicy.whitenoise.music.MusicRepeatMode
 import com.bicy.whitenoise.music.MusicShuffleMode
-import com.bicy.whitenoise.music.MusicTrack
-import com.bicy.whitenoise.music.ScanProgress
-import com.bicy.whitenoise.storage.config.ConfigStorage
+import com.bicy.whitenoise.music.MusicLibraryPart.MusicTrack
+import com.bicy.whitenoise.music.MusicLibraryPart.ScanProgress
+
 import com.bicy.whitenoise.ui.components.ExpandableTopBarPart.DecelerateEasing
 import com.bicy.whitenoise.ui.components.ExpandableTopBarPart.MainAlbumIconSize
 import com.bicy.whitenoise.ui.components.ExpandableTopBarPart.MainAlbumSize
 import com.bicy.whitenoise.ui.components.ExpandableTopBarPart.MainControlSize
+import com.bicy.whitenoise.ui.components.ExpandableTopBarPart.MainPlayButtonSize
 import com.bicy.whitenoise.ui.components.ExpandableTopBarPart.MainTitleFontSize
 import com.bicy.whitenoise.ui.components.ExpandableTopBarPart.MusicCategory
 import com.bicy.whitenoise.ui.components.ExpandableTopBarPart.PanelState
@@ -106,10 +111,12 @@ import com.bicy.whitenoise.ui.utils.LocalPlaylistNavigation
 import com.bicy.whitenoise.ui.utils.LocalPlaylistNavigationHolder
 import com.bicy.whitenoise.ui.utils.PlaylistNavigationState
 import com.bicy.whitenoise.ui.utils.rememberPlaylistNavigationState
+import com.bicy.whitenoise.ui.utils.ResponsiveDimensions
 import com.bicy.whitenoise.ui.components.ExpandableTopBarPart.SidebarWidth
 import com.bicy.whitenoise.ui.components.ExpandableTopBarPart.SlideInPanel
 import com.bicy.whitenoise.ui.components.ExpandableTopBarPart.TopBarCornerRadius
 import com.bicy.whitenoise.ui.components.ExpandableTopBarPart.TopBarHeight
+import com.bicy.whitenoise.ui.components.ExpandableNavBarPart.CollapsedHeight
 import com.bicy.whitenoise.ui.components.ExpandableTopBarPart.TopBarPaddingHorizontal
 import com.bicy.whitenoise.ui.components.ExpandableTopBarPart.TopBarPaddingTop
 import com.bicy.whitenoise.ui.components.ExpandableTopBarPart.TransitionProgress
@@ -119,6 +126,9 @@ import com.bicy.whitenoise.ui.theme.ThemeColorManager
 import com.bicy.whitenoise.ui.theme.dropShadow
 import com.bicy.whitenoise.ui.theme.MusicGradientBackground
 import com.bicy.whitenoise.utils.AudioMetadataReader
+import com.bicy.whitenoise.ui.components.glass.GlassMode
+import com.bicy.whitenoise.ui.components.glass.GlassBoxScope
+import com.bicy.whitenoise.storage.config.GlassRenderConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -132,14 +142,47 @@ fun ExpandableTopBar(
     isOtherInteracting: Boolean = false,
     forceCollapse: Boolean = false,
     onForceCollapseComplete: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // 渲染配置参数（用于动态构建glassModifier）
+    glassMode: GlassMode = GlassMode.OFF,
+    glassScale: Float = 0f,
+    glassBlur: Float = 0f,
+    glassCenterDistortion: Float = 0f,
+    glassElevation: Int = 4,
+    glassDarkness: Float = 0f,
+    glassWarpEdges: Float = 0f,
+    // GlassBoxScope用于调用glassBackground方法
+    glassScope: GlassBoxScope? = null
 ) {
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
     val screenHeight = configuration.screenHeightDp.dp
     val density = LocalDensity.current
+    val isLandscape = ResponsiveDimensions.isLandscape()
     
     val themeColor by ThemeColorManager.currentThemeColor.collectAsState()
+
+    // 阴影参数 - 根据玻璃模式读取对应配置
+    val shadowEnabled by remember(glassMode) {
+        if (glassMode == GlassMode.PERFECT)
+            GlassRenderConfig.perfShadowEnabledFlow
+        else
+            GlassRenderConfig.compatShadowEnabledFlow
+    }.collectAsState(initial = false)
+
+    val shadowStrength by remember(glassMode) {
+        if (glassMode == GlassMode.PERFECT)
+            GlassRenderConfig.perfShadowStrengthFlow
+        else
+            GlassRenderConfig.compatShadowStrengthFlow
+    }.collectAsState(initial = 0.5f)
+
+    val shadowHeight by remember(glassMode) {
+        if (glassMode == GlassMode.PERFECT)
+            GlassRenderConfig.perfElevationFlow
+        else
+            GlassRenderConfig.compatShadowHeightFlow
+    }.collectAsState(initial = 0.5f)
     
     val statusBarHeight = with(density) {
         WindowInsets.statusBars.getTop(this).toDp()
@@ -157,9 +200,7 @@ fun ExpandableTopBar(
     var panelState by remember { mutableStateOf(PanelState.Main) }
     var displayedPanelType by remember { mutableStateOf<PanelType?>(null) }
     var isAnimating by remember { mutableStateOf(false) }
-    
-    val globalState by ConfigStorage.config.collectAsState()
-    val isPremiumUser = globalState.isPremium
+    var panelResetSignal by remember { mutableIntStateOf(0) }
     
     LaunchedEffect(forceCollapse) {
         if (forceCollapse && isExpanded && !isAnimating) {
@@ -168,7 +209,7 @@ fun ExpandableTopBar(
             scope.launch {
                 expandProgress.animateTo(
                     targetValue = 0f,
-                    animationSpec = tween(500, easing = DecelerateEasing)
+                    animationSpec = tween(350, easing = FastOutSlowInEasing)
                 )
                 panelProgress.snapTo(0f)
                 onForceCollapseComplete()
@@ -176,11 +217,12 @@ fun ExpandableTopBar(
             }
             panelState = PanelState.Main
             displayedPanelType = null
+            panelResetSignal++
         }
     }
     
     var forceCollapsePanel by remember { mutableStateOf(false) }
-    
+
     LaunchedEffect(forceCollapsePanel) {
         if (forceCollapsePanel && panelState != PanelState.Main && !isAnimating) {
             isAnimating = true
@@ -193,44 +235,111 @@ fun ExpandableTopBar(
                 isAnimating = false
             }
             displayedPanelType = null
+            panelResetSignal++
             forceCollapsePanel = false
         }
     }
-    
+
+    // 横竖屏切换时：重置面板状态，避免横屏的Mixer/Playlist状态影响竖屏的手势处理
+    LaunchedEffect(isLandscape) {
+        if (panelState != PanelState.Main || displayedPanelType != null || panelProgress.value > 0.1f) {
+            panelState = PanelState.Main
+            displayedPanelType = null
+            panelResetSignal++
+            scope.launch {
+                panelProgress.snapTo(0f)
+            }
+        }
+    }
+
     val navBgColor = themeColor.navBg
-    
+
     val rawProgress = expandProgress.value
     val progress = if (rawProgress.isNaN()) 0f else rawProgress.coerceIn(0f, 1f)
-    
+
     BackHandler(enabled = progress > 0.1f && panelState != PanelState.Main && !playlistNavigationState.hasSubPage && !isAnimating) {
         forceCollapsePanel = true
     }
-    
+
     BackHandler(enabled = progress > 0.1f && panelState == PanelState.Playlist && playlistNavigationState.hasSubPage && !isAnimating) {
         playlistNavigationState.onNavigateBack?.invoke()
     }
-    
-    val currentPaddingHorizontal = remember(progress) {
-        val value = TopBarPaddingHorizontal * (1f - progress)
-        if (value.value.isNaN() || value < 0.dp) 0.dp else value
+
+    // 横屏时：宽度变化（从CollapsedHeight扩展到screenWidth）
+    // 竖屏时：高度变化（从TopBarHeight扩展到screenHeight）
+    val currentWidth = remember(progress, screenWidth, isLandscape) {
+        if (isLandscape) {
+            val collapsedWidth = CollapsedHeight
+            val value = collapsedWidth + (screenWidth - collapsedWidth) * progress
+            if (value.value.isNaN() || value < collapsedWidth) collapsedWidth else value
+        } else {
+            screenWidth
+        }
     }
-    val currentPaddingTop = remember(progress) {
-        val value = TopBarPaddingTop * (1f - progress)
-        if (value.value.isNaN() || value < 0.dp) 0.dp else value
+    val currentHeight = remember(progress, screenHeight, isLandscape) {
+        if (isLandscape) {
+            screenHeight
+        } else {
+            val value = TopBarHeight + (screenHeight - TopBarHeight) * progress
+            if (value.value.isNaN() || value < TopBarHeight) TopBarHeight else value
+        }
     }
+
     val currentCornerRadius = remember(progress) {
         val value = TopBarCornerRadius * (1f - progress)
         if (value.value.isNaN() || value < 0.dp) 0.dp else value
     }
-    
-    val currentStatusBarPadding = remember(progress, statusBarHeight) {
-        val value = (statusBarHeight + TopBarHeight) * (1f - progress)
-        if (value.value.isNaN() || value < 0.dp) 0.dp else value
+
+    // 根据动态的currentCornerRadius构建glassModifier（当glassScope可用时）
+    val glassModifier = if (glassScope != null && glassMode != GlassMode.OFF) {
+        remember(currentCornerRadius, glassScale, glassBlur, glassCenterDistortion,
+                 glassElevation, glassDarkness, glassWarpEdges) {
+            glassScope.run {
+                Modifier.glassBackground(
+                    id = 1L, // 使用不同的id避免与bottom_nav冲突
+                    scale = glassScale.coerceIn(0f, 1f),
+                    blur = glassBlur.coerceIn(0f, 1f),
+                    centerDistortion = glassCenterDistortion.coerceIn(0f, 1f),
+                    shape = RoundedCornerShape(currentCornerRadius),
+                    elevation = glassElevation.dp,
+                    tint = Color.Transparent,
+                    darkness = glassDarkness.coerceIn(0f, 1f),
+                    warpEdges = glassWarpEdges.coerceIn(0f, 1f)
+                )
+            }
+        }
+    } else {
+        Modifier
     }
-    
-    val currentHeight = remember(progress, screenHeight) {
-        val value = TopBarHeight + (screenHeight - TopBarHeight) * progress
-        if (value.value.isNaN() || value < TopBarHeight) TopBarHeight else value
+
+    val currentStatusBarPadding = remember(progress, statusBarHeight, isLandscape) {
+        if (isLandscape) {
+            val value = TopBarPaddingHorizontal * (1f - progress)
+            if (value.value.isNaN() || value < 0.dp) 0.dp else value
+        } else {
+            // 展开时保留 statusBarHeight，防止面板内容与摄像头/刘海重合
+            val value = statusBarHeight + (TopBarHeight * (1f - progress))
+            if (value.value.isNaN() || value < statusBarHeight) statusBarHeight else value
+        }
+    }
+
+    val currentPaddingHorizontal = remember(progress, isLandscape) {
+        if (isLandscape) {
+            val value = TopBarPaddingTop * (1f - progress)
+            if (value.value.isNaN() || value < 0.dp) 0.dp else value
+        } else {
+            val value = TopBarPaddingHorizontal * (1f - progress)
+            if (value.value.isNaN() || value < 0.dp) 0.dp else value
+        }
+    }
+    val currentPaddingTop = remember(progress, isLandscape) {
+        if (isLandscape) {
+            val value = TopBarPaddingHorizontal * (1f - progress)
+            if (value.value.isNaN() || value < 0.dp) 0.dp else value
+        } else {
+            val value = TopBarPaddingTop * (1f - progress)
+            if (value.value.isNaN() || value < 0.dp) 0.dp else value
+        }
     }
     
     val contentAlpha = remember(progress) { (1f - progress).coerceIn(0f, 1f) }
@@ -247,71 +356,108 @@ fun ExpandableTopBar(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .zIndex(zIndex)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = currentStatusBarPadding)
-                .padding(top = currentPaddingTop)
-                .padding(horizontal = currentPaddingHorizontal),
-            contentAlignment = Alignment.TopCenter
+                .then(
+                    if (isLandscape) {
+                        // 横屏时：左侧边栏，从左边开始
+                        Modifier.padding(start = currentStatusBarPadding)
+                    } else {
+                        // 竖屏时：顶部栏，从顶部开始
+                        Modifier.padding(top = currentStatusBarPadding)
+                    }
+                )
+                .then(
+                    if (isLandscape) {
+                        // 横屏时：上下padding
+                        Modifier.padding(vertical = currentPaddingHorizontal)
+                    } else {
+                        // 竖屏时：顶部额外padding
+                        Modifier.padding(top = currentPaddingTop)
+                    }
+                )
+                .padding(horizontal = if (isLandscape) 0.dp else currentPaddingHorizontal),
+            contentAlignment = if (isLandscape) Alignment.CenterStart else Alignment.TopCenter
         ) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(currentHeight)
-                    .dropShadow(
-                        config = ShadowConfig.Deep,
-                        shape = RoundedCornerShape(currentCornerRadius),
-                        clip = false
-                    )
-                    .graphicsLayer {
-                        shape = RoundedCornerShape(currentCornerRadius)
-                        clip = true
+            modifier = Modifier
+                .then(
+                    if (isLandscape) {
+                        // 横屏时：宽度变化，高度固定
+                        Modifier.width(currentWidth).height(currentHeight)
+                    } else {
+                        // 竖屏时：宽度固定，高度变化
+                        Modifier.fillMaxWidth().height(currentHeight)
                     }
-                    .background(navBgColor)
-                    .pointerInput(Unit) {
-                        detectDragGestures(
-                            onDragStart = {
-                                dragOffset = 0f
-                                isInteracting = true
-                                onInteractionStateChanged(true)
-                                scope.launch {
-                                    expandProgress.stop()
-                                    panelProgress.stop()
-                                }
-                            },
-                            onDragEnd = {
-                                isInteracting = false
-                                onInteractionStateChanged(false)
-                                
-                                val horizontalThreshold = with(density) { 80.dp.toPx() }
-                                val verticalThreshold = with(density) { 50.dp.toPx() }
-                                
-                                if (progress > 0.9f && abs(dragOffset) > horizontalThreshold) {
-                                    val targetPanelType = if (dragOffset < 0) {
-                                        PanelType.Mixer
-                                    } else {
-                                        PanelType.Playlist
+                )
+                .then(
+                    if (shadowEnabled) {
+                        Modifier.dropShadow(
+                            config = ShadowConfig(
+                                offsetY = (shadowHeight * 12).dp.coerceIn(0.dp, 12.dp),
+                                blurRadius = (shadowHeight * 24 + 4).dp.coerceIn(4.dp, 28.dp),
+                                color = Color.Black.copy(alpha = 0.1f + shadowStrength * 0.4f)
+                            ),
+                            shape = RoundedCornerShape(currentCornerRadius),
+                            clip = false
+                        )
+                    } else {
+                        Modifier
+                    }
+                )
+                .then(glassModifier)
+                .graphicsLayer {
+                    shape = RoundedCornerShape(currentCornerRadius)
+                    clip = true
+                }
+        ) {
+            // 背景层 - 玻璃模式透明，让 Shader 效果透出；关闭模式显示背景色
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .then(
+                        if (glassScope != null && glassMode != GlassMode.OFF) {
+                            Modifier.background(Color.Transparent)
+                        } else {
+                            Modifier.background(navBgColor)
+                        }
+                    )
+            )
+
+            // 内容层 - 包含交互逻辑
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    // 播放列表/调音台模式时禁用手势检测，让输入框、下拉菜单正常响应
+                    .pointerInput(panelState, isLandscape) {
+                        if (isLandscape) {
+                            // 横屏时：使用左右滑动
+                            detectDragGestures(
+                                onDragStart = {
+                                    dragOffset = 0f
+                                    isInteracting = true
+                                    onInteractionStateChanged(true)
+                                    scope.launch {
+                                        expandProgress.stop()
+                                        panelProgress.stop()
                                     }
-                                    displayedPanelType = targetPanelType
-                                    panelState = if (targetPanelType == PanelType.Mixer) PanelState.Mixer else PanelState.Playlist
-                                    scope.launch { panelProgress.snapTo(1f) }
-                                } else if (progress > 0.9f && displayedPanelType != null) {
-                                    panelState = PanelState.Main
-                                    scope.launch { panelProgress.snapTo(0f) }
-                                    displayedPanelType = null
-                                } else {
-                                    val verticalThreshold = with(density) { 50.dp.toPx() }
+                                },
+                                onDragEnd = {
+                                    isInteracting = false
+                                    onInteractionStateChanged(false)
+
+                                    val threshold = with(density) { 50.dp.toPx() }
                                     val currentProgress = expandProgress.value
-                                    
-                                    if (abs(dragOffset) > verticalThreshold) {
+
+                                    if (abs(dragOffset) > threshold) {
+                                        // 横屏时左侧边栏：向右滑动（正方向）展开，向左滑动（负方向）收缩
                                         val targetValue = if (dragOffset > 0) 1f else 0f
                                         scope.launch {
                                             expandProgress.animateTo(
                                                 targetValue = targetValue,
-                                                animationSpec = tween(500, easing = DecelerateEasing)
+                                                animationSpec = tween(350, easing = FastOutSlowInEasing)
                                             )
                                         }
                                         isExpanded = dragOffset > 0
@@ -320,130 +466,140 @@ fun ExpandableTopBar(
                                         scope.launch {
                                             expandProgress.animateTo(
                                                 targetValue = targetValue,
-                                                animationSpec = tween(500, easing = DecelerateEasing)
+                                                animationSpec = tween(350, easing = FastOutSlowInEasing)
                                             )
                                         }
                                         isExpanded = currentProgress > 0.5f
                                     }
-                                }
-                                dragOffset = 0f
-                            },
-                            onDrag = { change, dragAmount ->
-                                val touchX = change.position.x
-                                val sidebarWidthPx = with(density) { SidebarWidth.toPx() }
-                                val screenWidthPx = with(density) { screenWidth.toPx() }
-                                
-                                val isInLeftSidebar = touchX < sidebarWidthPx
-                                val isInRightSidebar = touchX > screenWidthPx - sidebarWidthPx
-                                val isInSidebarArea = isInLeftSidebar || isInRightSidebar
-                                val isInCenterArea = !isInSidebarArea
-                                
-                                val totalDrag = sqrt(dragAmount.x * dragAmount.x + dragAmount.y * dragAmount.y)
-                                val angle = atan2(dragAmount.y, dragAmount.x) * 180 / kotlin.math.PI
-                                
-                                val isHorizontal = abs(angle) > 135 || abs(angle) < 45
-                                val isVertical = abs(angle) > 45 && abs(angle) < 135
-                                
-                                if (progress > 0.9f && isHorizontal) {
-                                    if (displayedPanelType == null && abs(dragAmount.x) > 10) {
-                                        displayedPanelType = if (dragAmount.x < 0) PanelType.Mixer else PanelType.Playlist
-                                    }
-                                    
-                                    dragOffset += dragAmount.x
-                                    val totalDragNeeded = with(density) { 
-                                        (screenWidth - SidebarWidth).toPx() 
-                                    }
-                                    val currentPanelProgress = panelProgress.value
-                                    val newProgress = when {
-                                        displayedPanelType == PanelType.Mixer -> {
-                                            (-dragOffset / totalDragNeeded).coerceIn(0f, 1f)
-                                        }
-                                        displayedPanelType == PanelType.Playlist -> {
-                                            (dragOffset / totalDragNeeded).coerceIn(0f, 1f)
-                                        }
-                                        else -> 0f
-                                    }
-                                    scope.launch {
-                                        panelProgress.snapTo(newProgress)
-                                    }
-                                } else if (isVertical) {
-                                    val canProcessVertical = if (progress > 0.9f && displayedPanelType != null) {
-                                        isInCenterArea
-                                    } else {
-                                        true
-                                    }
-                                    
-                                    if (canProcessVertical) {
-                                        dragOffset += dragAmount.y
+                                    dragOffset = 0f
+                                },
+                                onDrag = { _, dragAmount ->
+                                    // 横屏时：只处理水平滑动（左右）
+                                    val isHorizontal = abs(dragAmount.x) > abs(dragAmount.y)
+                                    if (isHorizontal) {
+                                        dragOffset += dragAmount.x
                                         val totalDragNeeded = with(density) {
-                                            screenHeight.toPx() - TopBarHeight.toPx()
+                                            screenWidth.toPx() - CollapsedHeight.toPx()
                                         }
                                         val currentProgress = expandProgress.value
-                                        val newProgress = (currentProgress + dragAmount.y / totalDragNeeded).coerceIn(0f, 1f)
+                                        val newProgress = (currentProgress + dragAmount.x / totalDragNeeded).coerceIn(0f, 1f)
                                         scope.launch {
                                             expandProgress.snapTo(newProgress)
                                         }
                                     }
                                 }
+                            )
+                        } else {
+                            // 竖屏时手势检测
+                            if (panelState == PanelState.Main) {
+                                // Main 模式：正常检测拖拽手势
+                                detectDragGestures(
+                                    onDragStart = {
+                                        dragOffset = 0f
+                                        isInteracting = true
+                                        onInteractionStateChanged(true)
+                                        scope.launch {
+                                            expandProgress.stop()
+                                            panelProgress.stop()
+                                        }
+                                    },
+                                    onDragEnd = {
+                                        isInteracting = false
+                                        onInteractionStateChanged(false)
+
+                                        val threshold = with(density) { 50.dp.toPx() }
+                                        val currentProgress = expandProgress.value
+
+                                        if (abs(dragOffset) > threshold) {
+                                            val targetValue = if (dragOffset > 0) 1f else 0f
+                                            scope.launch {
+                                                expandProgress.animateTo(
+                                                    targetValue = targetValue,
+                                                    animationSpec = tween(350, easing = FastOutSlowInEasing)
+                                                )
+                                            }
+                                            isExpanded = dragOffset > 0
+                                        } else {
+                                            val targetValue = if (currentProgress > 0.5f) 1f else 0f
+                                            scope.launch {
+                                                expandProgress.animateTo(
+                                                    targetValue = targetValue,
+                                                    animationSpec = tween(350, easing = FastOutSlowInEasing)
+                                                )
+                                            }
+                                            isExpanded = currentProgress > 0.5f
+                                        }
+                                        dragOffset = 0f
+                                    },
+                                    onDrag = { _, dragAmount ->
+                                        val isVertical = abs(dragAmount.y) > abs(dragAmount.x)
+                                        if (isVertical) {
+                                            dragOffset += dragAmount.y
+                                            val totalDragNeeded = with(density) {
+                                                screenHeight.toPx() - TopBarHeight.toPx()
+                                            }
+                                            val currentProgress = expandProgress.value
+                                            val newProgress = (currentProgress + dragAmount.y / totalDragNeeded).coerceIn(0f, 1f)
+                                            scope.launch {
+                                                expandProgress.snapTo(newProgress)
+                                            }
+                                        }
+                                    }
+                                )
                             }
-                        )
+                            // 播放列表模式：不进入手势检测，事件直接传递给子组件
+                        }
                     }
                     .clickable(enabled = !isExpanded) {
                         MusicPlayerController.playPause()
                     }
             ) {
                 CollapsedTopBarContent(
-                    alpha = contentAlpha
+                    alpha = contentAlpha,
+                    isLandscape = isLandscape
                 )
                 
-                if (isPremiumUser) {
-                    ExpandedTopBarContent(
-                        alpha = panelAlpha,
-                        panelProgress = panelProgress.value,
-                        panelState = panelState,
-                        displayedPanelType = displayedPanelType,
-                        scope = scope,
-                        onPanelStateChange = { newState ->
-                            if (newState == PanelState.Main) {
-                                panelState = newState
-                                scope.launch { panelProgress.snapTo(0f) }
-                                displayedPanelType = null
-                            } else {
-                                val newPanelType = if (newState == PanelState.Mixer) PanelType.Mixer else PanelType.Playlist
-                                displayedPanelType = newPanelType
-                                panelState = newState
-                                scope.launch { panelProgress.snapTo(1f) }
-                            }
+                // 移除高级版限制，所有用户都可以使用面板功能
+                ExpandedTopBarContent(
+                    alpha = panelAlpha,
+                    panelProgress = panelProgress.value,
+                    panelState = panelState,
+                    displayedPanelType = displayedPanelType,
+                    scope = scope,
+                    resetSignal = panelResetSignal,
+                    onPanelStateChange = { newState ->
+                        if (newState == PanelState.Main) {
+                            panelState = newState
+                            scope.launch { panelProgress.snapTo(0f) }
+                            displayedPanelType = null
+                        } else {
+                            val newPanelType = if (newState == PanelState.Mixer) PanelType.Mixer else PanelType.Playlist
+                            displayedPanelType = newPanelType
+                            panelState = newState
+                            scope.launch { panelProgress.snapTo(1f) }
                         }
-                    )
-                } else {
-                    PremiumRequiredContent(
-                        alpha = panelAlpha,
-                        onCollapse = {
-                            scope.launch {
-                                expandProgress.animateTo(0f)
-                            }
-                        }
-                    )
-                }
+                    }
+                )
             }
         }
     }
     }
 }
+}
 
 @Composable
 private fun CollapsedTopBarContent(
-    alpha: Float
+    alpha: Float,
+    isLandscape: Boolean = false
 ) {
     val playerState by MusicPlayerController.state.collectAsState()
     val currentTrack = playerState.currentTrack
     val isPlaying = playerState.isPlaying
-    
+
     val infiniteTransition = rememberInfiniteTransition(label = "audioVisualizer")
-    
+
     val barCount = 4
-    
+
     val barPhases = List(barCount) { index ->
         infiniteTransition.animateFloat(
             initialValue = 0f,
@@ -458,69 +614,125 @@ private fun CollapsedTopBarContent(
             label = "bar_$index"
         )
     }
-    
+
     val barColors = MaterialTheme.colorScheme.primary
     val trackName = currentTrack?.title ?: stringResource(R.string.still_empty)
-    
-    Row(
-        modifier = Modifier
-            .fillMaxSize()
-            .alpha(alpha)
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Icon(
-            imageVector = Icons.Default.MusicNote,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = alpha),
-            modifier = Modifier.size(24.dp)
-        )
-        
-        Spacer(modifier = Modifier.width(12.dp))
-        
-        Text(
-            text = trackName,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f)
-        )
-        
-        Spacer(modifier = Modifier.width(12.dp))
-        
-        Canvas(
+
+    if (isLandscape) {
+        // 横屏时：纵向布局
+        Column(
             modifier = Modifier
-                .width(36.dp)
-                .height(20.dp)
+                .fillMaxSize()
+                .alpha(alpha)
+                .padding(vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            if (size.width.isNaN() || size.height.isNaN() || size.width <= 0f || size.height <= 0f) {
-                return@Canvas
+            Icon(
+                imageVector = Icons.Default.MusicNote,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = alpha),
+                modifier = Modifier.size(24.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Canvas(
+                modifier = Modifier
+                    .width(20.dp)
+                    .height(36.dp)
+            ) {
+                if (size.width.isNaN() || size.height.isNaN() || size.width <= 0f || size.height <= 0f) {
+                    return@Canvas
+                }
+
+                val barWidth = 3.dp.toPx()
+                val barSpacing = (size.height - barWidth * barCount) / (barCount - 1)
+                val maxBarHeight = size.width * 0.8f
+                val minBarHeight = size.width * 0.2f
+                val centerX = size.width / 2
+
+                for (i in 0 until barCount) {
+                    val phase by barPhases[i]
+                    val progress = phase
+
+                    if (progress.isNaN()) continue
+
+                    val barHeight = minBarHeight + (maxBarHeight - minBarHeight) * progress
+
+                    val yPos = i * (barWidth + barSpacing)
+
+                    drawRect(
+                        color = barColors.copy(alpha = alpha),
+                        topLeft = Offset(centerX - barHeight / 2, yPos),
+                        size = Size(barHeight, barWidth)
+                    )
+                }
+
             }
-            
-            val barWidth = 3.dp.toPx()
-            val barSpacing = (size.width - barWidth * barCount) / (barCount - 1)
-            val maxBarHeight = size.height * 0.8f
-            val minBarHeight = size.height * 0.2f
-            val centerY = size.height / 2
-            
-            for (i in 0 until barCount) {
-                val phase by barPhases[i]
-                val progress = phase
-                
-                if (progress.isNaN()) continue
-                
-                val barHeight = minBarHeight + (maxBarHeight - minBarHeight) * progress
-                
-                val xPos = i * (barWidth + barSpacing)
-                
-                drawRect(
-                    color = barColors.copy(alpha = alpha),
-                    topLeft = Offset(xPos, centerY - barHeight / 2),
-                    size = Size(barWidth, barHeight)
-                )
+        }
+    } else {
+        // 竖屏时：横向布局
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(alpha)
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Icon(
+                imageVector = Icons.Default.MusicNote,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = alpha),
+                modifier = Modifier.size(24.dp)
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Text(
+                text = trackName,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Canvas(
+                modifier = Modifier
+                    .width(36.dp)
+                    .height(20.dp)
+            ) {
+                if (size.width.isNaN() || size.height.isNaN() || size.width <= 0f || size.height <= 0f) {
+                    return@Canvas
+                }
+
+                val barWidth = 3.dp.toPx()
+                val barSpacing = (size.width - barWidth * barCount) / (barCount - 1)
+                val maxBarHeight = size.height * 0.8f
+                val minBarHeight = size.height * 0.2f
+                val centerY = size.height / 2
+
+                for (i in 0 until barCount) {
+                    val phase by barPhases[i]
+                    val progress = phase
+
+                    if (progress.isNaN()) continue
+
+                    val barHeight = minBarHeight + (maxBarHeight - minBarHeight) * progress
+
+                    val xPos = i * (barWidth + barSpacing)
+
+                    drawRect(
+                        color = barColors.copy(alpha = alpha),
+                        topLeft = Offset(xPos, centerY - barHeight / 2),
+                        size = Size(barWidth, barHeight)
+                    )
+                }
             }
         }
     }
@@ -533,6 +745,7 @@ private fun ExpandedTopBarContent(
     panelState: PanelState,
     displayedPanelType: PanelType?,
     scope: CoroutineScope,
+    resetSignal: Int = 0,
     onPanelStateChange: (PanelState) -> Unit
 ) {
     val playerState by MusicPlayerController.state.collectAsState()
@@ -548,6 +761,17 @@ private fun ExpandedTopBarContent(
     var panelTransitionProgress by remember { mutableFloatStateOf(0f) }
     var targetPanelType by remember { mutableStateOf<PanelType?>(null) }
     var isPanelTransitioning by remember { mutableStateOf(false) }
+    
+    // 当顶栏收起或横竖屏切换时，重置所有局部状态
+    LaunchedEffect(resetSignal) {
+        if (resetSignal > 0) {
+            isCompactSpacing = false
+            expandedPanel = null
+            panelTransitionProgress = 0f
+            isPanelTransitioning = false
+            targetPanelType = null
+        }
+    }
     
     val animatedPanelTransitionProgress by animateFloatAsState(
         targetValue = panelTransitionProgress,
@@ -956,6 +1180,7 @@ private fun TransitioningMainContent(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .statusBarsPadding()
             .graphicsLayer {
                 clip = true
             },
@@ -1095,56 +1320,6 @@ private fun TransitioningMainContent(
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            if (horizontalProgressTransition.alpha > 0.01f) {
-                Column(
-                    modifier = Modifier
-                        .height(effectiveProgressHeight)
-                        .graphicsLayer {
-                            alpha = horizontalProgressTransition.alpha * effectiveProgressAlpha
-                        }
-                ) {
-                    if (effectiveProgressHeight > 20.dp) {
-                        InteractiveSlider(
-                            value = if (duration > 0) position.toFloat() else 0f,
-                            onValueChange = { if (track != null) MusicPlayerController.seekTo(it.toLong()) },
-                            valueRange = 0f..duration.toFloat().coerceAtLeast(1f),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .graphicsLayer {
-                                    scaleX = effectiveProgressWidth
-                                    transformOrigin = TransformOrigin(0.5f, 0.5f)
-                                }
-                                .padding(horizontal = 16.dp),
-                            colors = SliderDefaults.colors(
-                                thumbColor = MaterialTheme.colorScheme.primary,
-                                activeTrackColor = MaterialTheme.colorScheme.primary,
-                                inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
-                            )
-                        )
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = AudioMetadataReader.formatDuration(position),
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
-                            Text(
-                                text = AudioMetadataReader.formatDuration(duration),
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
-                        }
-                    }
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
             Row(
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -1185,6 +1360,8 @@ private fun TransitioningMainContent(
                     modifier = Modifier
                         .size(effectiveControlSize)
                         .graphicsLayer {
+                            // 统一缩放锚点：所有按钮以自身中心缩放
+                            transformOrigin = TransformOrigin.Center
                             scaleX = prevButtonTransition.scale
                             scaleY = prevButtonTransition.scale
                             translationX = prevButtonTransition.offsetX
@@ -1207,6 +1384,8 @@ private fun TransitioningMainContent(
                     modifier = Modifier
                         .size(effectiveControlSize)
                         .graphicsLayer {
+                            // 播放按钮以自身中心缩放
+                            transformOrigin = TransformOrigin.Center
                             scaleX = playButtonTransition.scale
                             scaleY = playButtonTransition.scale
                             translationX = playButtonTransition.offsetX
@@ -1231,6 +1410,8 @@ private fun TransitioningMainContent(
                     modifier = Modifier
                         .size(effectiveControlSize)
                         .graphicsLayer {
+                            // 统一缩放锚点：所有按钮以自身中心缩放
+                            transformOrigin = TransformOrigin.Center
                             scaleX = nextButtonTransition.scale
                             scaleY = nextButtonTransition.scale
                             translationX = nextButtonTransition.offsetX
@@ -1292,23 +1473,44 @@ private fun TransitioningMainContent(
                 if (expandedPanel != PanelType.Mixer) {
                     IconButton(
                         onClick = {
-                            onCompactSpacingChange(true)
-                            onExpandedPanelChange(PanelType.Mixer)
-                        },
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = stringResource(R.string.mixer),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                        onCompactSpacingChange(true)
+                        onExpandedPanelChange(PanelType.Mixer)
+                    },
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = stringResource(R.string.mixer),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
+            }
 
-                if (expandedPanel != PanelType.Playlist) {
+            // 胶囊状进度条（位于调音台按钮和播放列表按钮中间）
+            if (horizontalProgressTransition.alpha > 0.01f && effectiveProgressHeight > 20.dp) {
+                Slider(
+                    value = if (duration > 0) position.toFloat() else 0f,
+                    onValueChange = { if (track != null) MusicPlayerController.seekTo(it.toLong()) },
+                    valueRange = 0f..duration.toFloat().coerceAtLeast(1f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .graphicsLayer {
+                            alpha = horizontalProgressTransition.alpha * effectiveProgressAlpha
+                        },
+                    enabled = track != null,
+                    colors = SliderDefaults.colors(
+                        thumbColor = Color.Transparent, // 隐藏thumb实现胶囊状
+                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                        inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                    )
+                )
+            }
+
+            if (expandedPanel != PanelType.Playlist) {
                     IconButton(
                         onClick = {
                             onCompactSpacingChange(true)
@@ -1327,12 +1529,6 @@ private fun TransitioningMainContent(
                     }
                 }
 
-                if (false) {
-                    FeatureButton(
-                        text = "测试",
-                        onClick = { onCompactSpacingChange(!isCompactSpacing) }
-                    )
-                }
             }
                     }
                 }
@@ -1369,7 +1565,14 @@ private fun TransitioningMainContent(
                         panelProgress = 1f,
                         playlist = playlist,
                         playlistIndex = playlistIndex,
-                        onBack = { onExpandedPanelChange(null) },
+                        onBack = {
+                            // 先恢复主体（退出紧凑模式），再关闭面板
+                            // 顺序与专辑封面点击保持一致
+                            onCompactSpacingChange(false)
+                            if (expandedPanel != null) {
+                                onExpandedPanelChange(null)
+                            }
+                        },
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -1531,10 +1734,11 @@ private fun MixerPanel(
 @Composable
 private fun TabButton(
     text: String,
+    icon: ImageVector,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    com.bicy.whitenoise.ui.components.ExpandableTopBarPart.TabButton(text, isSelected, onClick)
+    com.bicy.whitenoise.ui.components.ExpandableTopBarPart.TabButton(text, icon, isSelected, onClick)
 }
 
 @Composable
@@ -1635,11 +1839,12 @@ private fun CategorySidebar(
 
 @Composable
 private fun CategoryTab(
-    label: String,
+    imageVector: ImageVector,
+    contentDescription: String,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    com.bicy.whitenoise.ui.components.ExpandableTopBarPart.CategoryTab(label, isSelected, onClick)
+    com.bicy.whitenoise.ui.components.ExpandableTopBarPart.CategoryTab(imageVector, contentDescription, isSelected, onClick)
 }
 
 @Composable
@@ -1668,32 +1873,4 @@ private fun PlaylistItem(
     onFavoriteClick: (() -> Unit)? = null
 ) {
     com.bicy.whitenoise.ui.components.ExpandableTopBarPart.PlaylistItem(track, isPlaying, isFavorite, onClick, onFavoriteClick)
-}
-
-@Composable
-private fun FeatureButton(
-    text: String,
-    onClick: () -> Unit
-) {
-    com.bicy.whitenoise.ui.components.ExpandableTopBarPart.FeatureButton(text, onClick)
-}
-
-@Composable
-private fun PremiumRequiredContent(
-    alpha: Float,
-    onCollapse: () -> Unit
-) {
-    com.bicy.whitenoise.ui.components.ExpandableTopBarPart.PremiumRequiredContent(alpha, onCollapse)
-}
-
-@Composable
-private fun PremiumUnlockDialog(
-    onDismiss: () -> Unit,
-    onUnlock: () -> Unit
-) {
-    com.bicy.whitenoise.ui.screens.SettingScreenPart.UnlockPremiumDialog(
-        isPremium = false,
-        onDismiss = onDismiss,
-        onPayClick = onUnlock
-    )
 }

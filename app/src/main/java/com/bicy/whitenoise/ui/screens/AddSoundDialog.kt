@@ -22,7 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import com.bicy.whitenoise.ui.components.glass.GlassAlertDialogSimple
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -78,17 +78,12 @@ fun AddSoundDialog(
         }
     }
     
-    @Suppress("DEPRECATION")
-    AlertDialog(
+    GlassAlertDialogSimple(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-        modifier = Modifier
-            .fillMaxWidth(ResponsiveDimensions.dialogMaxWidth() / LocalConfiguration.current.screenWidthDp.dp)
-            .clip(RoundedCornerShape(16.dp))
+        modifier = Modifier.fillMaxWidth(ResponsiveDimensions.dialogMaxWidth() / LocalConfiguration.current.screenWidthDp.dp)
     ) {
         Column(
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.surface)
                 .padding(20.dp)
                 .verticalScroll(rememberScrollState())
         ) {

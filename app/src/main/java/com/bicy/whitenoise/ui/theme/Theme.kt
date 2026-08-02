@@ -7,6 +7,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.bicy.whitenoise.ui.theme.ThemeColorsPart.*
 
 private fun createColorScheme(themeColor: ThemeColorScheme): ColorScheme {
     val isDark = !themeColor.isLight
@@ -71,18 +72,4 @@ fun WhiteNoiseTheme(
     )
 }
 
-@Composable
-fun WhiteNoiseThemeWithPremium(
-    isPremiumUser: Boolean,
-    content: @Composable () -> Unit
-) {
-    val themeColor by ThemeColorManager.currentThemeColor.collectAsState()
-    
-    val colorScheme = createColorScheme(themeColor)
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
-}

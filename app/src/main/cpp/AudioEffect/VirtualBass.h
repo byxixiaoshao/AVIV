@@ -7,79 +7,132 @@
 
 namespace audiofx {
 
-// 低频激励器 (Bass Exciter)
-// 原理：分离低频 -> 动态饱和 -> 混合回原始信号
-// 增强低频的"质感"和"冲击感"，而不是简单提升增益
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+/**
+ * 虚拟低音 (Virtual Bass) - 基于 FFmpeg af_virtualbass.c 移植与优化
+ *
+ * 原理：利用"缺失基频"(missing fundamental) 心理声学效应，通过非线性器件(NLD)
+ *       在低频处生成谐波，使小型扬声器无法重放的低频在听感上被"补全"。
+ *
+ * 信号链：
+ *   (L+R)/2 → 二阶Butterworth低通(SVF) → 软NLD谐波生成 → 带通滤波 →
+ *   软膝限幅 → DC阻断 → 混合回 L/R
+ *
+ * 相对 FFmpeg 原版的优化（解决伪还原爆音）：
+ *   1. 软NLD：保留 atan+sqrt 结构，钳位输入避免 sqrt 产生 NaN；
+ *      输出端追加软膝限幅，避免硬削波点击声。
+ *   2. 带通滤波：~150Hz 带通去除 NLD 产生的带外互调失真(IMD)。
+ *   3. 软膝限幅：NLD 输出后软压缩，抑制瞬态过冲。
+ *   4. DC阻断：一阶 DC 阻断器(20Hz 高通)滤除 NLD 直流偏移。
+ *   5. 平滑过渡：intensity 一阶平滑，避免滑块拖动 zipper 噪声。
+ *   6. 保守混合增益：最大 0.15（旧实现可达 2.1，是爆音根因）。
+ *   7. 强度反向映射：UI intensity(0..3) → FFmpeg strength(3..0.5)，
+ *      使"高强度 = 更强虚拟低音"符合用户直觉。
+ */
 class VirtualBass : public AudioEffectBase {
 public:
-    VirtualBass() : intensity_(0.5f), sampleRate_(44100) {}
+    VirtualBass() : intensity_(0.0f), sampleRate_(44100) {}
 
     void init(int sampleRate) override {
         sampleRate_ = sampleRate > 0 ? sampleRate : 44100;
-        updateCoefficients();
+        updateLowpass(250.0f);                          // FFmpeg 默认 cutoff=250Hz
+        bandpass_.design(sampleRate_, 150.0f, 0.7f);    // 带通中心 150Hz
+        dcBlocker_.design(sampleRate_);                 // DC 阻断 20Hz
         clear();
     }
 
     void process(float* samples, int numFrames, int channels) override {
         if (!enabled_ || intensity_ < 0.01f) return;
+        int ch = std::min(channels, 2);
+
+        // intensity 一阶平滑（~25ms 时间常数），避免参数跳变产生 zipper 噪声
+        const float kSmooth = 0.999f;
 
         for (int i = 0; i < numFrames; i++) {
-            for (int c = 0; c < channels && c < 2; c++) {
-                int idx = i * channels + c;
-                float input = samples[idx];
+            smoothIntensity_ += (intensity_ - smoothIntensity_) * (1.0f - kSmooth);
+            if (smoothIntensity_ < 0.01f) continue;  // 淡入期不处理，直通
 
-                // Step 1: 分离低频 (below 200Hz)
-                float low = lp_[c].process(input);
+            // 反向映射：UI intensity(0..3) → FFmpeg strength(3..0.5)
+            // 高强度 → 低 strength → 大 st → sin 更多 wrapping → 更丰富谐波
+            float ffStrength = 3.5f - smoothIntensity_;
+            if (ffStrength > 3.0f) ffStrength = 3.0f;
+            else if (ffStrength < 0.5f) ffStrength = 0.5f;
+            const float st = static_cast<float>(M_PI) / ffStrength;
 
-                // Step 2: 高通滤除超低频 (below 40Hz)，避免处理 DC 和隆隆声
-                float lowFiltered = hp_[c].process(low);
+            // 取中心声道 (L+R)/2 作为低频提取源
+            float l = samples[i * channels + 0];
+            float r = (ch > 1) ? samples[i * channels + 1] : l;
+            float center = (l + r) * 0.5f;
 
-                // Step 3: 动态饱和 - 使用软削波产生谐波
-                // 饱和度随信号强度动态变化
-                float absLow = std::abs(lowFiltered);
-                float drive = 1.0f + intensity_ * 2.0f;  // 1.0 - 7.0
+            // Step 1: 二阶 Butterworth 低通（SVF 拓扑，移植自 FFmpeg vb_stereo）
+            // 拓扑：v3 = v0 - b1; v1 = a0*b0 + a1*v3; v2 = b1 + a1*b0 + a2*v3;
+            //       b0 = 2*v1 - b0; b1 = 2*v2 - b1; 输出 = v2 (m[2]=1)
+            float v0 = center;
+            float v3 = v0 - lpB1_;
+            float v1 = lpA0_ * lpB0_ + lpA1_ * v3;
+            float v2 = lpB1_ + lpA1_ * lpB0_ + lpA2_ * v3;
+            lpB0_ = 2.0f * v1 - lpB0_;
+            lpB1_ = 2.0f * v2 - lpB1_;
+            float bass = v2;
 
-                // 软饱和函数: tanh with drive
-                float saturated = std::tanh(lowFiltered * drive) / std::tanh(drive);
+            // Step 2: 软 NLD 谐波生成
+            // FFmpeg 原版：vb_fun(x) = 2.5*atan(0.9*x) + 2.5*sqrt(1-(0.9*x)^2) - 2.5
+            // 改进：钳位 0.9*x 到 [-1,1] 避免 sqrt(负数) 产生 NaN
+            float xn = 0.9f * bass;
+            if (xn > 1.0f) xn = 1.0f;
+            else if (xn < -1.0f) xn = -1.0f;
+            float y = 2.5f * std::atan(xn) + 2.5f * std::sqrt(1.0f - xn * xn) - 2.5f;
+            float nld = (y < 0.0f) ? std::sin(y) : y;
+            float vb = std::sin(nld * st);  // FFmpeg 最终包络
 
-                // Step 4: 包络跟随 - 平滑处理，避免瞬态失真
-                // 检测低频能量
-                float envelope = env_[c].process(absLow);
+            // Step 3: 带通滤波，去除带外互调失真
+            vb = bandpass_.process(vb);
 
-                // 根据包络调整激励量：信号强时激励多，信号弱时激励少
-                float exciterAmount = envelope * intensity_;
+            // Step 4: 软膝限幅，抑制 NLD 瞬态过冲
+            vb = softKneeLimit(vb, 0.6f, 0.9f);
 
-                // Step 5: 混合激励信号
-                // 只添加饱和后的低频，不添加原始低频（避免重复）
-                float excited = saturated * exciterAmount * 0.7f;
+            // Step 5: DC 阻断（20Hz 高通），滤除 NLD 直流偏移
+            vb = dcBlocker_.process(vb);
 
-                // Step 6: 添加少量高频"点击感"（瞬态增强）
-                // 检测瞬态：当前值 - 前一个值
-                float transient = lowFiltered - prevLow_[c];
-                prevLow_[c] = lowFiltered;
-
-                // 瞬态经过高通，提取"点击"
-                float click = clickHp_[c].process(transient);
-                float clickAmount = std::abs(click) * intensity_ * 0.3f;
-
-                // 最终输出
-                samples[idx] = input + excited + click * clickAmount;
+            // Step 6: 混合回 L/R
+            // mix 增益随 intensity 线性增长，最大 0.5
+            // （旧值 0.15 太保守，intensity=0.3 时 mix 仅 0.015，几乎听不到效果）
+            // 过载由 softKneeLimit + stage3 的 effectsLimiter_ 兜底
+            float mix = (smoothIntensity_ / 3.0f) * 0.5f;
+            float wet = vb * mix;
+            samples[i * channels + 0] = l + wet;
+            if (ch > 1) {
+                samples[i * channels + 1] = r + wet;
             }
         }
     }
 
     void clear() override {
-        for (int c = 0; c < 2; c++) {
-            lp_[c].clear();
-            hp_[c].clear();
-            clickHp_[c].clear();
-            env_[c].clear();
-            prevLow_[c] = 0.0f;
+        lpB0_ = 0.0f;
+        lpB1_ = 0.0f;
+        bandpass_.clear();
+        dcBlocker_.clear();
+        smoothIntensity_ = 0.0f;  // 淡入，避免启用瞬间爆音
+    }
+
+    // 重新启用时重置滤波器状态，避免陈旧状态导致点击声
+    void setEnabled(bool enabled) override {
+        if (enabled && !enabled_) {
+            lpB0_ = 0.0f;
+            lpB1_ = 0.0f;
+            bandpass_.clear();
+            dcBlocker_.clear();
+            smoothIntensity_ = 0.0f;
         }
+        enabled_ = enabled;
     }
 
     void setParameter(int paramId, float value) override {
         if (paramId == 0) {
+            // UI 传 0..3 强度
             intensity_ = std::clamp(value, 0.0f, 3.0f);
         }
     }
@@ -89,91 +142,93 @@ public:
     }
 
     EffectType getType() const override { return EffectType::VirtualBass; }
-    std::string getName() const override { return "低频激励器"; }
+    std::string getName() const override { return "虚拟低音"; }
     std::string getCategory() const override { return "音质增强"; }
 
 private:
-    void updateCoefficients() {
-        float dt = 1.0f / sampleRate_;
-
-        // Lowpass: 分离低频 (below 200Hz)
-        float lpCutoff = 200.0f;
-        float lpRc = 1.0f / (2.0f * 3.14159265358979323846f * lpCutoff);
-        float lpAlpha = dt / (lpRc + dt);
-
-        // Highpass 1: 滤除超低频 (below 40Hz)
-        float hpCutoff = 40.0f;
-        float hpRc = 1.0f / (2.0f * 3.14159265358979323846f * hpCutoff);
-        float hpAlpha = hpRc / (hpRc + dt);
-
-        // Highpass 2: 提取瞬态点击 (above 100Hz)
-        float clickCutoff = 100.0f;
-        float clickRc = 1.0f / (2.0f * 3.14159265358979323846f * clickCutoff);
-        float clickAlpha = clickRc / (clickRc + dt);
-
-        for (int c = 0; c < 2; c++) {
-            lp_[c].setAlpha(lpAlpha);
-            hp_[c].setAlpha(hpAlpha);
-            clickHp_[c].setAlpha(clickAlpha);
-            env_[c].setAttackRelease(0.005f, 0.05f, sampleRate_);  // 5ms attack, 50ms release
-        }
+    // 二阶 Butterworth 低通系数计算（SVF 拓扑，移植自 FFmpeg config_input）
+    void updateLowpass(float cutoff) {
+        const float Q = 0.707f;
+        float g = std::tan(static_cast<float>(M_PI) * cutoff / sampleRate_);
+        float k = 1.0f / Q;
+        lpA0_ = 1.0f / (1.0f + g * (g + k));
+        lpA1_ = g * lpA0_;
+        lpA2_ = g * lpA1_;
+        // m[0]=0, m[1]=0, m[2]=1 → 输出取 v2
     }
 
-    // One-pole Lowpass
-    struct OnePoleLP {
-        float state_ = 0.0f;
-        float alpha_ = 0.1f;
-        void setAlpha(float a) { alpha_ = a; }
-        float process(float input) {
-            state_ = alpha_ * input + (1.0f - alpha_) * state_;
-            return state_;
+    // 软膝限幅：|x| <= thresh 直通；[thresh, limit] 内 tanh 平滑压缩
+    static float softKneeLimit(float x, float thresh, float limit) {
+        float absX = std::abs(x);
+        if (absX <= thresh) return x;
+        float sign = (x >= 0.0f) ? 1.0f : -1.0f;
+        float t = (absX - thresh) / (limit - thresh);
+        if (t > 1.0f) t = 1.0f;
+        float shaped = thresh + (limit - thresh) * std::tanh(t);
+        return sign * shaped;
+    }
+
+    // 双二阶滤波器（用于带通）
+    struct Biquad {
+        float b0_ = 1.0f, b1_ = 0.0f, b2_ = 0.0f;
+        float a1_ = 0.0f, a2_ = 0.0f;  // a0 归一化为 1
+        float z1_ = 0.0f, z2_ = 0.0f;
+
+        // BPF (constant 0 dB peak gain)
+        void design(int sampleRate, float freq, float Q) {
+            float w0 = 2.0f * static_cast<float>(M_PI) * freq / sampleRate;
+            float cosW = std::cos(w0);
+            float sinW = std::sin(w0);
+            float alpha = sinW / (2.0f * Q);
+            float a0 = 1.0f + alpha;
+            b0_ = alpha / a0;
+            b1_ = 0.0f;
+            b2_ = -alpha / a0;
+            a1_ = -2.0f * cosW / a0;
+            a2_ = (1.0f - alpha) / a0;
         }
-        void clear() { state_ = 0.0f; }
+
+        // Direct Form I Transposed（数值稳定）
+        float process(float x) {
+            float y = b0_ * x + z1_;
+            z1_ = b1_ * x - a1_ * y + z2_;
+            z2_ = b2_ * x - a2_ * y;
+            return y;
+        }
+
+        void clear() { z1_ = 0.0f; z2_ = 0.0f; }
     };
 
-    // One-pole Highpass
-    struct OnePoleHP {
-        float state_ = 0.0f;
+    // 一阶 DC 阻断器（高通，fc≈20Hz）
+    struct DCBlocker {
+        float r_ = 0.997f;
         float prevIn_ = 0.0f;
-        float alpha_ = 0.1f;
-        void setAlpha(float a) { alpha_ = a; }
-        float process(float input) {
-            float output = alpha_ * (state_ + input - prevIn_);
-            prevIn_ = input;
-            state_ = output;
-            return output;
-        }
-        void clear() { state_ = 0.0f; prevIn_ = 0.0f; }
-    };
+        float prevOut_ = 0.0f;
 
-    // Envelope Follower (用于动态处理)
-    struct EnvelopeFollower {
-        float state_ = 0.0f;
-        float attackCoeff_ = 0.1f;
-        float releaseCoeff_ = 0.01f;
-
-        void setAttackRelease(float attackMs, float releaseMs, int sampleRate) {
-            attackCoeff_ = 1.0f - std::exp(-1.0f / (attackMs * sampleRate));
-            releaseCoeff_ = 1.0f - std::exp(-1.0f / (releaseMs * sampleRate));
+        void design(int sampleRate) {
+            r_ = 1.0f - std::min(1.0f, 2.0f * static_cast<float>(M_PI) * 20.0f / sampleRate);
         }
 
-        float process(float input) {
-            float absIn = std::abs(input);
-            float coeff = (absIn > state_) ? attackCoeff_ : releaseCoeff_;
-            state_ = coeff * absIn + (1.0f - coeff) * state_;
-            return state_;
+        float process(float x) {
+            float y = x - prevIn_ + r_ * prevOut_;
+            prevIn_ = x;
+            prevOut_ = y;
+            return y;
         }
 
-        void clear() { state_ = 0.0f; }
+        void clear() { prevIn_ = 0.0f; prevOut_ = 0.0f; }
     };
 
     float intensity_;
+    float smoothIntensity_ = 0.0f;  // 平滑后的 intensity（用于 process）
     int sampleRate_;
-    OnePoleLP lp_[2];
-    OnePoleHP hp_[2];
-    OnePoleHP clickHp_[2];
-    EnvelopeFollower env_[2];
-    float prevLow_[2] = {0.0f, 0.0f};
+
+    // 低通滤波器系数与状态（FFmpeg SVF 拓扑，对应 a[3] / cf[2]）
+    float lpA0_ = 1.0f, lpA1_ = 0.0f, lpA2_ = 0.0f;
+    float lpB0_ = 0.0f, lpB1_ = 0.0f;
+
+    Biquad bandpass_;
+    DCBlocker dcBlocker_;
 };
 
 }

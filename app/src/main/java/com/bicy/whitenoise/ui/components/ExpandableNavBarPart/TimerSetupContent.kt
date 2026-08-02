@@ -17,15 +17,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -92,11 +87,24 @@ fun PresetButtonsContent(
     fun performVibrate() {
         vibrator?.let {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val effect = VibrationEffect.createOneShot(10, 60)
+                val effect = VibrationEffect.createOneShot(12, 110)
                 it.vibrate(effect)
             } else {
                 @Suppress("DEPRECATION")
-                it.vibrate(10)
+                it.vibrate(12)
+            }
+        }
+    }
+
+    // 到达预设目标时的确认震动（强）
+    fun performConfirmVibrate() {
+        vibrator?.let {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val effect = VibrationEffect.createOneShot(45, 230)
+                it.vibrate(effect)
+            } else {
+                @Suppress("DEPRECATION")
+                it.vibrate(45)
             }
         }
     }
@@ -120,6 +128,7 @@ fun PresetButtonsContent(
                 if (elapsed >= totalAnimDuration) {
                     TimerManager.setTime(targetHours, targetMins)
                     animatingToTarget = -1
+                    performConfirmVibrate()
                     break
                 }
                 
@@ -157,6 +166,7 @@ fun PresetButtonsContent(
                 if (elapsed >= totalAnimDuration) {
                     TimerManager.setTime(targetHours, 0)
                     animatingToTarget = -1
+                    performConfirmVibrate()
                     break
                 }
                 
@@ -225,55 +235,64 @@ fun TimeSlidersContent(
     val context = LocalContext.current
     @Suppress("DEPRECATION")
     val vibrator = remember { context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator }
-    
-    var lastVibrateTime by remember { mutableLongStateOf(0L) }
-    
+
     val timerState by TimerManager.timerState.collectAsState()
     val currentHours = timerState.hours
     val currentMinutes = timerState.minutes
-    
-    fun performSliderVibrate() {
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastVibrateTime > 50) {
-            vibrator?.let {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val effect = VibrationEffect.createOneShot(25, 150)
-                    it.vibrate(effect)
-                } else {
-                    @Suppress("DEPRECATION")
-                    it.vibrate(25)
-                }
+
+    // 记录上次震动时的值，只有值真正变化时才震动
+    var lastVibratedHours by remember { mutableIntStateOf(-1) }
+    var lastVibratedMinutes by remember { mutableIntStateOf(-1) }
+
+    // 分级震动：0=轻刻度, 1=中刻度(5分钟倍数), 2=强刻度(15分钟倍数/小时)
+    fun performStepVibrate(level: Int = 0) {
+        vibrator?.let {
+            val (duration, amplitude) = when (level) {
+                2 -> 50L to 255
+                1 -> 35L to 200
+                else -> 18L to 120
             }
-            lastVibrateTime = currentTime
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val effect = VibrationEffect.createOneShot(duration, amplitude.coerceIn(1, 255))
+                it.vibrate(effect)
+            } else {
+                @Suppress("DEPRECATION")
+                it.vibrate(duration)
+            }
         }
     }
-    
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
     ) {
-        Text(
-            text = stringResource(R.string.hours),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f * textAlpha)
-        )
-        Spacer(modifier = Modifier.height(4.dp))
+        // 小时行：标题 + 数字 + 滑块 并排
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
+                text = stringResource(R.string.hours_label),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f * textAlpha),
+                modifier = Modifier.width(28.dp)
+            )
+            Text(
                 text = "$currentHours",
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = textAlpha),
-                modifier = Modifier.width(40.dp)
+                modifier = Modifier.width(36.dp)
             )
             InteractiveSlider(
                 value = currentHours.toFloat(),
-                onValueChange = { h -> 
+                onValueChange = { h ->
                     val newHours = h.toInt()
-                    performSliderVibrate()
-                    TimerManager.setHours(newHours) 
+                    if (newHours != lastVibratedHours) {
+                        // 小时每一步都是重要刻度 → 强震动
+                        performStepVibrate(2)
+                        lastVibratedHours = newHours
+                    }
+                    TimerManager.setHours(newHours)
                 },
                 valueRange = 0f..23f,
                 steps = 23,
@@ -281,30 +300,40 @@ fun TimeSlidersContent(
                 enabled = isEnabled
             )
         }
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
-        Text(
-            text = stringResource(R.string.minutes),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f * textAlpha)
-        )
-        Spacer(modifier = Modifier.height(4.dp))
+
+        // 分钟行：标题 + 数字 + 滑块 并排
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
+                text = stringResource(R.string.minutes_label),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f * textAlpha),
+                modifier = Modifier.width(28.dp)
+            )
+            Text(
                 text = "$currentMinutes",
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = textAlpha),
-                modifier = Modifier.width(40.dp)
+                modifier = Modifier.width(36.dp)
             )
             InteractiveSlider(
                 value = currentMinutes.toFloat(),
-                onValueChange = { m -> 
+                onValueChange = { m ->
                     val newMinutes = m.toInt()
-                    performSliderVibrate()
-                    TimerManager.setMinutes(newMinutes) 
+                    if (newMinutes != lastVibratedMinutes) {
+                        // 15分钟倍数→强, 5分钟倍数→中, 其余→轻
+                        val level = when {
+                            newMinutes % 15 == 0 -> 2
+                            newMinutes % 5 == 0 -> 1
+                            else -> 0
+                        }
+                        performStepVibrate(level)
+                        lastVibratedMinutes = newMinutes
+                    }
+                    TimerManager.setMinutes(newMinutes)
                 },
                 valueRange = 0f..59f,
                 steps = 59,
@@ -312,33 +341,6 @@ fun TimeSlidersContent(
                 enabled = isEnabled
             )
         }
-    }
-}
-
-@Composable
-fun StartButton(
-    onStart: () -> Unit,
-    textAlpha: Float,
-    isEnabled: Boolean = true
-) {
-    Button(
-        onClick = onStart,
-        enabled = isEnabled,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(28.dp)
-    ) {
-        Icon(
-            imageVector = Icons.Default.PlayArrow,
-            contentDescription = null,
-            modifier = Modifier.size(24.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = stringResource(R.string.start_timer),
-            style = MaterialTheme.typography.titleMedium
-        )
     }
 }
 

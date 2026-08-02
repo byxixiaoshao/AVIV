@@ -11,7 +11,8 @@
 enum class OffsetType {
     Fixed = 0,
     Surround = 1,
-    Random = 2
+    Random = 2,
+    Scatter = 3  // 散点模式
 };
 
 enum class SurroundMode {
@@ -31,8 +32,21 @@ struct SpatialParams {
     
     std::atomic<int> surroundMode{0};
     std::atomic<float> surroundRadius{1.0f};
-    std::atomic<float> surroundSpeed{1.0f};
+    // 环绕周期（秒/圈）：数值越大转得越慢，角速度 ω = 2π / surroundPeriodSeconds
+    std::atomic<float> surroundPeriodSeconds{5.0f};
     
+    // 散点随机参数
+    std::atomic<float> scatterMinRadius{0.5f};
+    std::atomic<float> scatterMaxRadius{5.0f};
+    std::atomic<bool> scatterXEnabled{true};
+    std::atomic<bool> scatterYEnabled{true};
+    std::atomic<bool> scatterZEnabled{true};
+    std::atomic<bool> scatterMoveEnabled{false};
+    std::atomic<float> scatterMoveRandomValue{0.5f};
+    std::atomic<float> scatterMoveSpeed{1.0f};
+    std::atomic<float> scatterDirectionRandom{0.3f};
+    
+    // 旧参数（保留兼容）
     std::atomic<float> randomMaxDistance{5.0f};
     std::atomic<float> randomMinDistance{0.5f};
     std::atomic<float> randomValue{0.5f};
@@ -58,14 +72,23 @@ public:
     
     void setOffsetType(int type);
     void setFixedOffset(float leftRight, float upDown, float frontBack, float multiplier);
-    void setSurroundParams(int mode, float radius, float speed);
+    // 设置环绕参数。periodSeconds 语义为"秒/圈"（数值越大转得越慢）
+    void setSurroundParams(int mode, float radius, float periodSeconds);
     void setRandomParams(float maxDistance, float minDistance, float randomValue, float speed);
+    
+    // 散点参数设置
+    void setScatterParams(
+        float minRadius, float maxRadius,
+        bool xEnabled, bool yEnabled, bool zEnabled,
+        bool moveEnabled, float moveRandomValue, float moveSpeed, float directionRandom
+    );
     
     void getCurrentPosition(float& azimuth, float& elevation, float& distance) const;
     
 private:
     void updateSurroundPosition();
     void updateRandomPosition();
+    void updateScatterPosition();
     void calculateHrtf(float azimuth, float elevation, float distance,
                        float& leftGain, float& rightGain, float& itdSamples, float& frontBackFactor);
     
@@ -86,6 +109,7 @@ private:
     float randomCurrentY_ = 0.0f;
     float randomCurrentZ_ = 1.0f;
     float randomTimeAccumulator_ = 0.0f;
+    bool scatterPositionInitialized_ = false;
     
     float lastX_ = 0.0f;
     float lastY_ = 0.0f;
@@ -99,7 +123,7 @@ private:
     float lastFrontBackFactor_ = 1.0f;
     float lastItdSamples_ = 0.0f;
     
-    float frontBackFilterState_[2] = {0.0f, 0.0f};
+    float frontBackFilterState_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     
     std::vector<float> leftDelayBuffer_;
     std::vector<float> rightDelayBuffer_;

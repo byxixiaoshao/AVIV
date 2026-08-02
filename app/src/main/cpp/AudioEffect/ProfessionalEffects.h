@@ -341,43 +341,92 @@ private:
 class HiFiEffect : public AudioEffectBase {
 public:
     HiFiEffect() : intensity_(0.0f) {}
-    
+
     void init(int sampleRate) override {
         sampleRate_ = sampleRate > 0 ? sampleRate : 44100;
+        // DC blocker for a ~20 Hz high-pass: strips the DC pumped by the
+        // sample*sample term while keeping the musical 2nd harmonic.
+        dcCoeff_ = 1.0f - std::min(1.0f, static_cast<float>(2.0f * M_PI * 20.0f / sampleRate_));
         clear();
     }
-    
+
     void process(float* samples, int numFrames, int channels) override {
         if (!enabled_ || intensity_ < 0.001f) return;
-        
+        int ch = std::min(channels, 2);
+
+        // Ramp intensity per sample (~25 ms at 44.1 kHz) so slider moves and
+        // (re)enable never cause a gain jump -> no click on parameter changes.
+        const float kSmooth = 0.999f;
         for (int i = 0; i < numFrames; i++) {
-            for (int c = 0; c < channels; c++) {
+            smoothIntensity_ += (intensity_ - smoothIntensity_) * (1.0f - kSmooth);
+            float inten = smoothIntensity_;
+
+            for (int c = 0; c < ch; c++) {
                 int idx = i * channels + c;
                 float sample = samples[idx];
-                
-                float attack = std::abs(sample - prevSample_[c]);
-                float transient = (attack > 0.02f) ? 
-                    attack * intensity_ * 0.8f * (sample > prevSample_[c] ? 1.0f : -1.0f) : 0.0f;
-                
-                float evenHarmonic = sample * sample * intensity_ * 0.08f;
-                
+
+                // While fading in, keep prevSample_ tracking so the transient
+                // detector never fires against a stale value at full strength.
+                if (inten < 0.001f) {
+                    prevSample_[c] = sample;
+                    continue;
+                }
+
+                // Transient (derivative) exciter. Original used a hard 0.02
+                // threshold that switched the term on/off -> waveform step =
+                // audible click. softKnee gives a continuous gate instead.
+                float diff = sample - prevSample_[c];
+                diff = std::clamp(diff, -2.0f, 2.0f);  // 限制瞬态项幅度，防止前级过载时爆音
+                float attack = std::abs(diff);
+                float gate = softKnee(attack, 0.01f, 0.06f);
+                float transient = diff * inten * 0.8f * gate;
+
+                // Even (2nd) harmonic from squaring. sample*sample is always
+                // >= 0, i.e. a DC offset that pumps the waveform / woofer.
+                // DC-block it: keeps cos(2w), drops the DC term.
+                // 平方项对输入幅度敏感：前级（如多段压缩 intensity>1）过载时 sample 可远超 1，
+                // 平方后急剧放大推入 tanh 饱和区产生刺耳失真。用 clamp 后的值计算平方项。
+                float clampedForSquare = std::clamp(sample, -1.0f, 1.0f);
+                float evenHarmonic = dcBlock(clampedForSquare * clampedForSquare * inten * 0.08f, c);
+
+                // Expansion bounded to a safe range (original could exceed
+                // unity on loud peaks, over-driving the tanh into harshness).
                 float envelope = std::abs(sample);
-                float expansion = 1.0f + (envelope - 0.5f) * intensity_ * 0.4f;
-                
+                float expansion = std::clamp(
+                    1.0f + (envelope - 0.5f) * inten * 0.4f, 0.8f, 1.2f);
+
+                // Combine, pre-limit so tanh stays in its soft region, and
+                // soft-clip. Output remains bounded to [-0.95, 0.95].
                 float output = (sample + transient + evenHarmonic) * expansion;
-                
+                output = std::clamp(output, -3.0f, 3.0f);
+
                 prevSample_[c] = sample;
                 samples[idx] = std::tanh(output) * 0.95f;
             }
         }
     }
-    
+
     void clear() override {
         std::fill(prevSample_, prevSample_ + 2, 0.0f);
+        std::fill(dcPrevIn_, dcPrevIn_ + 2, 0.0f);
+        std::fill(dcPrevOut_, dcPrevOut_ + 2, 0.0f);
+        smoothIntensity_ = 0.0f;  // fade in on (re)enable to avoid attack pop
     }
-    
-    void setParameter(int paramId, float value) override { 
-        if (paramId == 0) intensity_ = std::clamp(value, 0.0f, 1.0f); 
+
+    // Base setEnabled only flips the flag; reset state on re-enable so a stale
+    // prevSample_ (frozen while disabled) doesn't fire a transient click.
+    void setEnabled(bool enabled) override {
+        if (enabled && !enabled_) {
+            std::fill(prevSample_, prevSample_ + 2, 0.0f);
+            std::fill(dcPrevIn_, dcPrevIn_ + 2, 0.0f);
+            std::fill(dcPrevOut_, dcPrevOut_ + 2, 0.0f);
+            smoothIntensity_ = 0.0f;
+        }
+        enabled_ = enabled;
+    }
+
+    void setParameter(int paramId, float value) override {
+        if (paramId == 0) intensity_ = std::clamp(value, 0.0f, 1.0f);
     }
     float getParameter(int paramId) const override { return paramId == 0 ? intensity_ : 0.0f; }
     EffectType getType() const override { return EffectType::HiFi; }
@@ -386,7 +435,27 @@ public:
 
 private:
     float intensity_;
+    float smoothIntensity_ = 0.0f;        // ramped copy used in process()
     float prevSample_[2] = {0.0f, 0.0f};
+    float dcCoeff_ = 0.997f;
+    float dcPrevIn_[2] = {0.0f, 0.0f};
+    float dcPrevOut_[2] = {0.0f, 0.0f};
+
+    // Continuous 0..1 ramp over [low, high]; replaces the hard ternary gate.
+    static float softKnee(float x, float low, float high) {
+        if (x <= low) return 0.0f;
+        if (x >= high) return 1.0f;
+        float t = (x - low) / (high - low);
+        return t * t * (3.0f - 2.0f * t);  // smoothstep
+    }
+
+    // One-pole DC blocker (high-pass): y[n] = x[n] - x[n-1] + R*y[n-1].
+    float dcBlock(float x, int c) {
+        float y = x - dcPrevIn_[c] + dcCoeff_ * dcPrevOut_[c];
+        dcPrevIn_[c] = x;
+        dcPrevOut_[c] = y;
+        return y;
+    }
 };
 
 class DistortionEffect : public AudioEffectBase {

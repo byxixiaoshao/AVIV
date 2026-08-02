@@ -1,6 +1,7 @@
 #include "FFmpegDecoder.h"
 #include <android/log.h>
 #include <unistd.h>
+#include <cinttypes>  // 用于 PRId64 宏，跨平台兼容 int64_t 格式说明符
 
 #define LOG_TAG "FFmpegDecoder"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -85,6 +86,42 @@ static int64_t fdSeek(void* opaque, int64_t offset, int whence) {
     
     ctx->position = newPos;
     return ctx->position;
+}
+
+static int streamRead(void* opaque, uint8_t* buf, int bufSize) {
+    auto* ctx = static_cast<StreamContext*>(opaque);
+    return ctx->read(buf, bufSize);
+}
+
+static int64_t streamSeek(void* opaque, int64_t offset, int whence) {
+    auto* ctx = static_cast<StreamContext*>(opaque);
+    if (whence == AVSEEK_SIZE) {
+        return -1;  // 流式解码未知总大小
+    }
+    // 流式解码不支持 seek
+    return AVERROR(ENOSYS);
+}
+
+static bool initStreamIO(AVFormatContext* formatCtx, AVIOContext** avioCtx,
+                          unsigned char** avioBuffer, StreamContext* streamCtx) {
+    const int bufferSize = 8192;
+    *avioBuffer = static_cast<unsigned char*>(av_malloc(bufferSize));
+    if (!*avioBuffer) {
+        LOGE("Failed to allocate AVIO buffer for stream");
+        return false;
+    }
+
+    *avioCtx = avio_alloc_context(*avioBuffer, bufferSize, 0, streamCtx,
+                                   streamRead, nullptr, streamSeek);
+    if (!*avioCtx) {
+        LOGE("Failed to allocate AVIO context for stream");
+        av_free(*avioBuffer);
+        *avioBuffer = nullptr;
+        return false;
+    }
+
+    formatCtx->pb = *avioCtx;
+    return true;
 }
 
 FFmpegDecoder::FFmpegDecoder() = default;
@@ -213,6 +250,76 @@ bool FFmpegDecoder::openFromFd(int fd, int64_t offset, int64_t length) {
     isOpen_ = true;
     LOGI("Opened fd: %d (offset=%lld, length=%lld), sample rate: %d, channels: %d", 
          fd, (long long)offset, (long long)length,
+         codecCtx_->sample_rate, codecCtx_->ch_layout.nb_channels);
+    
+    return true;
+}
+
+bool FFmpegDecoder::openFromStream(StreamContext* streamCtx) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    
+    if (isOpen_) {
+        close();
+    }
+
+    if (!streamCtx) {
+        LOGE("Null stream context");
+        return false;
+    }
+
+    useStream_ = true;
+    streamCtx_ = streamCtx;
+
+    formatCtx_ = avformat_alloc_context();
+    if (!formatCtx_) {
+        LOGE("Failed to allocate format context");
+        return false;
+    }
+
+    if (!initStreamIO(formatCtx_, &avioCtx_, &avioBuffer_, streamCtx)) {
+        cleanup();
+        return false;
+    }
+
+    int ret = avformat_open_input(&formatCtx_, "", nullptr, nullptr);
+    if (ret != 0) {
+        char errBuf[256];
+        av_strerror(ret, errBuf, sizeof(errBuf));
+        LOGE("Failed to open stream: %s", errBuf);
+        cleanup();
+        return false;
+    }
+
+    ret = avformat_find_stream_info(formatCtx_, nullptr);
+    if (ret < 0) {
+        char errBuf[256];
+        av_strerror(ret, errBuf, sizeof(errBuf));
+        LOGE("Failed to find stream info: %s", errBuf);
+        cleanup();
+        return false;
+    }
+
+    audioStreamIndex_ = -1;
+    for (unsigned int i = 0; i < formatCtx_->nb_streams; i++) {
+        if (formatCtx_->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+            audioStreamIndex_ = i;
+            break;
+        }
+    }
+
+    if (audioStreamIndex_ == -1) {
+        LOGE("No audio stream found");
+        cleanup();
+        return false;
+    }
+
+    if (!initDecoder()) {
+        cleanup();
+        return false;
+    }
+
+    isOpen_ = true;
+    LOGI("Opened stream, sample rate: %d, channels: %d", 
          codecCtx_->sample_rate, codecCtx_->ch_layout.nb_channels);
     
     return true;
@@ -351,10 +458,16 @@ void FFmpegDecoder::cleanup() {
     audioStreamIndex_ = -1;
     isOpen_ = false;
     useFd_ = false;
+    useStream_ = false;
+    streamCtx_ = nullptr;
 }
 
 bool FFmpegDecoder::isOpen() const {
     return isOpen_;
+}
+
+bool FFmpegDecoder::isStreamActive() const {
+    return useStream_ && streamCtx_ && !streamCtx_->isComplete();
 }
 
 AudioInfo FFmpegDecoder::getAudioInfo() const {
@@ -463,7 +576,7 @@ bool FFmpegDecoder::decodeAll(DecodedAudio& output) {
         output.durationMs = (int64_t)(totalSamples * 1000.0 / output.sampleRate);
     }
 
-    LOGI("Decoded %zu samples, duration: %ld ms", output.samples.size(), output.durationMs);
+    LOGI("Decoded %zu samples, duration: %" PRId64 " ms", output.samples.size(), output.durationMs);
     return success;
 }
 

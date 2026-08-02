@@ -1,5 +1,8 @@
 package com.bicy.whitenoise.audio
 
+import com.bicy.whitenoise.service.AnomalyType
+import com.bicy.whitenoise.service.MemoryLockService
+
 object OboeAudioEngine {
     
     init {
@@ -9,7 +12,12 @@ object OboeAudioEngine {
     }
     
     fun init(): Boolean {
-        return nativeInit()
+        return try {
+            nativeInit()
+        } catch (e: Exception) {
+            MemoryLockService.reportAnomaly(AnomalyType.AUDIO_PLAYER_ERROR, "Oboe引擎初始化失败", e.stackTraceToString())
+            false
+        }
     }
     
     fun warmup() {
@@ -18,6 +26,12 @@ object OboeAudioEngine {
     
     fun release() {
         nativeRelease()
+    }
+
+    // P2-7: 轻量重建音频流（保留已加载的 tracks）
+    // 用于 onErrorAfterClose 后的优雅恢复，避免全量 release+init 重新加载文件
+    fun recreateStream(): Boolean {
+        return nativeRecreateStream()
     }
     
     fun loadSound(soundId: String, filePath: String): Int {
@@ -123,6 +137,22 @@ object OboeAudioEngine {
     fun setCreativeEffectIntensity(soundId: String, effectType: Int, intensity: Float) {
         nativeSetCreativeEffectIntensity(soundId, effectType, intensity)
     }
+
+    /**
+     * 设置播放速率（独立于音调），由 SoundTouch 实时 time-stretch 实现。
+     * @param speed 1.0=原速，0.5=半速，2.0=倍速（范围 0.25~4.0）
+     */
+    fun setPlaybackSpeed(soundId: String, speed: Float) {
+        nativeSetPlaybackSpeed(soundId, speed)
+    }
+
+    /**
+     * 设置音调偏移（独立于速率），由 SoundTouch 实时 pitch-shift 实现。
+     * @param semitones 半音数，0=原调，+12=高八度，-12=低八度（范围 -24~+24）
+     */
+    fun setPitchShift(soundId: String, semitones: Float) {
+        nativeSetPitchShift(soundId, semitones)
+    }
     
     fun seekTo(soundId: String, positionMs: Long) {
         nativeSeekTo(soundId, positionMs)
@@ -150,6 +180,26 @@ object OboeAudioEngine {
     
     fun clearRestartFlag() {
         nativeClearRestartFlag()
+    }
+    
+    fun getXRunCount(): Int {
+        return nativeGetXRunCount()
+    }
+    
+    fun hasUnderrun(): Boolean {
+        return nativeHasUnderrun()
+    }
+    
+    fun clearUnderrunFlag() {
+        nativeClearUnderrunFlag()
+    }
+    
+    fun setEqualizerCurve(soundId: String, frequencies: FloatArray, gains: FloatArray, filterTypes: IntArray, qValues: FloatArray, curveIns: IntArray, curveOuts: IntArray) {
+        nativeSetEqualizerCurve(soundId, frequencies, gains, filterTypes, qValues, curveIns, curveOuts)
+    }
+    
+    fun getFilterResponse(soundId: String, frequency: Float): Float {
+        return nativeGetFilterResponse(soundId, frequency)
     }
     
     fun setEqBandGain(soundId: String, bandIndex: Int, gain: Float) {
@@ -225,10 +275,6 @@ object OboeAudioEngine {
         nativeSetAutoEqMaxCut(soundId, db)
     }
     
-    fun setAutoEqSmoothing(soundId: String, s: Float) {
-        nativeSetAutoEqSmoothing(soundId, s)
-    }
-    
     fun setAutoEqBrightnessTarget(soundId: String, db: Float) {
         nativeSetAutoEqBrightnessTarget(soundId, db)
     }
@@ -260,9 +306,30 @@ object OboeAudioEngine {
     fun setAutoEqHysteresis(soundId: String, db: Float) {
         nativeSetAutoEqHysteresis(soundId, db)
     }
+    
+    fun setAutoEqBandCount(soundId: String, count: Int) {
+        nativeSetAutoEqBandCount(soundId, count)
+    }
+    
+    fun setAutoEqBandRatios(soundId: String, low: Float, mid: Float) {
+        nativeSetAutoEqBandRatios(soundId, low, mid)
+    }
 
     fun setSpeakerPreset(soundId: String, preset: String) {
         nativeSetSpeakerPreset(soundId, preset)
+    }
+
+    // Per-filter overrides (user-editable gain / frequency / Q for each AutoEQ band)
+    fun setAutoEqFilterOverride(soundId: String, bandIndex: Int, gainDb: Float, freqHz: Float, q: Float) {
+        nativeSetAutoEqFilterOverride(soundId, bandIndex, gainDb, freqHz, q)
+    }
+
+    fun clearAutoEqFilterOverride(soundId: String, bandIndex: Int) {
+        nativeClearAutoEqFilterOverride(soundId, bandIndex)
+    }
+
+    fun clearAllAutoEqFilterOverrides(soundId: String) {
+        nativeClearAllAutoEqFilterOverrides(soundId)
     }
     
     fun getHybridEqProgress(soundId: String): Int {
@@ -281,6 +348,10 @@ object OboeAudioEngine {
         return nativeGetAutoEqGains(soundId)
     }
     
+    fun getAutoEqFrequencies(soundId: String): FloatArray {
+        return nativeGetAutoEqFrequencies(soundId)
+    }
+    
     fun setSpatialEnabled(soundId: String, enabled: Boolean) {
         nativeSetSpatialEnabled(soundId, enabled)
     }
@@ -297,12 +368,25 @@ object OboeAudioEngine {
         nativeSetSpatialFixedOffset(soundId, leftRight, upDown, frontBack, multiplier)
     }
     
-    fun setSpatialSurroundParams(soundId: String, mode: Int, radius: Float, speed: Float) {
-        nativeSetSpatialSurroundParams(soundId, mode, radius, speed)
+    fun setSpatialSurroundParams(soundId: String, mode: Int, radius: Float, periodSeconds: Float) {
+        nativeSetSpatialSurroundParams(soundId, mode, radius, periodSeconds)
     }
     
     fun setSpatialRandomParams(soundId: String, maxDistance: Float, minDistance: Float, randomValue: Float, speed: Float) {
         nativeSetSpatialRandomParams(soundId, maxDistance, minDistance, randomValue, speed)
+    }
+    
+    fun setSpatialScatterParams(
+        soundId: String,
+        minRadius: Float, maxRadius: Float,
+        xEnabled: Boolean, yEnabled: Boolean, zEnabled: Boolean,
+        moveEnabled: Boolean, moveRandomValue: Float, moveSpeed: Float, directionRandom: Float
+    ) {
+        nativeSetSpatialScatterParams(
+            soundId, minRadius, maxRadius,
+            xEnabled, yEnabled, zEnabled,
+            moveEnabled, moveRandomValue, moveSpeed, directionRandom
+        )
     }
     
     fun setFadeDuration(soundId: String, durationSeconds: Float) {
@@ -381,6 +465,7 @@ object OboeAudioEngine {
     private external fun nativeInit(): Boolean
     private external fun nativeWarmup()
     private external fun nativeRelease()
+    private external fun nativeRecreateStream(): Boolean
     private external fun nativeLoadSound(soundId: String, filePath: String): Int
     private external fun nativeLoadSoundFromFd(soundId: String, fd: Int, offset: Long, length: Long, filePath: String): Int
     private external fun nativeUnloadSound(soundId: String)
@@ -407,6 +492,8 @@ object OboeAudioEngine {
     private external fun nativeSetHighpassCutoff(soundId: String, cutoff: Float)
     private external fun nativeSetEarlyReflectionLevel(soundId: String, level: Float)
     private external fun nativeSetCreativeEffectIntensity(soundId: String, effectType: Int, intensity: Float)
+    private external fun nativeSetPlaybackSpeed(soundId: String, speed: Float)
+    private external fun nativeSetPitchShift(soundId: String, semitones: Float)
     private external fun nativeSeekTo(soundId: String, positionMs: Long)
     private external fun nativeGetPosition(soundId: String): Long
     private external fun nativeGetDuration(soundId: String): Long
@@ -414,6 +501,11 @@ object OboeAudioEngine {
     private external fun nativeIsLooping(soundId: String): Boolean
     private external fun nativeNeedsRestart(): Boolean
     private external fun nativeClearRestartFlag()
+    private external fun nativeGetXRunCount(): Int
+    private external fun nativeHasUnderrun(): Boolean
+    private external fun nativeClearUnderrunFlag()
+    private external fun nativeSetEqualizerCurve(soundId: String, frequencies: FloatArray, gains: FloatArray, filterTypes: IntArray, qValues: FloatArray, curveIns: IntArray, curveOuts: IntArray)
+    private external fun nativeGetFilterResponse(soundId: String, frequency: Float): Float
     private external fun nativeSetEqBandGain(soundId: String, bandIndex: Int, gain: Float)
     private external fun nativeGetEqBandGain(soundId: String, bandIndex: Int): Float
     private external fun nativeSetEqEnabled(soundId: String, enabled: Boolean)
@@ -430,7 +522,6 @@ object OboeAudioEngine {
     private external fun nativeSetAutoEqResponseSpeed(soundId: String, speed: String)
     private external fun nativeSetAutoEqMaxBoost(soundId: String, db: Float)
     private external fun nativeSetAutoEqMaxCut(soundId: String, db: Float)
-    private external fun nativeSetAutoEqSmoothing(soundId: String, s: Float)
     private external fun nativeSetAutoEqBrightnessTarget(soundId: String, db: Float)
     private external fun nativeSetAutoEqLoudnessTarget(soundId: String, db: Float)
     private external fun nativeSetAutoEqDynamicQEnabled(soundId: String, enabled: Boolean)
@@ -439,17 +530,29 @@ object OboeAudioEngine {
     private external fun nativeSetAutoEqMaxSlope(soundId: String, slope: Float)
     private external fun nativeSetAutoEqCouplingCoeff(soundId: String, coeff: Float)
     private external fun nativeSetAutoEqHysteresis(soundId: String, db: Float)
+    private external fun nativeSetAutoEqBandCount(soundId: String, count: Int)
+    private external fun nativeSetAutoEqBandRatios(soundId: String, low: Float, mid: Float)
     private external fun nativeSetSpeakerPreset(soundId: String, preset: String)
+    private external fun nativeSetAutoEqFilterOverride(soundId: String, bandIndex: Int, gainDb: Float, freqHz: Float, q: Float)
+    private external fun nativeClearAutoEqFilterOverride(soundId: String, bandIndex: Int)
+    private external fun nativeClearAllAutoEqFilterOverrides(soundId: String)
     private external fun nativeGetHybridEqProgress(soundId: String): Int
     private external fun nativeIsHybridEqAnalyzing(soundId: String): Boolean
     private external fun nativeHasHybridEqCurve(soundId: String): Boolean
     private external fun nativeGetAutoEqGains(soundId: String): FloatArray
+    private external fun nativeGetAutoEqFrequencies(soundId: String): FloatArray
     private external fun nativeSetSpatialEnabled(soundId: String, enabled: Boolean)
     private external fun nativeSetSpatialIntensity(soundId: String, intensity: Float)
     private external fun nativeSetSpatialOffsetType(soundId: String, type: Int)
     private external fun nativeSetSpatialFixedOffset(soundId: String, leftRight: Float, upDown: Float, frontBack: Float, multiplier: Float)
-    private external fun nativeSetSpatialSurroundParams(soundId: String, mode: Int, radius: Float, speed: Float)
+    private external fun nativeSetSpatialSurroundParams(soundId: String, mode: Int, radius: Float, periodSeconds: Float)
     private external fun nativeSetSpatialRandomParams(soundId: String, maxDistance: Float, minDistance: Float, randomValue: Float, speed: Float)
+    private external fun nativeSetSpatialScatterParams(
+        soundId: String,
+        minRadius: Float, maxRadius: Float,
+        xEnabled: Boolean, yEnabled: Boolean, zEnabled: Boolean,
+        moveEnabled: Boolean, moveRandomValue: Float, moveSpeed: Float, directionRandom: Float
+    )
     private external fun nativeSetFadeDuration(soundId: String, durationSeconds: Float)
     private external fun nativeIsFadingOut(soundId: String): Boolean
     private external fun nativeCancelFadeOut(soundId: String)
@@ -490,4 +593,43 @@ object OboeAudioEngine {
     private external fun nativeSetLimitEffectsEnabled(soundId: String, enabled: Boolean)
     private external fun nativeSetLimitReverbEnabled(soundId: String, enabled: Boolean)
     private external fun nativeSetLimitSpatialEnabled(soundId: String, enabled: Boolean)
+    
+    // ======================== 流式解码 ========================
+    
+    /** 创建流缓存 */
+    fun createStream(streamId: String, bufferSize: Int = 0): Boolean {
+        return nativeCreateStream(streamId, bufferSize)
+    }
+    
+    /** 从流加载音频 */
+    fun loadSoundFromStream(soundId: String, streamId: String): Int {
+        return nativeLoadSoundFromStream(soundId, streamId)
+    }
+    
+    /** 写入数据到流缓存 */
+    fun writeStreamData(streamId: String, data: ByteArray): Int {
+        return nativeWriteStreamData(streamId, data)
+    }
+    
+    /** 标记流数据下载完成 */
+    fun setStreamComplete(streamId: String) {
+        nativeSetStreamComplete(streamId)
+    }
+    
+    /** 销毁流缓存 */
+    fun destroyStream(streamId: String) {
+        nativeDestroyStream(streamId)
+    }
+    
+    /** 检查流是否存在 */
+    fun hasStream(streamId: String): Boolean {
+        return nativeHasStream(streamId)
+    }
+    
+    private external fun nativeCreateStream(streamId: String, bufferSize: Int): Boolean
+    private external fun nativeLoadSoundFromStream(soundId: String, streamId: String): Int
+    private external fun nativeWriteStreamData(streamId: String, data: ByteArray): Int
+    private external fun nativeSetStreamComplete(streamId: String)
+    private external fun nativeDestroyStream(streamId: String)
+    private external fun nativeHasStream(streamId: String): Boolean
 }

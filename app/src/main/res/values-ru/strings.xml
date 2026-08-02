@@ -52,6 +52,7 @@
     <string name="text_color">Цвет текста</string>
     <string name="log_recording">Запись логов</string>
     <string name="about_app">О приложении</string>
+    <string name="github_repository">Репозиторий GitHub</string>
     
     <string name="scattered_sound_library">Библиотека разбросанных звуков</string>
     <string name="select_random_sound_group">Выберите случайную группу звуков для воспроизведения</string>
@@ -74,34 +75,13 @@
     <string name="delete">Удалить</string>
     
     <string name="donate_support">Поддержать пожертвованием</string>
-    <string name="unlock_premium">Разблокировать премиум</string>
-    <string name="thank_you_premium">Спасибо за использование премиум!\n\nЕсли вам нравится приложение, вы можете отсканировать QR-код для пожертвования и поддержки разработчика.</string>
+    <string name="donate_encourage">Если вам нравится приложение, вы можете отсканировать QR-код и поддержать разработчика.</string>
     <string name="wechat_pay">WeChat Pay</string>
     <string name="alipay">Alipay</string>
-    <string name="unlock_premium_hint">Разблокируйте премиум всего за 10 юаней и наслаждайтесь дополнительными функциями:</string>
-    <string name="feature">Функция</string>
-    <string name="normal_version">Обычная</string>
-    <string name="premium_version">Премиум</string>
     <string name="music_player">Музыкальный плеер</string>
-    <string name="basic_playback">Базовый</string>
-    <string name="full_feature">✓ Полный</string>
-    <string name="sound_quality_adjust">Настройка качества звука</string>
-    <string name="basic_adjust">Базовый</string>
-    <string name="sound_classification">Классификация звуков</string>
-    <string name="preset_classification">Пресет</string>
-    <string name="spatial_audio">Пространственное аудио</string>
-    <string name="basic_function">Базовая</string>
-    <string name="import_sounds">Импорт звуков</string>
-    <string name="not_supported">Не поддерживается</string>
-    <string name="custom_classification">Пользовательская классификация</string>
-    <string name="weekly_usage_limit">Недельный лимит</string>
-    <string name="go_to_payment">Перейти к оплате</string>
-    
-    <string name="thank_you_support">Спасибо за вашу поддержку</string>
-    <string name="thank_you_message">Я получил вашу доброту, оставьте эти деньги на чашку чая с молоком~</string>
-    <string name="thank_you_hint">Если у вас есть возможность, вы можете поддержать разработчика пожертвованием в настройках. Конечно, вы также можете поддержать авторов белого шума.</string>
-    <string name="continue_">Продолжить</string>
-    
+    <string name="stereo_widener">Расширитель стерео</string>
+    <string name="virtual_bass">Виртуальный бас</string>
+    <string name="multiband_compressor">Многополосный компрессор</string>
     <string name="app_icon">Иконка приложения</string>
     <string name="open_source_license">Лицензия open source</string>
     <string name="sound_source_credit">Благодарность источнику звуков</string>
@@ -126,7 +106,6 @@
     <string name="create_new_track">Создать новый трек</string>
     
     <string name="more_adjustments">Больше настроек</string>
-    <string name="premium_exclusive_feature">Премиум-функция</string>
     <string name="preset">Пресет</string>
     <string name="limiter">Лимитер</string>
     <string name="flat">Плоский</string>
@@ -139,8 +118,7 @@
     <string name="duration">Длительность</string>
     <string name="date_added">Дата добавления</string>
     
-    <string name="music_player_premium_feature">Музыкальный плеер - премиум-функция</string>
-    <string name="please_unlock_premium">Пожалуйста, разблокируйте премиум</string>
+
     
     <string name="hours">Часы</string>
     <string name="minutes">Минуты</string>
@@ -183,13 +161,41 @@
     
     <string name="shining_star">Сияющая звезда</string>
     <string name="dim_stardust">Тусклая звёздная пыль</string>
-    <string name="premium_user">Премиум-пользователь</string>
-    <string name="free_user">Бесплатный пользователь</string>
     <string name="donate_author">Пожертвовать автору</string>
     
     <string name="please_add_music_directory">Пожалуйста, сначала добавьте музыкальную папку</string>
     
     <string name="personalization">Персонализация</string>
+    <string name="liquid_glass_mode">Эффект жидкого стекла</string>
+    <string name="liquid_glass_off">Выкл</string>
+    <string name="liquid_glass_compatible">Совместимый</string>
+    <string name="liquid_glass_perfect">Идеальный</string>
+    <string name="nav_background_image">Фоновое изображение</string>
+    <string name="nav_background_image_set">Установлено (Нажмите для удаления)</string>
+    <string name="nav_background_image_none">Не установлено</string>
+    <string name="nav_background_alpha">Прозрачность цвета фона</string>
+    <string name="rendering_experimental">Рендеринг (Эксперимент.)</string>
+    <string name="glass_adjust_params">Настройка параметров</string>
+    <string name="glass_blur_strength">Сила размытия</string>
+    <string name="glass_scale_effect">Эффект линзы</string>
+    <string name="glass_center_distortion">Центральное искажение</string>
+    <string name="glass_edge_darkness">Затемнение краёв</string>
+    <string name="glass_edge_warp">Искривление краёв</string>
+    <string name="glass_shadow_height">Высота тени</string>
+    <string name="glass_compat_opacity">Прозрачность</string>
+    <string name="glass_compat_darkness">Затемнение краёв</string>
+    <string name="glass_compat_scale">Эффект масштаба</string>
+    <string name="glass_scope">Область применения</string>
+    <string name="glass_scope_bottom_nav">Нижняя панель навигации</string>
+    <string name="glass_scope_top_bar">Верхняя панель</string>
+    <string name="glass_scope_all">Всё</string>
+    <string name="frosted_glass">Матовое стекло</string>
+    <string name="frosted_glass_enable">Включить матовое стекло</string>
+    <string name="frosted_blur">Интенсивность размытия</string>
+    <string name="frosted_darkness">Затемнение</string>
+    <string name="frosted_scope_sections">Сворачиваемые секции</string>
+    <string name="frosted_scope_cards">Карточки</string>
+    <string name="frosted_scope_dialogs">Диалоги</string>
     <string name="viz_wn_sensitivity">Чувствительность визуализации белого шума</string>
     <string name="viz_music_sensitivity">Чувствительность визуализации музыки</string>
     <string name="viz_flash_sensitivity">Чувствительность вспышки музыки</string>
@@ -301,6 +307,12 @@
     <string name="name">Имя</string>
     <string name="enter_group_name">Введите имя группы</string>
     
+    <string name="go_to_sound_library">Перейти в библиотеку звуков</string>
+    <string name="unsaved_changes">Несохраненные изменения</string>
+    <string name="unsaved_changes_hint">У вас есть несохраненные изменения. Хотите сохранить перед выходом?</string>
+    <string name="save_and_continue">Сохранить и продолжить</string>
+    <string name="discard_changes">Отменить изменения</string>
+    
     <string name="spatial_scatter_warning">Как обработка смещения звука, при использовании могут возникать заикания</string>
     <string name="axis_x">Ось X (Влево/Вправо)</string>
     <string name="axis_y">Ось Y (Высота)</string>
@@ -386,6 +398,9 @@
     <string name="spatial_min_distance">Min Distance</string>
     <string name="volume">Volume</string>
     <string name="speed">Speed</string>
+    <string name="speed_adjust_title">Настройка скорости</string>
+    <string name="effect_order_title">Порядок обработки</string>
+    <string name="effect_order_desc">Настройка приоритета обработки аудиоэффектов</string>
     <string name="limit_effects">Limit Quality Effects</string>
     <string name="audio_effect_config">Audio Effect Config</string>
     <string name="quality_effect_title">Quality Effect</string>
@@ -418,7 +433,24 @@
     <string name="no_scattered_track">No scattered tracks\nPlease create a scattered track first</string>
     <string name="auto_eq_assist">Auto EQ Assist</string>
     <string name="spatial_scatter_range">Spatial Scatter Range</string>
+    <string name="random_radius">Случайный радиус</string>
+    <string name="axis_range">Диапазон осей</string>
+    <string name="dynamic_move">Динамическое движение</string>
+    <string name="move_random_value">Случайное движение</string>
+    <string name="direction_random_value">Случайное направление</string>
+    <string name="distance_range">Диапазон расстояния</string>
+    <string name="random_smoothness">Случайная плавность</string>
+    <string name="move_speed">Скорость движения</string>
     <string name="test">Test</string>
+    <string name="speaker_preset_title">Пресет динамика</string>
+    <string name="speaker_preset_phone">Динамик телефона</string>
+    <string name="speaker_preset_earphone">Наушники</string>
+    <string name="speaker_preset_bluetooth">Bluetooth-динамик</string>
+    <string name="speaker_preset_car">Автомобильное аудио</string>
+    <string name="speaker_preset_flat">Плоский (без компенсации)</string>
+    <string name="speaker_compensation_intensity">Интенсивность компенсации</string>
+    <string name="speaker_compensation_desc">Статическая кривая компенсации динамика: применяет предопределённые усиления EQ для компенсации недостатков частотной характеристики динамика.</string>
+    <string name="sync_compensation_to_manual_eq">Синхронизировать компенсацию с ручным EQ</string>
     <string name="timer">Timer</string>
     <string name="spatial_offset_title">Spatial Offset</string>
     <string name="spatial_offset_distance">Offset Distance</string>
@@ -432,4 +464,172 @@
     <string name="tone">Tone</string>
     <string name="delete_sound_hint">Are you sure you want to delete this sound? This action cannot be undone.</string>
     <string name="eq_preset_v_shape">V Shape</string>
+
+    <!-- Playlist Operations -->
+    <string name="more_options">Дополнительные параметры</string>
+    <string name="add_to_playlist">Добавить в плейлист</string>
+    <string name="remove_from_playlist">Удалить из плейлиста</string>
+    <string name="add_to_favorites">Добавить в избранное</string>
+    <string name="remove_from_favorites">Удалить из избранного</string>
+    <string name="delete_playlist">Удалить плейлист</string>
+    <string name="rename_playlist">Переименовать плейлист</string>
+    <string name="delete_playlist_confirm">Удалить плейлист \"%1$s\"?</string>
+    <string name="playlist_deleted">Плейлист удалён</string>
+    <string name="playlist_renamed">Плейлист переименован</string>
+    <string name="select_target_playlist">Выберите плейлист</string>
+    <string name="track_added">Добавлено в плейлист</string>
+    <string name="track_removed">Удалено из плейлиста</string>
+
+    <!-- App Statistics -->
+    <string name="app_statistics">Статистика приложения</string>
+    <string name="total_used_days">Всего дней использования</string>
+    <string name="total_run_duration">Общее время работы</string>
+    <string name="total_white_noise_duration">Общее время белого шума</string>
+    <string name="total_music_duration">Общее время музыки</string>
+    <string name="total_timer_duration">Общее время таймера</string>
+    <string name="today_stats">Статистика сегодня</string>
+    <string name="today_white_noise">Белый шум сегодня</string>
+    <string name="today_music">Музыка сегодня</string>
+    <string name="today_timer">Таймер сегодня</string>
+    <string name="history_stats">История статистики</string>
+    <string name="view_history">Просмотреть историю</string>
+    <string name="total_timer_starts">Всего запусков таймера</string>
+    <string name="days_unit">дней</string>
+    <string name="times_unit">раз</string>
+    <string name="no_history_data">Нет исторических данных</string>
+    <string name="history_dialog_title">История использования (последние 14 дней)</string>
+    <string name="view">Просмотр</string>
+
+    <!-- Floating Pet -->
+    <string name="floating_pet">Плавающий питомец</string>
+    <string name="switch_floating_pet">Сменить питомца</string>
+    <string name="floating_pet_size">Размер</string>
+    <string name="floating_pet_antialias">Сглаживание</string>
+    <string name="floating_pet_hide_delay">Задержка скрытия (сек)</string>
+    <string name="select_floating_pet">Выбрать питомца</string>
+    
+    <!-- AI -->
+    <string name="ai">ИИ</string>
+    <string name="ai_base_url">Базовый URL API</string>
+    <string name="ai_api_key">Ключ API</string>
+    <string name="ai_model">Модель</string>
+    <string name="ai_max_tokens">Макс. токенов</string>
+    <string name="ai_max_tool_calls">Макс. вызовов инструментов</string>
+    <string name="ai_system_prompt">Системный промпт</string>
+    <string name="ai_system_prompt_default">Вы ИИ-ассистент плеера белого шума и музыки. Вы можете общаться и вызывать инструменты для предоставления услуг в приложении.</string>
+    <string name="ai_enabled">Включить ИИ</string>
+    <string name="ai_temperature">Температура</string>
+    <string name="ai_enable_thinking">Включить размышление</string>
+    <string name="ai_test_connection">Проверить соединение</string>
+    <string name="ai_connection_success">Соединение успешно</string>
+    <string name="ai_connection_failed">Ошибка подключения: %1$s</string>
+    <string name="ai_not_configured">Сначала настройте API</string>
+    
+    <!-- Floating Pet additional -->
+    <string name="floating_pet_alpha">Прозрачность</string>
+    <string name="floating_pet_hidden_alpha">Прозрачность (скрыто)</string>
+    <string name="floating_pet_window_mode">Режим плавающего окна</string>
+    
+    <!-- Floating Window -->
+    <string name="floating_window_wn_play">Белый шум</string>
+    <string name="floating_window_music_prev">Предыдущий</string>
+    <string name="floating_window_music_play">Пауза/Play</string>
+    <string name="floating_window_music_next">Следующий</string>
+    <string name="floating_window_chat_hint">Введите сообщение...</string>
+    
+    <!-- AI Chat -->
+    <string name="ai_chat">AI Чат</string>
+    <string name="ai_history">История</string>
+    <string name="ai_welcome">Чем я могу помочь?</string>
+    <string name="ai_input_hint">Введите сообщение...</string>
+    <string name="ai_send">Отправить</string>
+    <string name="ai_token_total">Использование токенов</string>
+    <string name="ai_clear_chat">Очистить чат</string>
+    <string name="ai_loading">Обработка…</string>
+    <string name="ai_thinking">Размышление</string>
+    <string name="ai_dismiss">Закрыть</string>
+    
+    <!-- Data Migration -->
+    <string name="migration_title">Миграция данных</string>
+    <string name="migration_subtitle">Обнаружены старые данные</string>
+    <string name="migration_button">Мигрировать</string>
+    <string name="migration_message">Обнаружены данные старой версии. Нажмите ОК для миграции, приложение перезапустится после завершения.</string>
+    <string name="migration_in_progress">Миграция…</string>
+    <string name="migration_complete">Миграция завершена</string>
+    <string name="migration_failed">Миграция не удалась</string>
+    <string name="migration_failed_message">Произошла ошибка. Попробуйте позже.</string>
+    <string name="migration_restarting">Перезапуск…</string>
+
+    <!-- Theme Mode -->
+    <string name="theme_mode">Режим темы</string>
+    <string name="theme_mode_title">Выбрать режим темы</string>
+    <string name="theme_mode_off">Выключено</string>
+    <string name="theme_mode_off_desc">Всегда использовать один цвет темы</string>
+    <string name="theme_mode_follow_system">Следовать системе</string>
+    <string name="theme_mode_follow_system_desc">Автоматически переключаться между дневными/ночными темами на основе настроек системы</string>
+    <string name="theme_mode_scheduled">По расписанию</string>
+    <string name="theme_mode_scheduled_desc">Автоматически переключать темы по заданному расписанию</string>
+
+    <!-- Day/Night Theme -->
+    <string name="day_theme">Дневная тема</string>
+    <string name="night_theme">Ночная тема</string>
+
+    <!-- Scheduled Theme -->
+    <string name="schedule_config">Настройка расписания</string>
+    <string name="schedule_default_theme">Тема по умолчанию</string>
+    <string name="schedule_default_theme_desc">Тема, когда нет подходящего расписания</string>
+    <string name="schedule_tasks">Задания по расписанию</string>
+    <string name="schedule_no_tasks">Нет заданий по расписанию</string>
+    <string name="schedule_add_task">Добавить задание</string>
+    <string name="schedule_task_time">Временной диапазон</string>
+    <string name="schedule_task_theme">Тема</string>
+
+    <!-- Add Schedule Task -->
+    <string name="add_schedule_task">Добавить задание по расписанию</string>
+    <string name="schedule_start_time">Время начала</string>
+    <string name="schedule_end_time">Время окончания</string>
+    <string name="schedule_select_theme">Выбрать цвет темы</string>
+    <string name="schedule_task_name">Название задания (Опционально)</string>
+    <string name="schedule_time_conflict">Конфликт времени</string>
+    <string name="schedule_time_conflict_desc">Временной диапазон конфликтует с существующим заданием, пожалуйста, скорректируйте</string>
+    <string name="schedule_cross_day">Пересечение дня</string>
+    <string name="schedule_cross_day_desc">Время окончания раньше времени начала (например: ночь до утра)</string>
+
+    <!-- Custom Theme -->
+    <string name="create_custom_theme">Создать пользовательскую тему</string>
+    <string name="custom_theme_name">Название темы</string>
+    <string name="custom_theme_name_hint">Введите уникальное название темы</string>
+    <string name="custom_theme_name_exists">Название темы уже существует</string>
+    <string name="custom_theme_colors">Настройка цветов</string>
+    <string name="custom_theme_preview">Предпросмотр</string>
+    <string name="delete_custom_theme">Удалить пользовательскую тему</string>
+    <string name="delete_custom_theme_confirm">Удалить пользовательскую тему \"%1$s\"?</string>
+    <string name="edit_custom_theme">Редактировать пользовательскую тему</string>
+
+    <!-- Theme Color Dialog -->
+    <string name="theme_color_presets">Пресеты</string>
+    <string name="theme_color_custom_library">Пользовательская библиотека</string>
+    <string name="theme_color_create_button">Создать новую</string>
+    <!-- Search & Script -->
+    <string name="search">Поиск</string>
+    <string name="sort">Сортировка</string>
+    <string name="retry">Повторить</string>
+    <string name="online_music">Онлайн</string>
+    <string name="search_online_music">Искать музыку онлайн</string>
+    <string name="search_channel">Канал поиска</string>
+    <string name="search_channel_all">Все</string>
+    <string name="search_channel_wy">NetEase</string>
+    <string name="search_channel_kg">Kugou</string>
+    <string name="search_channel_tx">QQ Music</string>
+    <string name="search_channel_kw">Kuwo</string>
+    <string name="search_channel_mg">Migu</string>
+    <string name="searching">Поиск...</string>
+    <string name="no_search_results">Нет результатов</string>
+    <string name="search_online_music_hint">Введите ключевые слова для поиска</string>
+    <string name="source_script_management">Управление источниками</string>
+    <string name="scripts_count">источников</string>
+    <string name="no_scripts">Нет источников</string>
+    <string name="import_script">Импорт источника</string>
+    <string name="script_imported">Источник успешно импортирован</string>
+    <string name="script_import_failed">Ошибка импорта источника</string>
 </resources>

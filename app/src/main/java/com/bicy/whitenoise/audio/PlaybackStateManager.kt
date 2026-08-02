@@ -7,6 +7,7 @@ import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStoragePart.SpatialAudio
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStoragePart.CreativeEffectConfig
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStoragePart.ScatteredAudioClipData
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStoragePart.SpatialScatterRangeData
+import com.bicy.whitenoise.utils.UsageStatsManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -85,6 +86,12 @@ object PlaybackStateManager {
         loadedSounds[soundId] = filePath
         volumeSettings[soundId] = config.volume
         WhiteNoiseStorage.addPlayingSound(configWithFilePath)
+        
+        // 如果这是第一个播放的声音，开始统计
+        if (playingStates.values.count { it } == 1) {
+            UsageStatsManager.onWhiteNoiseStart()
+        }
+        
         notifyListeners()
         Log.i(TAG, "Playing sound: $soundId, filePath=$filePath")
     }
@@ -95,6 +102,12 @@ object PlaybackStateManager {
         loadedSounds.remove(soundId)
         volumeSettings.remove(soundId)
         WhiteNoiseStorage.removePlayingSound(soundId)
+        
+        // 如果没有正在播放的声音，结束统计
+        if (playingStates.values.none { it }) {
+            UsageStatsManager.onWhiteNoiseStop()
+        }
+        
         notifyListeners()
         Log.i(TAG, "Stopped sound: $soundId")
     }
@@ -102,15 +115,28 @@ object PlaybackStateManager {
     fun pauseSound(soundId: String) {
         playingStates[soundId] = false
         WhiteNoiseStorage.setPlaybackPaused(true)
+        
+        // 如果所有声音都暂停了，结束统计
+        if (playingStates.values.none { it }) {
+            UsageStatsManager.onWhiteNoiseStop()
+        }
+        
         notifyListeners()
         Log.i(TAG, "Paused sound: $soundId")
     }
     
     fun resumeSound(soundId: String) {
+        val wasAllPaused = playingStates.values.none { it }
         playingStates[soundId] = true
         if (playingStates.values.any { it }) {
             WhiteNoiseStorage.setPlaybackPaused(false)
         }
+        
+        // 如果之前所有声音都暂停了，现在有声音播放，开始统计
+        if (wasAllPaused && playingStates.values.any { it }) {
+            UsageStatsManager.onWhiteNoiseStart()
+        }
+        
         notifyListeners()
         Log.i(TAG, "Resumed sound: $soundId")
     }
@@ -118,6 +144,7 @@ object PlaybackStateManager {
     fun pauseAll() {
         playingStates.keys.forEach { playingStates[it] = false }
         WhiteNoiseStorage.setPlaybackPaused(true)
+        UsageStatsManager.onWhiteNoiseStop()
         notifyListeners()
         Log.i(TAG, "Paused all sounds")
     }
@@ -125,6 +152,7 @@ object PlaybackStateManager {
     fun resumeAll() {
         playingStates.keys.forEach { playingStates[it] = true }
         WhiteNoiseStorage.setPlaybackPaused(false)
+        UsageStatsManager.onWhiteNoiseStart()
         notifyListeners()
         Log.i(TAG, "Resumed all sounds")
     }

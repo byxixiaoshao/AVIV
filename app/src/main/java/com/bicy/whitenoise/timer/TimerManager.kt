@@ -11,6 +11,7 @@ import com.bicy.whitenoise.music.MusicPlayerController
 import com.bicy.whitenoise.servies.MusicService
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStorage
 import com.bicy.whitenoise.utils.RingtoneManager
+import com.bicy.whitenoise.utils.UsageStatsManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -209,7 +210,7 @@ object TimerManager {
         return String.format(Locale.getDefault(), "%02d:%02d:%02d", h, m, s)
     }
     
-    fun startTimer() {
+    fun startTimer(isSnooze: Boolean = false) {
         if (totalMinutes == 0) return
         
         countDownTimer?.cancel()
@@ -217,6 +218,10 @@ object TimerManager {
         val totalMillis = totalMinutes * 60 * 1000L
         
         vibrateTimerStart()
+        
+        if (!isSnooze) {
+            UsageStatsManager.onTimerStart()
+        }
         
         countDownTimer = object : CountDownTimer(totalMillis, 1000) {
             override fun onTick(millisUntilFinished: Long) {
@@ -292,6 +297,7 @@ object TimerManager {
         countDownTimer = null
         isTimerRunning = false
         RingtoneManager.stopRingtone()
+        UsageStatsManager.onTimerStop()
         _timerState.value = _timerState.value.copy(isActive = false, remainingTime = 0L, isFinished = false)
     }
     
@@ -305,16 +311,18 @@ object TimerManager {
     
     fun snooze() {
         RingtoneManager.stopRingtone()
+        UsageStatsManager.onTimerStop(isSnooze = true)
         _timerState.value = _timerState.value.copy(isFinished = false)
         totalMinutes = snoozeMinutes
         hours = snoozeMinutes / 60
         minutes = snoozeMinutes % 60
-        startTimer()
+        startTimer(isSnooze = true)
     }
     
     fun dismissTimer() {
         RingtoneManager.stopRingtone()
-        _timerState.value = _timerState.value.copy(isFinished = false)
+        UsageStatsManager.onTimerStop(isSnooze = true)
+        _timerState.value = _timerState.value.copy(isActive = false, isFinished = false, remainingTime = 0L)
     }
     
     fun isRunning(): Boolean = isTimerRunning

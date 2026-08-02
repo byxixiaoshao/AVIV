@@ -1,193 +1,58 @@
 package com.bicy.whitenoise.storage.config
 
 import android.util.Log
-import com.bicy.whitenoise.storage.core.StorageManager
+import com.bicy.whitenoise.utils.AppInitializer
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.json.JSONArray
-import org.json.JSONObject
+import java.io.File
 import java.lang.ref.WeakReference
+import com.bicy.whitenoise.storage.config.ConfigStoragePart.*
 import java.util.concurrent.CopyOnWriteArrayList
-
-data class AppConfig(
-    val isPremium: Boolean = false,
-    val premiumPurchaseDate: Long? = null,
-    val premiumOrderId: String? = null,
-    val autoPlay: Boolean = true,
-    val themeMode: String = "follow_system",
-    val themeColorId: String = "default",
-    val customAccentColor: Int = -1,
-    val customPrimaryColor: Int = -1,
-    val customBackgroundColor: Int = -1,
-    val customTextColor: Int = -1,
-    val language: String = "zh_CN",
-    val logEnabled: Boolean = true,
-    val audioEffectOrder: List<String> = listOf("spatial", "reverb", "equalizer", "quality"),
-    val vizWnEnabled: Boolean = true,
-    val vizMusicEnabled: Boolean = true,
-    val vizFlashEnabled: Boolean = true,
-    val vizWnSensitivity: Int = 1,
-    val vizMusicSensitivity: Int = 1,
-    val vizFlashSensitivity: Int = 1,
-    val vizRefreshRate: Int = 1,
-    val mediaControlPriority: String = "smart",
-    val autoEqEnabled: Boolean = false,
-    val autoEqMode: String = "simple",
-    val autoEqIntensity: Float = 0.5f,
-    val autoEqBassBias: Float = 0f,
-    val autoEqMidBias: Float = 0f,
-    val autoEqTrebleBias: Float = 0f,
-    val autoEqTargetCurve: String = "flat",
-    val autoEqResponseSpeed: String = "medium",
-    val autoEqProAttack: Float = 100f,
-    val autoEqProRelease: Float = 200f,
-    val autoEqProMaxSlope: Float = 10f,
-    val autoEqProMaxBoost: Float = 12f,
-    val autoEqProMaxCut: Float = 12f,
-    val autoEqProSmoothing: Float = 0.7f,
-    val autoEqProBrightnessTarget: Float = 0f,
-    val autoEqProLoudnessTarget: Float = 0f,
-    val autoEqProCouplingCoeff: Float = 0.3f,
-    val autoEqProHysteresisDb: Float = 1f,
-    val autoEqProDynamicQEnabled: Boolean = true,
-    val autoEqSyncToManual: Boolean = false,
-    val speakerPreset: String = "phone"
-)
-
-data class CustomColors(
-    val accent: Int,
-    val primary: Int,
-    val background: Int,
-    val text: Int
-)
 
 object ConfigStorage {
     
     private const val TAG = "ConfigStorage"
-    private const val CONFIG_FILE = "config.json"
+    private const val CONFIG_FILE = "app_config.json"
+    private val gson = Gson()
     
+    private lateinit var configFile: File
     private val _config = MutableStateFlow(AppConfig())
     val config: StateFlow<AppConfig> = _config.asStateFlow()
     
     private val listeners = CopyOnWriteArrayList<WeakReference<() -> Unit>>()
     
     fun init() {
+        configFile = File(AppInitializer.getContext().filesDir, "json_storage/$CONFIG_FILE")
+        configFile.parentFile?.mkdirs()
         loadConfig()
         Log.d(TAG, "ConfigStorage initialized")
     }
     
     private fun loadConfig() {
-        val file = StorageManager.getFile("config", CONFIG_FILE) ?: return
-        val json = StorageManager.loadJson(file)
-        
-        if (json != null) {
-            val orderArray = json.optJSONArray("audioEffectOrder")
-            val audioEffectOrder = if (orderArray != null) {
-                (0 until orderArray.length()).map { orderArray.getString(it) }
-            } else {
-                listOf("spatial", "reverb", "equalizer", "quality")
+        try {
+            if (configFile.exists()) {
+                val config = gson.fromJson(configFile.readText(), AppConfig::class.java)
+                if (config != null) {
+                    _config.value = config
+                    Log.d(TAG, "Config loaded from JSON")
+                    return
+                }
             }
-            
-            _config.value = AppConfig(
-                isPremium = json.optBoolean("isPremium", false),
-                premiumPurchaseDate = if (json.has("premiumPurchaseDate")) json.optLong("premiumPurchaseDate") else null,
-                premiumOrderId = json.optString("premiumOrderId").takeIf { it.isNotEmpty() },
-                autoPlay = json.optBoolean("autoPlay", true),
-                themeMode = json.optString("themeMode", "follow_system"),
-                themeColorId = json.optString("themeColorId", "default"),
-                customAccentColor = json.optInt("customAccentColor", -1),
-                customPrimaryColor = json.optInt("customPrimaryColor", -1),
-                customBackgroundColor = json.optInt("customBackgroundColor", -1),
-                customTextColor = json.optInt("customTextColor", -1),
-                language = json.optString("language", "zh_CN"),
-                logEnabled = json.optBoolean("logEnabled", false),
-                audioEffectOrder = audioEffectOrder,
-                vizWnEnabled = json.optBoolean("vizWnEnabled", true),
-                vizMusicEnabled = json.optBoolean("vizMusicEnabled", true),
-                vizFlashEnabled = json.optBoolean("vizFlashEnabled", true),
-                vizWnSensitivity = json.optInt("vizWnSensitivity", 1),
-                vizMusicSensitivity = json.optInt("vizMusicSensitivity", 1),
-                vizFlashSensitivity = json.optInt("vizFlashSensitivity", 1),
-                vizRefreshRate = json.optInt("vizRefreshRate", 1),
-                mediaControlPriority = json.optString("mediaControlPriority", "smart"),
-                autoEqEnabled = json.optBoolean("autoEqEnabled", false),
-                autoEqMode = json.optString("autoEqMode", "simple"),
-                autoEqIntensity = json.optDouble("autoEqIntensity", 0.5).toFloat(),
-                autoEqBassBias = json.optDouble("autoEqBassBias", 0.0).toFloat(),
-                autoEqMidBias = json.optDouble("autoEqMidBias", 0.0).toFloat(),
-                autoEqTrebleBias = json.optDouble("autoEqTrebleBias", 0.0).toFloat(),
-                autoEqTargetCurve = json.optString("autoEqTargetCurve", "flat"),
-                autoEqResponseSpeed = json.optString("autoEqResponseSpeed", "medium"),
-                autoEqProAttack = json.optDouble("autoEqProAttack", 100.0).toFloat(),
-                autoEqProRelease = json.optDouble("autoEqProRelease", 200.0).toFloat(),
-                autoEqProMaxSlope = json.optDouble("autoEqProMaxSlope", 10.0).toFloat(),
-                autoEqProMaxBoost = json.optDouble("autoEqProMaxBoost", 12.0).toFloat(),
-                autoEqProMaxCut = json.optDouble("autoEqProMaxCut", 12.0).toFloat(),
-                autoEqProSmoothing = json.optDouble("autoEqProSmoothing", 0.7).toFloat(),
-                autoEqProBrightnessTarget = json.optDouble("autoEqProBrightnessTarget", 0.0).toFloat(),
-                autoEqProLoudnessTarget = json.optDouble("autoEqProLoudnessTarget", 0.0).toFloat(),
-                autoEqProCouplingCoeff = json.optDouble("autoEqProCouplingCoeff", 0.3).toFloat(),
-                autoEqProHysteresisDb = json.optDouble("autoEqProHysteresisDb", 1.0).toFloat(),
-                autoEqProDynamicQEnabled = json.optBoolean("autoEqProDynamicQEnabled", true),
-                autoEqSyncToManual = json.optBoolean("autoEqSyncToManual", false),
-                speakerPreset = json.optString("speakerPreset", "phone")
-            )
-            Log.d(TAG, "Config loaded: themeColorId=${_config.value.themeColorId}, customAccentColor=${_config.value.customAccentColor}")
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to load config", e)
         }
+        Log.d(TAG, "No saved config, using defaults")
     }
     
     private fun saveConfig() {
-        val file = StorageManager.getFile("config", CONFIG_FILE) ?: return
-        val config = _config.value
-        
-        val json = JSONObject().apply {
-            put("isPremium", config.isPremium)
-            config.premiumPurchaseDate?.let { put("premiumPurchaseDate", it) }
-            config.premiumOrderId?.let { put("premiumOrderId", it) }
-            put("autoPlay", config.autoPlay)
-            put("themeMode", config.themeMode)
-            put("themeColorId", config.themeColorId)
-            put("customAccentColor", config.customAccentColor)
-            put("customPrimaryColor", config.customPrimaryColor)
-            put("customBackgroundColor", config.customBackgroundColor)
-            put("customTextColor", config.customTextColor)
-            put("language", config.language)
-            put("logEnabled", config.logEnabled)
-            put("audioEffectOrder", JSONArray(config.audioEffectOrder))
-            put("vizWnEnabled", config.vizWnEnabled)
-            put("vizMusicEnabled", config.vizMusicEnabled)
-            put("vizFlashEnabled", config.vizFlashEnabled)
-            put("vizWnSensitivity", config.vizWnSensitivity)
-            put("vizMusicSensitivity", config.vizMusicSensitivity)
-            put("vizFlashSensitivity", config.vizFlashSensitivity)
-            put("vizRefreshRate", config.vizRefreshRate)
-            put("mediaControlPriority", config.mediaControlPriority)
-            put("autoEqEnabled", config.autoEqEnabled)
-            put("autoEqMode", config.autoEqMode)
-            put("autoEqIntensity", config.autoEqIntensity.toDouble())
-            put("autoEqBassBias", config.autoEqBassBias.toDouble())
-            put("autoEqMidBias", config.autoEqMidBias.toDouble())
-            put("autoEqTrebleBias", config.autoEqTrebleBias.toDouble())
-            put("autoEqTargetCurve", config.autoEqTargetCurve)
-            put("autoEqResponseSpeed", config.autoEqResponseSpeed)
-            put("autoEqProAttack", config.autoEqProAttack.toDouble())
-            put("autoEqProRelease", config.autoEqProRelease.toDouble())
-            put("autoEqProMaxSlope", config.autoEqProMaxSlope.toDouble())
-            put("autoEqProMaxBoost", config.autoEqProMaxBoost.toDouble())
-            put("autoEqProMaxCut", config.autoEqProMaxCut.toDouble())
-            put("autoEqProSmoothing", config.autoEqProSmoothing.toDouble())
-            put("autoEqProBrightnessTarget", config.autoEqProBrightnessTarget.toDouble())
-            put("autoEqProLoudnessTarget", config.autoEqProLoudnessTarget.toDouble())
-            put("autoEqProCouplingCoeff", config.autoEqProCouplingCoeff.toDouble())
-            put("autoEqProHysteresisDb", config.autoEqProHysteresisDb.toDouble())
-            put("autoEqProDynamicQEnabled", config.autoEqProDynamicQEnabled)
-            put("autoEqSyncToManual", config.autoEqSyncToManual)
-            put("speakerPreset", config.speakerPreset)
+        try {
+            configFile.writeText(gson.toJson(_config.value))
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to save config", e)
         }
-        
-        StorageManager.saveJsonSync(file, json)
-        Log.d(TAG, "Config saved: themeColorId=${config.themeColorId}, customAccentColor=${config.customAccentColor}")
+        Log.d(TAG, "Config saved")
     }
     
     private fun updateConfig(update: (AppConfig) -> AppConfig) {
@@ -211,17 +76,6 @@ object ConfigStorage {
     
     fun getConfig(): AppConfig = _config.value
     
-    fun isPremiumUser(): Boolean = _config.value.isPremium
-    
-    fun setPremiumUser(isPremium: Boolean, orderId: String? = null) {
-        updateConfig { it.copy(
-            isPremium = isPremium,
-            premiumPurchaseDate = if (isPremium) System.currentTimeMillis() else null,
-            premiumOrderId = orderId
-        )}
-        Log.d(TAG, "Premium user set to: $isPremium")
-    }
-    
     fun getAutoPlay(): Boolean = _config.value.autoPlay
     
     fun setAutoPlay(enabled: Boolean) {
@@ -238,6 +92,24 @@ object ConfigStorage {
     
     fun setThemeColor(colorId: String) {
         updateConfig { it.copy(themeColorId = colorId) }
+    }
+    
+    fun getDayThemeId(): String = _config.value.dayThemeId
+    
+    fun setDayThemeId(themeId: String) {
+        updateConfig { it.copy(dayThemeId = themeId) }
+    }
+    
+    fun getNightThemeId(): String = _config.value.nightThemeId
+    
+    fun setNightThemeId(themeId: String) {
+        updateConfig { it.copy(nightThemeId = themeId) }
+    }
+    
+    fun getScheduledDefaultThemeId(): String = _config.value.scheduledDefaultThemeId
+    
+    fun setScheduledDefaultThemeId(themeId: String) {
+        updateConfig { it.copy(scheduledDefaultThemeId = themeId) }
     }
     
     fun getCustomColors(): CustomColors {
@@ -257,6 +129,15 @@ object ConfigStorage {
             customPrimaryColor = primary,
             customBackgroundColor = background,
             customTextColor = text
+        )}
+    }
+
+    fun clearOldCustomColors() {
+        updateConfig { it.copy(
+            customAccentColor = -1,
+            customPrimaryColor = -1,
+            customBackgroundColor = -1,
+            customTextColor = -1
         )}
     }
     
@@ -399,11 +280,6 @@ object ConfigStorage {
         updateConfig { it.copy(autoEqProMaxCut = value) }
     }
     
-    fun getAutoEqProSmoothing(): Float = _config.value.autoEqProSmoothing
-    fun setAutoEqProSmoothing(value: Float) {
-        updateConfig { it.copy(autoEqProSmoothing = value) }
-    }
-    
     fun getAutoEqProBrightnessTarget(): Float = _config.value.autoEqProBrightnessTarget
     fun setAutoEqProBrightnessTarget(value: Float) {
         updateConfig { it.copy(autoEqProBrightnessTarget = value) }
@@ -429,14 +305,175 @@ object ConfigStorage {
         updateConfig { it.copy(autoEqProDynamicQEnabled = enabled) }
     }
     
+    fun getAutoEqBandCount(): Int = _config.value.autoEqBandCount
+    fun setAutoEqBandCount(value: Int) {
+        updateConfig { it.copy(autoEqBandCount = value) }
+    }
+    
+    fun getAutoEqLowRatio(): Float = _config.value.autoEqLowRatio
+    fun setAutoEqLowRatio(value: Float) {
+        updateConfig { it.copy(autoEqLowRatio = value) }
+    }
+    
+    fun getAutoEqMidRatio(): Float = _config.value.autoEqMidRatio
+    fun setAutoEqMidRatio(value: Float) {
+        updateConfig { it.copy(autoEqMidRatio = value) }
+    }
+    
     fun isAutoEqSyncToManual(): Boolean = _config.value.autoEqSyncToManual
     fun setAutoEqSyncToManual(enabled: Boolean) {
         updateConfig { it.copy(autoEqSyncToManual = enabled) }
     }
 
+    // --- Per-filter overrides for AutoEQ ---
+    // Key convention: "<preset>:<bandIndex>" (e.g. "phone:3")
+    fun getAutoEqFilterOverrides(): Map<String, AutoEqFilterOverride> =
+        _config.value.autoEqFilterOverrides
+
+    fun getAutoEqFilterOverridesFor(preset: String): Map<Int, AutoEqFilterOverride> {
+        val prefix = "$preset:"
+        return _config.value.autoEqFilterOverrides
+            .filterKeys { it.startsWith(prefix) }
+            .mapKeys { it.key.removePrefix(prefix).toIntOrNull() ?: -1 }
+            .filterKeys { it >= 0 }
+    }
+
+    fun setAutoEqFilterOverride(preset: String, bandIndex: Int, override: AutoEqFilterOverride) {
+        updateConfig {
+            val key = "$preset:$bandIndex"
+            it.copy(autoEqFilterOverrides = it.autoEqFilterOverrides + (key to override))
+        }
+    }
+
+    fun clearAutoEqFilterOverride(preset: String, bandIndex: Int) {
+        updateConfig {
+            val key = "$preset:$bandIndex"
+            it.copy(autoEqFilterOverrides = it.autoEqFilterOverrides - key)
+        }
+    }
+
+    fun clearAutoEqFilterOverridesFor(preset: String) {
+        updateConfig {
+            val prefix = "$preset:"
+            it.copy(autoEqFilterOverrides = it.autoEqFilterOverrides.filterKeys { !it.startsWith(prefix) })
+        }
+    }
+
+    fun isEqUnlimitedPoints(): Boolean = _config.value.eqUnlimitedPoints
+    fun setEqUnlimitedPoints(enabled: Boolean) {
+        updateConfig { it.copy(eqUnlimitedPoints = enabled) }
+    }
+
+    fun isEqBypassEnabled(): Boolean = _config.value.eqBypassEnabled
+    fun setEqBypassEnabled(enabled: Boolean) {
+        updateConfig { it.copy(eqBypassEnabled = enabled) }
+    }
+
     fun getSpeakerPreset(): String = _config.value.speakerPreset
     fun setSpeakerPreset(preset: String) {
         updateConfig { it.copy(speakerPreset = preset) }
+    }
+    
+    fun isFloatingPetEnabled(): Boolean = _config.value.floatingPetEnabled
+    fun setFloatingPetEnabled(enabled: Boolean) {
+        updateConfig { it.copy(floatingPetEnabled = enabled) }
+    }
+    
+    fun getFloatingPetId(): String = _config.value.floatingPetId
+    fun setFloatingPetId(id: String) {
+        updateConfig { it.copy(floatingPetId = id) }
+    }
+    
+    fun getFloatingPetScale(): Float = _config.value.floatingPetScale
+    fun setFloatingPetScale(scale: Float) {
+        updateConfig { it.copy(floatingPetScale = scale) }
+    }
+    
+    fun isFloatingPetAntiAlias(): Boolean = _config.value.floatingPetAntiAlias
+    fun setFloatingPetAntiAlias(enabled: Boolean) {
+        updateConfig { it.copy(floatingPetAntiAlias = enabled) }
+    }
+    
+    fun getFloatingPetHideDelay(): Int = _config.value.floatingPetHideDelay
+    fun setFloatingPetHideDelay(delay: Int) {
+        updateConfig { it.copy(floatingPetHideDelay = delay.coerceIn(3, 10)) }
+    }
+    
+    fun getFloatingPetAlpha(): Float = _config.value.floatingPetAlpha
+    fun setFloatingPetAlpha(alpha: Float) {
+        updateConfig { it.copy(floatingPetAlpha = alpha.coerceIn(0.1f, 1.0f)) }
+    }
+    
+    fun getFloatingPetHiddenAlpha(): Float = _config.value.floatingPetHiddenAlpha
+    fun setFloatingPetHiddenAlpha(alpha: Float) {
+        updateConfig { it.copy(floatingPetHiddenAlpha = alpha.coerceIn(0.1f, 1.0f)) }
+    }
+    
+    fun isFloatingPetWindowMode(): Boolean = _config.value.floatingPetWindowMode
+    fun setFloatingPetWindowMode(enabled: Boolean) {
+        updateConfig { it.copy(floatingPetWindowMode = enabled) }
+    }
+    
+    fun getAiBaseUrl(): String = _config.value.aiBaseUrl
+    fun setAiBaseUrl(url: String) {
+        updateConfig { it.copy(aiBaseUrl = url) }
+    }
+    
+    fun getAiApiKey(): String = _config.value.aiApiKey
+    fun setAiApiKey(key: String) {
+        updateConfig { it.copy(aiApiKey = key) }
+    }
+    
+    fun getAiModel(): String = _config.value.aiModel
+    fun setAiModel(model: String) {
+        updateConfig { it.copy(aiModel = model) }
+    }
+    
+    fun getAiMaxTokens(): Int = _config.value.aiMaxTokens
+    fun setAiMaxTokens(tokens: Int) {
+        updateConfig { it.copy(aiMaxTokens = tokens.coerceIn(1024, 65536)) }
+    }
+    
+    fun getAiMaxToolCalls(): Int = _config.value.aiMaxToolCalls
+    fun setAiMaxToolCalls(calls: Int) {
+        updateConfig { it.copy(aiMaxToolCalls = calls.coerceIn(10, 50)) }
+    }
+    
+    fun getAiSystemPrompt(): String = _config.value.aiSystemPrompt
+    fun setAiSystemPrompt(prompt: String) {
+        updateConfig { it.copy(aiSystemPrompt = prompt) }
+    }
+
+    fun isAiEnabled(): Boolean = _config.value.aiEnabled
+    fun setAiEnabled(enabled: Boolean) {
+        updateConfig { it.copy(aiEnabled = enabled) }
+    }
+
+    fun getAiTemperature(): Float = _config.value.aiTemperature
+    fun setAiTemperature(value: Float) {
+        updateConfig { it.copy(aiTemperature = value.coerceIn(0f, 2f)) }
+    }
+
+    fun isAiEnableThinking(): Boolean = _config.value.aiEnableThinking
+    fun setAiEnableThinking(enabled: Boolean) {
+        updateConfig { it.copy(aiEnableThinking = enabled) }
+    }
+    
+    fun getCompletedTutorials(): List<String> = _config.value.completedTutorials
+    fun setCompletedTutorials(tutorials: List<String>) {
+        updateConfig { it.copy(completedTutorials = tutorials) }
+    }
+    fun addCompletedTutorial(tutorialId: String) {
+        updateConfig { it.copy(completedTutorials = it.completedTutorials + tutorialId) }
+    }
+    fun clearCompletedTutorials() {
+        updateConfig { it.copy(completedTutorials = emptyList()) }
+    }
+
+    fun getToastDurationSeconds(): Int = _config.value.toastDurationSeconds
+
+    fun setToastDurationSeconds(seconds: Int) {
+        updateConfig { it.copy(toastDurationSeconds = seconds.coerceIn(3, 10)) }
     }
     
     fun clearAllData() {

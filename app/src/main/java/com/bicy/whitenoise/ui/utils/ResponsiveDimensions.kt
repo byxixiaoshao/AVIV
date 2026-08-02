@@ -18,21 +18,33 @@ object ResponsiveDimensions {
     private const val BASE_WIDTH_DP = 360
     
     /**
+     * 判断是否为横屏模式
+     */
+    @Composable
+    fun isLandscape(): Boolean {
+        val configuration = LocalConfiguration.current
+        return configuration.screenWidthDp > configuration.screenHeightDp
+    }
+    
+    /**
      * Calculate scale factor based on screen width
      * Tablets (sw600dp+) get larger scale factor
+     * Landscape mode gets adjusted scaling
      */
     @Composable
     fun scaleFactor(): Float {
         val configuration = LocalConfiguration.current
         val screenWidthDp = configuration.screenWidthDp
+        val isLandscape = isLandscape()
         
-        return remember(screenWidthDp) {
+        return remember(screenWidthDp, isLandscape) {
             when {
                 screenWidthDp >= 900 -> 1.8f  // Large tablets
                 screenWidthDp >= 720 -> 1.5f  // Medium tablets
                 screenWidthDp >= 600 -> 1.3f  // Small tablets
                 screenWidthDp >= 480 -> 1.15f // Large phones
-                else -> 1f                    // Standard phones
+                isLandscape -> 1.05f // 横屏手机：轻微放大
+                else -> 1f          // Standard phones
             }
         }
     }
@@ -71,13 +83,16 @@ object ResponsiveDimensions {
     
     /**
      * Scale padding - use moderate scaling
+     * Landscape mode gets slightly larger horizontal padding to utilize width
      */
     @Composable
     fun scaledPadding(baseDp: Dp): Dp {
         val scale = scaleFactor()
+        val isLandscape = isLandscape()
         // Padding scales moderately
         val paddingScale = scale.coerceAtMost(1.5f)
-        return (baseDp.value * paddingScale).dp
+        val finalScale = if (isLandscape) paddingScale * 1.1f else paddingScale
+        return (baseDp.value * finalScale).dp
     }
     
     /**
@@ -92,18 +107,21 @@ object ResponsiveDimensions {
     
     /**
      * Get dialog max width for current screen size
+     * Landscape mode uses smaller percentage to avoid too wide dialogs
      */
     @Composable
     fun dialogMaxWidth(): Dp {
         val configuration = LocalConfiguration.current
         val screenWidthDp = configuration.screenWidthDp
+        val isLandscape = isLandscape()
         
-        return remember(screenWidthDp) {
+        return remember(screenWidthDp, isLandscape) {
             when {
                 screenWidthDp >= 900 -> 600.dp  // Large tablets
                 screenWidthDp >= 720 -> 500.dp  // Medium tablets
                 screenWidthDp >= 600 -> 450.dp  // Small tablets
                 screenWidthDp >= 480 -> 400.dp  // Large phones
+                isLandscape -> (screenWidthDp * 0.55f).dp.coerceAtMost(450.dp) // 横屏手机：55%宽度
                 else -> (screenWidthDp * 0.9f).dp // Standard phones
             }
         }
@@ -111,17 +129,20 @@ object ResponsiveDimensions {
     
     /**
      * Get dialog max height for current screen size
+     * Landscape mode uses smaller percentage to avoid too tall dialogs
      */
     @Composable
     fun dialogMaxHeight(): Dp {
         val configuration = LocalConfiguration.current
         val screenHeightDp = configuration.screenHeightDp
+        val isLandscape = isLandscape()
         
-        return remember(screenHeightDp) {
+        return remember(screenHeightDp, isLandscape) {
             when {
                 screenHeightDp >= 900 -> 700.dp
                 screenHeightDp >= 720 -> 600.dp
                 screenHeightDp >= 600 -> 550.dp
+                isLandscape -> (screenHeightDp * 0.65f).dp.coerceAtMost(400.dp) // 横屏：65%高度，最大400dp
                 else -> 500.dp
             }
         }

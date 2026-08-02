@@ -6,10 +6,12 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,13 +37,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material3.AlertDialog
+import com.bicy.whitenoise.ui.components.glass.GlassAlertDialogSimple
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import com.bicy.whitenoise.ui.components.InteractiveSlider
@@ -65,81 +73,231 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.bicy.whitenoise.R
 import com.bicy.whitenoise.storage.music.MusicDirectory
+import com.bicy.whitenoise.storage.theme.CustomThemeLibrary
+import com.bicy.whitenoise.ui.theme.CustomTheme
 import com.bicy.whitenoise.ui.theme.ThemeColorManager
-import com.bicy.whitenoise.ui.theme.ThemeColorPresets
-import com.bicy.whitenoise.ui.theme.ThemeColorScheme
+import com.bicy.whitenoise.ui.theme.ThemeColorsPart.ThemeColorPresets
+import com.bicy.whitenoise.ui.theme.ThemeColorsPart.ThemeColorScheme
 import com.bicy.whitenoise.ui.utils.ResponsiveDimensions
+import com.bicy.whitenoise.utils.UsageStatsManager
 
 @Composable
 fun ThemeColorDialog(
     currentColorId: String,
-    isPremiumUser: Boolean,
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit,
     onCustomColorSelected: (accent: Int, primary: Int, background: Int, text: Int) -> Unit,
-    onUnlockPremium: () -> Unit
+    onCreateCustomTheme: () -> Unit = {},
+    onDeleteCustomTheme: (String) -> Unit = {},
+    onEditCustomTheme: (ThemeColorScheme) -> Unit = {}
 ) {
     var selectedColorId by remember { mutableStateOf(currentColorId) }
-    
-    val presets = ThemeColorPresets.allPresets
-    val customColors by ThemeColorManager.customColors.collectAsState()
-    
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.theme_color_dialog_title)) },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth()
+    // 长按弹出的主题（非空时显示菜单）
+    var longPressedTheme by remember { mutableStateOf<ThemeColorScheme?>(null) }
+    // 等待二次确认删除的主题 id（非空时该卡片变红，点击确认删除）
+    var pendingDeleteThemeId by remember { mutableStateOf<String?>(null) }
+
+    val allThemes = com.bicy.whitenoise.storage.theme.CustomThemeLibrary.getAllThemesIncludingPresets()
+
+    GlassAlertDialogSimple(
+        onDismissRequest = onDismiss
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.theme_color_dialog_title),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(4),
+                modifier = Modifier.height((((allThemes.size + 1) / 4 + 1) * 70).dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(4),
-                    modifier = Modifier.height(ResponsiveDimensions.dialogMaxHeight() - 100.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(presets, key = { it.id }) { preset ->
-                        ThemeColorGridItem(
-                            themeColor = preset,
-                            isSelected = selectedColorId == preset.id,
-                            onClick = { selectedColorId = preset.id }
-                        )
-                    }
-                    
-                    // 自定义颜色项
-                    item {
-                        ThemeColorCustomGridItem(
-                            customColors = customColors,
-                            isSelected = selectedColorId == "custom",
-                            onClick = { selectedColorId = "custom" }
-                        )
-                    }
+                items(allThemes, key = { it.id }) { theme ->
+                    val isPendingDelete = pendingDeleteThemeId == theme.id
+                    ThemeColorGridItem(
+                        themeColor = theme,
+                        isSelected = selectedColorId == theme.id,
+                        isPendingDelete = isPendingDelete,
+                        onClick = {
+                            if (isPendingDelete) {
+                                // 二次确认删除
+                                pendingDeleteThemeId = null
+                                onDeleteCustomTheme(theme.id)
+                            } else {
+                                selectedColorId = theme.id
+                            }
+                        },
+                        onLongClick = {
+                            pendingDeleteThemeId = null
+                            longPressedTheme = theme
+                        }
+                    )
+                }
+
+                // 添加按钮放在最后
+                item {
+                    ThemeColorCustomGridItem(
+                        onClick = { onCreateCustomTheme() }
+                    )
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = { onConfirm(selectedColorId) }) {
-                Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.primary)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp)
+            ) {
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.BottomStart)
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+
+                TextButton(
+                    onClick = { onConfirm(selectedColorId) },
+                    modifier = Modifier.align(Alignment.BottomEnd)
+                ) {
+                    Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.primary)
+                }
             }
         }
-    )
+    }
+
+    // 长按菜单（编辑/删除/复制）
+    longPressedTheme?.let { theme ->
+        val isCustom = com.bicy.whitenoise.storage.theme.CustomThemeLibrary.isCustomTheme(theme.id)
+        ThemeLongPressMenuDialog(
+            themeName = theme.name,
+            isCustom = isCustom,
+            onDismiss = { longPressedTheme = null },
+            onEdit = {
+                longPressedTheme = null
+                onEditCustomTheme(theme)
+            },
+            onDelete = {
+                longPressedTheme = null
+                pendingDeleteThemeId = theme.id
+            },
+            onCopy = {
+                longPressedTheme = null
+                copyThemeAsNew(theme)
+            }
+        )
+    }
 }
 
+/**
+ * 复制主题色为新自定义主题，命名为"原色名_副本"
+ * 若名称重复则自动追加数字后缀
+ */
+private fun copyThemeAsNew(theme: ThemeColorScheme) {
+    var newName = "${theme.name}_副本"
+    var suffix = 1
+    while (com.bicy.whitenoise.storage.theme.CustomThemeLibrary.isThemeNameExists(newName)) {
+        newName = "${theme.name}_副本${suffix}"
+        suffix++
+    }
+    val newTheme = CustomTheme(
+        id = java.util.UUID.randomUUID().toString(),
+        name = newName,
+        accent = theme.accent.toArgb(),
+        primary = theme.primary.toArgb(),
+        background = theme.background.toArgb(),
+        text = theme.text.toArgb(),
+        createdAt = System.currentTimeMillis()
+    )
+    com.bicy.whitenoise.storage.theme.CustomThemeLibrary.addTheme(newTheme)
+}
+
+/**
+ * 主题色长按菜单：编辑/删除/复制
+ * 仅自定义主题可编辑/删除；预设主题仅可复制
+ */
+@Composable
+private fun ThemeLongPressMenuDialog(
+    themeName: String,
+    isCustom: Boolean,
+    onDismiss: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+    onCopy: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                Text(
+                    text = themeName,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
+
+                if (isCustom) {
+                    MenuRow(icon = Icons.Default.Edit, label = "编辑", onClick = onEdit)
+                    MenuRow(
+                        icon = Icons.Default.Delete,
+                        label = "删除",
+                        tint = MaterialTheme.colorScheme.error,
+                        onClick = onDelete
+                    )
+                }
+                MenuRow(icon = Icons.Default.ContentCopy, label = "复制", onClick = onCopy)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MenuRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    tint: Color = MaterialTheme.colorScheme.onSurface,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(imageVector = icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = tint)
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ThemeColorGridItem(
     themeColor: ThemeColorScheme,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isPendingDelete: Boolean = false,
+    onLongClick: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
-            .clickable(onClick = onClick)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -149,7 +307,13 @@ fun ThemeColorGridItem(
                 .clip(RoundedCornerShape(12.dp))
                 .background(themeColor.primary)
                 .then(
-                    if (isSelected) {
+                    if (isPendingDelete) {
+                        Modifier.border(
+                            width = 3.dp,
+                            color = MaterialTheme.colorScheme.error,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                    } else if (isSelected) {
                         Modifier.border(
                             width = 3.dp,
                             color = MaterialTheme.colorScheme.primary,
@@ -161,7 +325,14 @@ fun ThemeColorGridItem(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            if (isSelected) {
+            if (isPendingDelete) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(22.dp)
+                )
+            } else if (isSelected) {
                 Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = null,
@@ -170,13 +341,15 @@ fun ThemeColorGridItem(
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(4.dp))
-        
+
         Text(
-            text = themeColor.name,
+            text = if (isPendingDelete) "再次点击删除" else themeColor.name,
             style = MaterialTheme.typography.labelSmall,
-            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            color = if (isPendingDelete) MaterialTheme.colorScheme.error
+                    else if (isSelected) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -185,8 +358,6 @@ fun ThemeColorGridItem(
 
 @Composable
 fun ThemeColorCustomGridItem(
-    customColors: ThemeColorManager.CustomColors?,
-    isSelected: Boolean,
     onClick: () -> Unit
 ) {
     Column(
@@ -195,86 +366,25 @@ fun ThemeColorCustomGridItem(
             .padding(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (customColors != null) {
-            // 显示自定义颜色预览
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .then(
-                        if (isSelected) {
-                            Modifier.border(
-                                width = 3.dp,
-                                color = MaterialTheme.colorScheme.primary,
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                        } else {
-                            Modifier
-                        }
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                // 四个小圆圈显示四种颜色
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(20.dp)
-                            .clip(CircleShape)
-                            .background(Color(customColors.accent))
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(20.dp)
-                            .clip(CircleShape)
-                            .background(Color(customColors.primary))
-                    )
-                }
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(20.dp)
-                            .clip(CircleShape)
-                            .background(Color(customColors.background))
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(20.dp)
-                            .clip(CircleShape)
-                            .background(Color(customColors.text))
-                    )
-                }
-            }
-        } else {
-            // 显示添加图标
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .then(
-                        if (isSelected) {
-                            Modifier.border(
-                                width = 3.dp,
-                                color = MaterialTheme.colorScheme.primary,
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                        } else {
-                            Modifier
-                        }
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+        // 显示添加图标
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(12.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
         }
         
         Spacer(modifier = Modifier.height(4.dp))
@@ -282,7 +392,7 @@ fun ThemeColorCustomGridItem(
         Text(
             text = stringResource(R.string.custom_color),
             style = MaterialTheme.typography.labelSmall,
-            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -386,151 +496,167 @@ fun CustomColorPickerDialog(
         }
     }
     
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("自定义颜色") },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth()
+    GlassAlertDialogSimple(
+        onDismissRequest = onDismiss
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+        ) {
+            Text(
+                text = "自定义颜色",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    colorTypeLabels.forEach { (type, label) ->
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                colorTypeLabels.forEach { (type, label) ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .clickable { selectedColorType = type }
+                            .padding(4.dp)
+                    ) {
+                        Box(
                             modifier = Modifier
+                                .size(32.dp)
                                 .clip(CircleShape)
-                                .clickable { selectedColorType = type }
-                                .padding(4.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        when (type) {
-                                            "accent" -> accentColor
-                                            "primary" -> primaryColor
-                                            "background" -> backgroundColor
-                                            "text" -> textColor
-                                            else -> accentColor
-                                        }
-                                    )
-                                    .then(
-                                        if (selectedColorType == type) {
-                                            Modifier.border(3.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                                        } else {
-                                            Modifier.border(1.dp, Color.Gray, CircleShape)
-                                        }
-                                    )
-                            )
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (selectedColorType == type) 
-                                    MaterialTheme.colorScheme.primary 
-                                else 
-                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
-                        }
+                                .background(
+                                    when (type) {
+                                        "accent" -> accentColor
+                                        "primary" -> primaryColor
+                                        "background" -> backgroundColor
+                                        "text" -> textColor
+                                        else -> accentColor
+                                    }
+                                )
+                                .then(
+                                    if (selectedColorType == type) {
+                                        Modifier.border(3.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                                    } else {
+                                        Modifier.border(1.dp, Color.Gray, CircleShape)
+                                    }
+                                )
+                        )
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (selectedColorType == type) 
+                                MaterialTheme.colorScheme.primary 
+                            else 
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
                     }
                 }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(60.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(backgroundColor)
-                        .padding(8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(backgroundColor)
+                    .padding(8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
                     text = stringResource(R.string.preview_text),
                     color = textColor,
                     style = MaterialTheme.typography.titleMedium
                 )
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Text(
-                    text = stringResource(R.string.hue),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                
-                InteractiveSlider(
-                    value = hue,
-                    onValueChange = { 
-                        hue = it
-                        updateCurrentColor()
-                    },
-                    valueRange = 0f..360f,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                Text(
-                    text = stringResource(R.string.saturation),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                
-                InteractiveSlider(
-                    value = saturation,
-                    onValueChange = { 
-                        saturation = it
-                        updateCurrentColor()
-                    },
-                    valueRange = 0f..1f,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                Text(
-                    text = stringResource(R.string.brightness),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                
-                InteractiveSlider(
-                    value = value,
-                    onValueChange = { 
-                        value = it
-                        updateCurrentColor()
-                    },
-                    valueRange = 0f..1f,
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onConfirm(
-                        accentColor.toArgb(),
-                        primaryColor.toArgb(),
-                        backgroundColor.toArgb(),
-                        textColor.toArgb()
-                    )
-                }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Text(
+                text = stringResource(R.string.hue),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            InteractiveSlider(
+                value = hue,
+                onValueChange = { 
+                    hue = it
+                    updateCurrentColor()
+                },
+                valueRange = 0f..360f,
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            Text(
+                text = stringResource(R.string.saturation),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            InteractiveSlider(
+                value = saturation,
+                onValueChange = { 
+                    saturation = it
+                    updateCurrentColor()
+                },
+                valueRange = 0f..1f,
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            Text(
+                text = stringResource(R.string.brightness),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            InteractiveSlider(
+                value = value,
+                onValueChange = { 
+                    value = it
+                    updateCurrentColor()
+                },
+                valueRange = 0f..1f,
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp)
             ) {
-                Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.primary)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.BottomStart)
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+                
+                TextButton(
+                    onClick = {
+                        onConfirm(
+                            accentColor.toArgb(),
+                            primaryColor.toArgb(),
+                            backgroundColor.toArgb(),
+                            textColor.toArgb()
+                        )
+                    },
+                    modifier = Modifier.align(Alignment.BottomEnd)
+                ) {
+                    Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.primary)
+                }
             }
         }
-    )
+    }
 }
 
 @Composable
@@ -590,10 +716,22 @@ fun SingleColorPickerDialog(
         }
     }
     
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
+    GlassAlertDialogSimple(
+        onDismissRequest = onDismiss
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -813,20 +951,28 @@ fun SingleColorPickerDialog(
                     }
                 }
             }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onConfirm(currentColor.toArgb()) }
+            
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp)
             ) {
-                Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.primary)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.BottomStart)
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+                
+                TextButton(
+                    onClick = { onConfirm(currentColor.toArgb()) },
+                    modifier = Modifier.align(Alignment.BottomEnd)
+                ) {
+                    Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.primary)
+                }
             }
         }
-    )
+    }
 }
 
 private fun getHue(color: Color): Float {
@@ -870,51 +1016,62 @@ fun MusicDirectoryDialog(
     onRemoveDirectory: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("音乐目录") },
-        text = {
-            Column {
-                if (directories.isEmpty()) {
-                    Text(
-                        text = "尚未添加任何音乐目录\n点击下方按钮添加",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        modifier = Modifier.padding(vertical = 16.dp)
-                    )
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.height(200.dp)
-                    ) {
-                        items(directories, key = { it.path }) { dir ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Folder,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(24.dp)
+    GlassAlertDialogSimple(
+        onDismissRequest = onDismiss
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp)
+        ) {
+            Text(
+                text = "音乐目录",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            if (directories.isEmpty()) {
+                Text(
+                    text = "尚未添加任何音乐目录\n点击下方按钮添加",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.height(200.dp)
+                ) {
+                    items(directories, key = { it.path }) { dir ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Folder,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            
+                            Spacer(modifier = Modifier.width(12.dp))
+                            
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = dir.name,
+                                    style = MaterialTheme.typography.bodyLarge
                                 )
-                                
-                                Spacer(modifier = Modifier.width(12.dp))
-                                
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = dir.name,
-                                        style = MaterialTheme.typography.bodyLarge
-                                    )
-                                    Text(
-                                        text = dir.path,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                        maxLines = 1
-                                    )
-                                }
-                                
+                                Text(
+                                    text = dir.path,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                    maxLines = 1
+                                )
+                            }
+                            
+                            // 默认目录不可删除
+                            if (!dir.isDefault) {
                                 IconButton(onClick = { onRemoveDirectory(dir.path) }) {
                                     Icon(
                                         imageVector = Icons.Default.Delete,
@@ -922,262 +1079,150 @@ fun MusicDirectoryDialog(
                                         tint = MaterialTheme.colorScheme.error
                                     )
                                 }
+                            } else {
+                                Text(
+                                    text = "默认",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                )
                             }
                         }
                     }
                 }
+            }
+            
+            if (isScanning) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.scanning_music),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp)
+            ) {
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.BottomStart)
+                ) {
+                    Text(stringResource(R.string.close))
+                }
                 
-                if (isScanning) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(R.string.scanning_music),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
+                TextButton(
+                    onClick = onAddDirectory,
+                    modifier = Modifier.align(Alignment.BottomEnd)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
                     )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(stringResource(R.string.add_directory))
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onAddDirectory) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.add_directory))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.close))
-            }
         }
-    )
+    }
 }
 
 @Suppress("DEPRECATION")
 @Composable
-fun UnlockPremiumDialog(
-    isPremium: Boolean,
-    onDismiss: () -> Unit,
-    onPayClick: () -> Unit
+fun DonationDialog(
+    onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { 
+    GlassAlertDialogSimple(
+        onDismissRequest = onDismiss
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp)
+        ) {
             Text(
-                text = if (isPremium) stringResource(R.string.donate_support) else stringResource(R.string.unlock_premium),
-                fontWeight = FontWeight.Bold
+                text = stringResource(R.string.donate_support),
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
             )
-        },
-        text = {
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (isPremium) {
-                    Text(
-                        text = stringResource(R.string.thank_you_premium),
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
+                Text(
+                    text = stringResource(R.string.donate_encourage),
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.qrcode_wechat),
-                                contentDescription = stringResource(R.string.wechat_pay),
-                                contentScale = ContentScale.FillBounds,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(1f)
-                                    .clip(RoundedCornerShape(8.dp))
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = stringResource(R.string.wechat_pay),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                            )
-                        }
-                        
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.qrcode_alipay),
-                                contentDescription = stringResource(R.string.alipay),
-                                contentScale = ContentScale.FillBounds,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(1f)
-                                    .clip(RoundedCornerShape(8.dp))
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = stringResource(R.string.alipay),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                            )
-                        }
-                    }
-                } else {
-                    Text(
-                        text = stringResource(R.string.unlock_premium_hint),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    val features = listOf(
-                        Triple(stringResource(R.string.music_player), stringResource(R.string.basic_playback), stringResource(R.string.full_feature)),
-                        Triple(stringResource(R.string.sound_quality_adjust), stringResource(R.string.basic_adjust), stringResource(R.string.full_feature)),
-                        Triple(stringResource(R.string.sound_classification), stringResource(R.string.preset_classification), stringResource(R.string.full_feature)),
-                        Triple(stringResource(R.string.theme_color), stringResource(R.string.preset_classification), stringResource(R.string.full_feature)),
-                        Triple(stringResource(R.string.spatial_audio), stringResource(R.string.basic_function), stringResource(R.string.full_feature)),
-                        Triple(stringResource(R.string.import_sounds), stringResource(R.string.not_supported), stringResource(R.string.full_feature)),
-                        Triple(stringResource(R.string.custom_classification), stringResource(R.string.not_supported), stringResource(R.string.full_feature)),
-                        Triple(stringResource(R.string.weekly_usage_limit), "7d", "168h")
-                    )
-                    
-                    val headerColor = MaterialTheme.colorScheme.primary
-                    val rowColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = stringResource(R.string.feature),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = headerColor,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            text = stringResource(R.string.normal_version),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = headerColor,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            text = stringResource(R.string.premium_version),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = headerColor,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    
-                    Spacer(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
-                    )
-                    
-                    features.forEach { (feature, normal, premium) ->
-                        Row(
+                        Image(
+                            painter = painterResource(id = R.drawable.qrcode_wechat),
+                            contentDescription = stringResource(R.string.wechat_pay),
+                            contentScale = ContentScale.FillBounds,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 6.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = feature,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = rowColor,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Text(
-                                text = normal,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = rowColor,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Text(
-                                text = premium,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(8.dp))
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.wechat_pay),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                    }
+                    
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.qrcode_alipay),
+                            contentDescription = stringResource(R.string.alipay),
+                            contentScale = ContentScale.FillBounds,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(8.dp))
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.alipay),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
                     }
                 }
             }
-        },
-        confirmButton = {
-            if (!isPremium) {
-                TextButton(onClick = onPayClick) {
-                    Text(
-                        text = stringResource(R.string.go_to_payment),
-                        color = MaterialTheme.colorScheme.primary
-                    )
+            
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp)
+            ) {
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.BottomEnd)
+                ) {
+                    Text(stringResource(R.string.close))
                 }
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(if (isPremium) stringResource(R.string.close) else stringResource(R.string.cancel))
-            }
         }
-    )
-}
-
-@Suppress("DEPRECATION")
-@Composable
-fun ThankYouDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { 
-            Text(
-                text = stringResource(R.string.thank_you_support),
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Column {
-                Text(
-                    text = stringResource(R.string.thank_you_message),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Text(
-                    text = stringResource(R.string.thank_you_hint),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(
-                    text = stringResource(R.string.continue_),
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    )
+    }
 }
 
 @Suppress("DEPRECATION")
@@ -1194,40 +1239,65 @@ fun AboutDialog(
         }
     }
     
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = null,
-        text = {
+    GlassAlertDialogSimple(
+        onDismissRequest = onDismiss
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // ===== 顶部固定区域：关闭按钮 =====
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, end = 8.dp)
+            ) {
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.TopEnd)
+                ) {
+                    Text(
+                        text = stringResource(R.string.close),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+            
+            // ===== 顶部固定区域：应用图标、名称、版本 =====
+            Icon(
+                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                contentDescription = stringResource(R.string.app_icon),
+                modifier = Modifier.size(80.dp),
+                tint = Color.Unspecified
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Text(
+                text = stringResource(R.string.app_name),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            
+            Text(
+                text = versionName ?: "Unknown",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // ===== 下半部分：纵向滚动内容 =====
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .weight(1f, fill = false)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.Start
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                    contentDescription = stringResource(R.string.app_icon),
-                    modifier = Modifier.size(80.dp),
-                    tint = Color.Unspecified
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Text(
-                    text = stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                
-                Text(
-                    text = versionName ?: "Unknown",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
+                // 开源许可
                 Text(
                     text = stringResource(R.string.open_source_license),
                     style = MaterialTheme.typography.titleSmall,
@@ -1246,7 +1316,9 @@ fun AboutDialog(
                     "OkHttp" to "Apache 2.0",
                     "Jetpack Compose" to "Apache 2.0",
                     "Oboe" to "Apache 2.0",
-                    "FFmpeg" to "LGPL v2.1+"
+                    "SoundTouch" to "LGPL v2.1",
+                    "FFmpeg" to "LGPL v2.1+",
+                    "Liquid Glass Android" to "Apache 2.0"
                 )
                 
                 openSourceLicenses.forEach { (name, license) ->
@@ -1271,6 +1343,7 @@ fun AboutDialog(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
+                // 音源致谢
                 Text(
                     text = stringResource(R.string.sound_source_credit),
                     style = MaterialTheme.typography.titleSmall,
@@ -1285,30 +1358,85 @@ fun AboutDialog(
                     text = stringResource(R.string.sound_source_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
                 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
                     text = stringResource(R.string.sound_source_tip),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // 特别鸣谢
                 Text(
-                    text = stringResource(R.string.close),
-                    color = MaterialTheme.colorScheme.primary
+                    text = stringResource(R.string.special_thanks),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.fillMaxWidth()
                 )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = stringResource(R.string.software_testing),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                // 硬编码用户名
+                val testers = listOf(
+                    "条纹哦里GHT",
+                    "土豆仙人",
+                    "AAA哈密瓜批发星见雅"
+                )
+                testers.forEach { name ->
+                    Text(
+                        text = name,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        modifier = Modifier.padding(start = 12.dp).padding(vertical = 1.dp)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = stringResource(R.string.art_support),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                val artists = listOf(
+                    "AAA哈密瓜批发星见雅",
+                    "☆雨の日が好き☔"
+                )
+                artists.forEach { name ->
+                    Text(
+                        text = name,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        modifier = Modifier.padding(start = 12.dp).padding(vertical = 1.dp)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
-    )
+    }
 }
 
 @Composable
@@ -1326,131 +1454,138 @@ fun EffectOrderDialog(
     
     var order by remember { mutableStateOf(currentOrder) }
     
-    AlertDialog(
+    GlassAlertDialogSimple(
         onDismissRequest = onDismiss,
-        title = {
+        scrollableContent = {
             Text(
                 text = stringResource(R.string.audio_effect_order_title),
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
             )
-        },
-        text = {
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Text(
+                text = stringResource(R.string.audio_effect_order_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
             Column {
-                Text(
-                    text = stringResource(R.string.audio_effect_order_hint),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Column {
-                    order.forEachIndexed { index, effectId ->
-                        val effectName = effectNames[effectId] ?: effectId
-                        
-                        key(effectId) {
-                            AnimatedContent(
-                                targetState = index,
-                                transitionSpec = {
-                                    if (targetState > initialState) {
-                                        slideInVertically { height -> height } + fadeIn() togetherWith
-                                        slideOutVertically { height -> -height } + fadeOut()
-                                    } else {
-                                        slideInVertically { height -> -height } + fadeIn() togetherWith
-                                        slideOutVertically { height -> height } + fadeOut()
-                                    }
-                                },
-                                label = "item_animation_$effectId"
-                            ) { targetIndex ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                                        .padding(horizontal = 12.dp, vertical = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "${targetIndex + 1}",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.width(24.dp)
-                                    )
-                                    
-                                    Text(
-                                        text = effectName,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    
-                                    if (targetIndex > 0) {
-                                        IconButton(
-                                            onClick = {
-                                                val newOrder = order.toMutableList()
-                                                val item = newOrder.removeAt(targetIndex)
-                                                newOrder.add(targetIndex - 1, item)
-                                                order = newOrder
-                                            }
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(id = R.drawable.ic_arrow_up),
-                                                contentDescription = "上移",
-                                                tint = MaterialTheme.colorScheme.primary
-                                            )
+                order.forEachIndexed { index, effectId ->
+                    val effectName = effectNames[effectId] ?: effectId
+                    
+                    key(effectId) {
+                        AnimatedContent(
+                            targetState = index,
+                            transitionSpec = {
+                                if (targetState > initialState) {
+                                    slideInVertically { height -> height } + fadeIn() togetherWith
+                                    slideOutVertically { height -> -height } + fadeOut()
+                                } else {
+                                    slideInVertically { height -> -height } + fadeIn() togetherWith
+                                    slideOutVertically { height -> height } + fadeOut()
+                                }
+                            },
+                            label = "item_animation_$effectId"
+                        ) { targetIndex ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "${targetIndex + 1}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.width(24.dp)
+                                )
+                                
+                                Text(
+                                    text = effectName,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                
+                                if (targetIndex > 0) {
+                                    IconButton(
+                                        onClick = {
+                                            val newOrder = order.toMutableList()
+                                            val item = newOrder.removeAt(targetIndex)
+                                            newOrder.add(targetIndex - 1, item)
+                                            order = newOrder
                                         }
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.ic_arrow_up),
+                                            contentDescription = "上移",
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
                                     }
-                                    
-                                    if (targetIndex < order.size - 1) {
-                                        IconButton(
-                                            onClick = {
-                                                val newOrder = order.toMutableList()
-                                                val item = newOrder.removeAt(targetIndex)
-                                                newOrder.add(targetIndex + 1, item)
-                                                order = newOrder
-                                            }
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(id = R.drawable.ic_arrow_down),
-                                                contentDescription = "下移",
-                                                tint = MaterialTheme.colorScheme.primary
-                                            )
+                                }
+                                
+                                if (targetIndex < order.size - 1) {
+                                    IconButton(
+                                        onClick = {
+                                            val newOrder = order.toMutableList()
+                                            val item = newOrder.removeAt(targetIndex)
+                                            newOrder.add(targetIndex + 1, item)
+                                            order = newOrder
                                         }
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.ic_arrow_down),
+                                            contentDescription = "下移",
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
                                     }
                                 }
                             }
                         }
-                        
-                        if (index < order.size - 1) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
+                    }
+                    
+                    if (index < order.size - 1) {
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(
-                    text = "取消",
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onConfirm(order)
-                    onDismiss()
+        bottomContent = {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.BottomStart)
+                ) {
+                    Text(
+                        text = "取消",
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
                 }
-            ) {
-                Text(
-                    text = "确定",
-                    color = MaterialTheme.colorScheme.primary
-                )
+                
+                TextButton(
+                    onClick = {
+                        onConfirm(order)
+                        onDismiss()
+                    },
+                    modifier = Modifier.align(Alignment.BottomEnd)
+                ) {
+                    Text(
+                        text = "确定",
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
     )
 }
+
 
 @Composable
 fun MediaControlPriorityDialog(
@@ -1467,92 +1602,232 @@ fun MediaControlPriorityDialog(
     
     var selectedPriority by remember { mutableStateOf(currentPriority) }
     
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
+    GlassAlertDialogSimple(
+        onDismissRequest = onDismiss
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp)
+        ) {
             Text(
                 text = stringResource(R.string.media_control_priority_title),
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
             )
-        },
-        text = {
-            Column {
-                options.forEach { (value, label) ->
-                    Row(
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            options.forEach { (value, label) ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { selectedPriority = value }
+                        .padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { selectedPriority = value }
-                            .padding(vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .size(24.dp)
+                            .clip(CircleShape)
+                            .border(
+                                width = 2.dp,
+                                color = if (selectedPriority == value) 
+                                    MaterialTheme.colorScheme.primary 
+                                else 
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clip(CircleShape)
-                                .border(
-                                    width = 2.dp,
-                                    color = if (selectedPriority == value) 
-                                        MaterialTheme.colorScheme.primary 
-                                    else 
-                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                                    shape = CircleShape
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (selectedPriority == value) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(12.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary)
-                                )
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.width(16.dp))
-                        
-                        Column {
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = if (selectedPriority == value)
-                                    MaterialTheme.colorScheme.primary
-                                else
-                                    MaterialTheme.colorScheme.onSurface
+                        if (selectedPriority == value) {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primary)
                             )
-                            
-                            if (value == "smart") {
-                                Text(
-                                    text = stringResource(R.string.media_control_smart_desc),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                                )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.width(16.dp))
+                    
+                    Column {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (selectedPriority == value)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurface
+                        )
+                        
+                        if (value == "smart") {
+                            Text(
+                                text = stringResource(R.string.media_control_smart_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                        }
+                    }
+                }
+            }
+            
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp)
+            ) {
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.BottomStart)
+                ) {
+                    Text(
+                        text = stringResource(R.string.cancel),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+                
+                TextButton(
+                    onClick = {
+                        onConfirm(selectedPriority)
+                        onDismiss()
+                    },
+                    modifier = Modifier.align(Alignment.BottomEnd)
+                ) {
+                    Text(
+                        text = stringResource(R.string.confirm),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+    }
+}
+
+enum class HistoryType {
+    WHITE_NOISE, MUSIC, TIMER, ALL
+}
+
+@Composable
+fun UsageHistoryDialog(
+    type: HistoryType = HistoryType.ALL,
+    onDismiss: () -> Unit
+) {
+    val historyStats = UsageStatsManager.getHistoryStats()
+    
+    val titleText = when (type) {
+        HistoryType.WHITE_NOISE -> "${stringResource(R.string.history_stats)} - ${stringResource(R.string.white_noise)}"
+        HistoryType.MUSIC -> "${stringResource(R.string.history_stats)} - ${stringResource(R.string.music)}"
+        HistoryType.TIMER -> "${stringResource(R.string.history_stats)} - ${stringResource(R.string.timer)}"
+        HistoryType.ALL -> stringResource(R.string.history_dialog_title)
+    }
+    
+    GlassAlertDialogSimple(
+        onDismissRequest = onDismiss
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+        ) {
+            Text(
+                text = titleText,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            if (historyStats.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.no_history_data),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(historyStats) { stat ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = stat.date,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            when (type) {
+                                HistoryType.WHITE_NOISE -> {
+                                    Text(
+                                        text = UsageStatsManager.formatDurationSimple(stat.whiteNoiseDuration),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                    )
+                                }
+                                HistoryType.MUSIC -> {
+                                    Text(
+                                        text = UsageStatsManager.formatDurationSimple(stat.musicDuration),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                    )
+                                }
+                                HistoryType.TIMER -> {
+                                    Text(
+                                        text = UsageStatsManager.formatDurationSimple(stat.timerDuration),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                    )
+                                }
+                                HistoryType.ALL -> {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    ) {
+                                        Text(
+                                            text = "WN: ${UsageStatsManager.formatDurationSimple(stat.whiteNoiseDuration)}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(
+                                            text = "Music: ${UsageStatsManager.formatDurationSimple(stat.musicDuration)}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(
+                                            text = "Timer: ${UsageStatsManager.formatDurationSimple(stat.timerDuration)}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(
-                    text = stringResource(R.string.cancel),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onConfirm(selectedPriority)
-                    onDismiss()
-                }
+            
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp)
             ) {
-                Text(
-                    text = stringResource(R.string.confirm),
-                    color = MaterialTheme.colorScheme.primary
-                )
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.BottomEnd)
+                ) {
+                    Text(
+                        text = stringResource(R.string.confirm),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
-    )
+    }
 }

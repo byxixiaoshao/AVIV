@@ -22,6 +22,14 @@ static void nativeRelease_impl(JNIEnv* env, jobject thiz) {
     LOGI("AudioEngine released");
 }
 
+// P2-7: 轻量重建音频流（保留已加载的 tracks）
+static jboolean nativeRecreateStream_impl(JNIEnv* env, jobject thiz) {
+    auto* engine = AudioEngine::getInstance();
+    bool result = engine->recreateStream();
+    LOGI("AudioEngine recreateStream result: %d", result);
+    return result ? JNI_TRUE : JNI_FALSE;
+}
+
 static void nativeWarmup_impl(JNIEnv* env, jobject thiz) {
     LOGI("AudioEngine warmup (no-op)");
 }
@@ -273,10 +281,31 @@ static void nativeSetEarlyReflectionLevel_impl(JNIEnv* env, jobject thiz,
 static void nativeSetCreativeEffectIntensity_impl(JNIEnv* env, jobject thiz,
                                                                                  jstring soundId, jint effectType, jfloat intensity) {
     const char* id = env->GetStringUTFChars(soundId, nullptr);
-    
+
     auto* engine = AudioEngine::getInstance();
     engine->setTrackCreativeEffectIntensity(std::string(id), effectType, intensity);
-    
+
+    env->ReleaseStringUTFChars(soundId, id);
+}
+
+// SoundTouch：独立播放速率 / 音调调节（pitch 与 speed 解耦）
+static void nativeSetPlaybackSpeed_impl(JNIEnv* env, jobject thiz,
+                                                                      jstring soundId, jfloat speed) {
+    const char* id = env->GetStringUTFChars(soundId, nullptr);
+
+    auto* engine = AudioEngine::getInstance();
+    engine->setTrackPlaybackSpeed(std::string(id), speed);
+
+    env->ReleaseStringUTFChars(soundId, id);
+}
+
+static void nativeSetPitchShift_impl(JNIEnv* env, jobject thiz,
+                                                                    jstring soundId, jfloat semitones) {
+    const char* id = env->GetStringUTFChars(soundId, nullptr);
+
+    auto* engine = AudioEngine::getInstance();
+    engine->setTrackPitchShift(std::string(id), semitones);
+
     env->ReleaseStringUTFChars(soundId, id);
 }
 
@@ -343,6 +372,21 @@ static void nativeClearRestartFlag_impl(JNIEnv* env, jobject thiz) {
     engine->clearRestartFlag();
 }
 
+static jint nativeGetXRunCount_impl(JNIEnv* env, jobject thiz) {
+    auto* engine = AudioEngine::getInstance();
+    return engine->getXRunCount();
+}
+
+static jboolean nativeHasUnderrun_impl(JNIEnv* env, jobject thiz) {
+    auto* engine = AudioEngine::getInstance();
+    return engine->hasUnderrun() ? JNI_TRUE : JNI_FALSE;
+}
+
+static void nativeClearUnderrunFlag_impl(JNIEnv* env, jobject thiz) {
+    auto* engine = AudioEngine::getInstance();
+    engine->clearUnderrunFlag();
+}
+
 static void nativeSetEqBandGain_impl(JNIEnv* env, jobject thiz,
                                                                     jstring soundId, jint bandIndex, jfloat gain) {
     const char* id = env->GetStringUTFChars(soundId, nullptr);
@@ -384,46 +428,73 @@ static void nativeSetEqLimiterEnabled_impl(JNIEnv* env, jobject thiz,
     env->ReleaseStringUTFChars(soundId, id);
 }
 
+static void nativeSetEqualizerCurve_impl(JNIEnv* env, jobject thiz,
+    jstring soundId, jfloatArray frequencies, jfloatArray gains, jintArray filterTypes,
+    jfloatArray qValues, jintArray curveIns, jintArray curveOuts) {
+const char* id = env->GetStringUTFChars(soundId, nullptr);
+
+jsize numPoints = env->GetArrayLength(frequencies);
+jfloat* freqPtr = env->GetFloatArrayElements(frequencies, nullptr);
+jfloat* gainPtr = env->GetFloatArrayElements(gains, nullptr);
+jint* typePtr = env->GetIntArrayElements(filterTypes, nullptr);
+jfloat* qPtr = env->GetFloatArrayElements(qValues, nullptr);
+jint* cInPtr = env->GetIntArrayElements(curveIns, nullptr);
+jint* cOutPtr = env->GetIntArrayElements(curveOuts, nullptr);
+
+std::vector<audiofx::ControlPoint> points;
+points.reserve(numPoints);
+for (jsize i = 0; i < numPoints; i++) {
+    audiofx::ControlPoint pt;
+    pt.frequencyHz = freqPtr[i];
+    pt.gainDb = gainPtr[i];
+    pt.filterType = static_cast<audiofx::EqFilterType>(typePtr[i]);
+    pt.Q = qPtr[i];
+    pt.curveIn = static_cast<audiofx::CurveInterpolation>(cInPtr[i]);
+    pt.curveOut = static_cast<audiofx::CurveInterpolation>(cOutPtr[i]);
+    points.push_back(pt);
+}
+
+auto* engine = AudioEngine::getInstance();
+engine->setTrackEqualizerCurve(std::string(id), points);
+
+env->ReleaseFloatArrayElements(frequencies, freqPtr, JNI_ABORT);
+env->ReleaseFloatArrayElements(gains, gainPtr, JNI_ABORT);
+env->ReleaseIntArrayElements(filterTypes, typePtr, JNI_ABORT);
+env->ReleaseFloatArrayElements(qValues, qPtr, JNI_ABORT);
+env->ReleaseIntArrayElements(curveIns, cInPtr, JNI_ABORT);
+env->ReleaseIntArrayElements(curveOuts, cOutPtr, JNI_ABORT);
+env->ReleaseStringUTFChars(soundId, id);
+}
+
+static jfloat nativeGetFilterResponse_impl(JNIEnv* env, jobject thiz,
+    jstring soundId, jfloat frequency) {
+    const char* id = env->GetStringUTFChars(soundId, nullptr);
+    auto* engine = AudioEngine::getInstance();
+    float response = engine->getTrackFilterResponse(std::string(id), frequency);
+    env->ReleaseStringUTFChars(soundId, id);
+    return response;
+}
+
+// Deprecated stubs
 static void nativeSetEqGains_impl(JNIEnv* env, jobject thiz,
                                                                  jstring soundId, jfloatArray gains) {
-    const char* id = env->GetStringUTFChars(soundId, nullptr);
-    
-    jfloat* gainsPtr = env->GetFloatArrayElements(gains, nullptr);
-    jsize length = env->GetArrayLength(gains);
-    
-    std::array<float, EQ_BAND_COUNT> gainsArray = {};
-    for (jsize i = 0; i < length && i < EQ_BAND_COUNT; i++) {
-        gainsArray[i] = gainsPtr[i];
-    }
-    
-    auto* engine = AudioEngine::getInstance();
-    engine->setTrackEqGains(std::string(id), gainsArray);
-    
-    env->ReleaseFloatArrayElements(gains, gainsPtr, JNI_ABORT);
-    env->ReleaseStringUTFChars(soundId, id);
+    (void)env; (void)thiz; (void)soundId; (void)gains;
 }
 
 static jfloatArray nativeGetEqGains_impl(JNIEnv* env, jobject thiz,
                                                                  jstring soundId) {
-    const char* id = env->GetStringUTFChars(soundId, nullptr);
-    
-    auto* engine = AudioEngine::getInstance();
-    auto gains = engine->getTrackEqGains(std::string(id));
-    
-    jfloatArray result = env->NewFloatArray(EQ_BAND_COUNT);
-    env->SetFloatArrayRegion(result, 0, EQ_BAND_COUNT, gains.data());
-    
-    env->ReleaseStringUTFChars(soundId, id);
+    (void)thiz; (void)soundId;
+    jfloatArray result = env->NewFloatArray(12);
+    float zeros[12] = {0};
+    env->SetFloatArrayRegion(result, 0, 12, zeros);
     return result;
 }
 
 static void nativeSetSpatialEnabled_impl(JNIEnv* env, jobject thiz,
-                                                                          jstring soundId, jboolean enabled) {
+    jstring soundId, jboolean enabled) {
     const char* id = env->GetStringUTFChars(soundId, nullptr);
-    
     auto* engine = AudioEngine::getInstance();
     engine->setTrackSpatialEnabled(std::string(id), enabled == JNI_TRUE);
-    
     env->ReleaseStringUTFChars(soundId, id);
 }
 
@@ -459,13 +530,15 @@ static void nativeSetSpatialFixedOffset_impl(JNIEnv* env, jobject thiz,
     env->ReleaseStringUTFChars(soundId, id);
 }
 
+// 设置声向环绕参数。periodSeconds 语义为"秒/圈"（数值越大转得越慢），
+// C++ 内部按角速度 ω = 2π / periodSeconds 计算位置增量。
 static void nativeSetSpatialSurroundParams_impl(JNIEnv* env, jobject thiz,
                                                                                   jstring soundId,
-                                                                                  jint mode, jfloat radius, jfloat speed) {
+                                                                                  jint mode, jfloat radius, jfloat periodSeconds) {
     const char* id = env->GetStringUTFChars(soundId, nullptr);
     
     auto* engine = AudioEngine::getInstance();
-    engine->setTrackSpatialSurroundParams(std::string(id), mode, radius, speed);
+    engine->setTrackSpatialSurroundParams(std::string(id), mode, radius, periodSeconds);
     
     env->ReleaseStringUTFChars(soundId, id);
 }
@@ -478,6 +551,25 @@ static void nativeSetSpatialRandomParams_impl(JNIEnv* env, jobject thiz,
     
     auto* engine = AudioEngine::getInstance();
     engine->setTrackSpatialRandomParams(std::string(id), maxDistance, minDistance, randomValue, speed);
+    
+    env->ReleaseStringUTFChars(soundId, id);
+}
+
+static void nativeSetSpatialScatterParams_impl(JNIEnv* env, jobject thiz,
+                                                                                  jstring soundId,
+                                                                                  jfloat minRadius, jfloat maxRadius,
+                                                                                  jboolean xEnabled, jboolean yEnabled, jboolean zEnabled,
+                                                                                  jboolean moveEnabled, jfloat moveRandomValue,
+                                                                                  jfloat moveSpeed, jfloat directionRandom) {
+    const char* id = env->GetStringUTFChars(soundId, nullptr);
+    
+    auto* engine = AudioEngine::getInstance();
+    engine->setTrackSpatialScatterParams(
+        std::string(id),
+        minRadius, maxRadius,
+        xEnabled == JNI_TRUE, yEnabled == JNI_TRUE, zEnabled == JNI_TRUE,
+        moveEnabled == JNI_TRUE, moveRandomValue, moveSpeed, directionRandom
+    );
     
     env->ReleaseStringUTFChars(soundId, id);
 }
@@ -701,14 +793,6 @@ static void nativeSetAutoEqMaxCut_impl(JNIEnv* env, jobject thiz,
     env->ReleaseStringUTFChars(soundId, id);
 }
 
-static void nativeSetAutoEqSmoothing_impl(JNIEnv* env, jobject thiz,
-                                           jstring soundId, jfloat s) {
-    const char* id = env->GetStringUTFChars(soundId, nullptr);
-    auto* engine = AudioEngine::getInstance();
-    engine->setTrackAutoEqSmoothing(std::string(id), s);
-    env->ReleaseStringUTFChars(soundId, id);
-}
-
 static void nativeSetAutoEqBrightnessTarget_impl(JNIEnv* env, jobject thiz,
                                                   jstring soundId, jfloat db) {
     const char* id = env->GetStringUTFChars(soundId, nullptr);
@@ -739,9 +823,24 @@ static jfloatArray nativeGetAutoEqGains_impl(JNIEnv* env, jobject thiz, jstring 
     auto gains = engine->getTrackAutoEqGains(std::string(id));
     env->ReleaseStringUTFChars(soundId, id);
     
-    jfloatArray result = env->NewFloatArray(audiofx::AUTO_EQ_BANDS);
-    if (result != nullptr) {
-        env->SetFloatArrayRegion(result, 0, audiofx::AUTO_EQ_BANDS, gains.data());
+    int count = static_cast<int>(gains.size());
+    jfloatArray result = env->NewFloatArray(count);
+    if (result != nullptr && count > 0) {
+        env->SetFloatArrayRegion(result, 0, count, gains.data());
+    }
+    return result;
+}
+
+static jfloatArray nativeGetAutoEqFrequencies_impl(JNIEnv* env, jobject thiz, jstring soundId) {
+    const char* id = env->GetStringUTFChars(soundId, nullptr);
+    auto* engine = AudioEngine::getInstance();
+    auto freqs = engine->getTrackAutoEqFrequencies(std::string(id));
+    env->ReleaseStringUTFChars(soundId, id);
+    
+    int count = static_cast<int>(freqs.size());
+    jfloatArray result = env->NewFloatArray(count);
+    if (result != nullptr && count > 0) {
+        env->SetFloatArrayRegion(result, 0, count, freqs.data());
     }
     return result;
 }
@@ -791,6 +890,22 @@ static void nativeSetAutoEqHysteresis_impl(JNIEnv* env, jobject thiz,
     env->ReleaseStringUTFChars(soundId, id);
 }
 
+static void nativeSetAutoEqBandCount_impl(JNIEnv* env, jobject thiz,
+                                           jstring soundId, jint count) {
+    const char* id = env->GetStringUTFChars(soundId, nullptr);
+    auto* engine = AudioEngine::getInstance();
+    engine->setTrackAutoEqBandCount(std::string(id), count);
+    env->ReleaseStringUTFChars(soundId, id);
+}
+
+static void nativeSetAutoEqBandRatios_impl(JNIEnv* env, jobject thiz,
+                                            jstring soundId, jfloat low, jfloat mid) {
+    const char* id = env->GetStringUTFChars(soundId, nullptr);
+    auto* engine = AudioEngine::getInstance();
+    engine->setTrackAutoEqBandRatios(std::string(id), low, mid);
+    env->ReleaseStringUTFChars(soundId, id);
+}
+
 static void nativeSetSpeakerPreset_impl(JNIEnv* env, jobject thiz,
                                          jstring soundId, jstring preset) {
     const char* id = env->GetStringUTFChars(soundId, nullptr);
@@ -802,6 +917,32 @@ static void nativeSetSpeakerPreset_impl(JNIEnv* env, jobject thiz,
     env->ReleaseStringUTFChars(preset, presetStr);
 }
 
+// Per-filter overrides (user-editable gain / frequency / Q)
+static void nativeSetAutoEqFilterOverride_impl(JNIEnv* env, jobject thiz,
+                                                jstring soundId, jint bandIndex,
+                                                jfloat gainDb, jfloat freqHz, jfloat q) {
+    const char* id = env->GetStringUTFChars(soundId, nullptr);
+    auto* engine = AudioEngine::getInstance();
+    engine->setTrackAutoEqFilterOverride(std::string(id), bandIndex, gainDb, freqHz, q);
+    env->ReleaseStringUTFChars(soundId, id);
+}
+
+static void nativeClearAutoEqFilterOverride_impl(JNIEnv* env, jobject thiz,
+                                                  jstring soundId, jint bandIndex) {
+    const char* id = env->GetStringUTFChars(soundId, nullptr);
+    auto* engine = AudioEngine::getInstance();
+    engine->clearTrackAutoEqFilterOverride(std::string(id), bandIndex);
+    env->ReleaseStringUTFChars(soundId, id);
+}
+
+static void nativeClearAllAutoEqFilterOverrides_impl(JNIEnv* env, jobject thiz,
+                                                      jstring soundId) {
+    const char* id = env->GetStringUTFChars(soundId, nullptr);
+    auto* engine = AudioEngine::getInstance();
+    engine->clearAllTrackAutoEqFilterOverrides(std::string(id));
+    env->ReleaseStringUTFChars(soundId, id);
+}
+
 // HybridEq stubs (not yet implemented)
 static jint nativeGetHybridEqProgress_impl(JNIEnv* env, jobject thiz, jstring soundId) {
     return 0;
@@ -811,6 +952,78 @@ static jboolean nativeIsHybridEqAnalyzing_impl(JNIEnv* env, jobject thiz, jstrin
 }
 static jboolean nativeHasHybridEqCurve_impl(JNIEnv* env, jobject thiz, jstring soundId) {
     return JNI_FALSE;
+}
+
+// ======================== 流式解码 JNI 绑定 ========================
+
+static jboolean nativeCreateStream_impl(JNIEnv* env, jobject thiz,
+                                         jstring streamId, jint bufferSize) {
+    const char* id = env->GetStringUTFChars(streamId, nullptr);
+    auto* engine = AudioEngine::getInstance();
+    bool result = engine->createStream(std::string(id), static_cast<size_t>(bufferSize));
+    env->ReleaseStringUTFChars(streamId, id);
+    return result ? JNI_TRUE : JNI_FALSE;
+}
+
+static jint nativeLoadSoundFromStream_impl(JNIEnv* env, jobject thiz,
+                                            jstring soundId, jstring streamId) {
+    const char* trackId = env->GetStringUTFChars(soundId, nullptr);
+    const char* sId = env->GetStringUTFChars(streamId, nullptr);
+    
+    auto* engine = AudioEngine::getInstance();
+    int result = engine->loadTrackFromStream(std::string(trackId), std::string(sId));
+    
+    env->ReleaseStringUTFChars(soundId, trackId);
+    env->ReleaseStringUTFChars(streamId, sId);
+    return result;
+}
+
+static jint nativeWriteStreamData_impl(JNIEnv* env, jobject thiz,
+                                        jstring streamId, jbyteArray data) {
+    const char* id = env->GetStringUTFChars(streamId, nullptr);
+    
+    jbyte* dataPtr = env->GetByteArrayElements(data, nullptr);
+    jsize len = env->GetArrayLength(data);
+    
+    auto* engine = AudioEngine::getInstance();
+    size_t written = 0;
+    engine->writeStreamData(std::string(id), reinterpret_cast<const uint8_t*>(dataPtr),
+                            static_cast<size_t>(len), written);
+    
+    env->ReleaseByteArrayElements(data, dataPtr, JNI_ABORT);
+    env->ReleaseStringUTFChars(streamId, id);
+    return static_cast<jint>(written);
+}
+
+static void nativeSetStreamComplete_impl(JNIEnv* env, jobject thiz,
+                                          jstring streamId) {
+    const char* id = env->GetStringUTFChars(streamId, nullptr);
+    
+    auto* engine = AudioEngine::getInstance();
+    engine->setStreamComplete(std::string(id));
+    
+    env->ReleaseStringUTFChars(streamId, id);
+}
+
+static void nativeDestroyStream_impl(JNIEnv* env, jobject thiz,
+                                      jstring streamId) {
+    const char* id = env->GetStringUTFChars(streamId, nullptr);
+    
+    auto* engine = AudioEngine::getInstance();
+    engine->destroyStream(std::string(id));
+    
+    env->ReleaseStringUTFChars(streamId, id);
+}
+
+static jboolean nativeHasStream_impl(JNIEnv* env, jobject thiz,
+                                      jstring streamId) {
+    const char* id = env->GetStringUTFChars(streamId, nullptr);
+    
+    auto* engine = AudioEngine::getInstance();
+    bool result = engine->hasStream(std::string(id));
+    
+    env->ReleaseStringUTFChars(streamId, id);
+    return result ? JNI_TRUE : JNI_FALSE;
 }
 
 static void nativeSetLimitSpatialEnabled_impl(JNIEnv* env, jobject thiz,
@@ -878,6 +1091,7 @@ Java_com_bicy_whitenoise_audio_OboeAudioEngine_registerNatives(JNIEnv* env, jobj
     JNINativeMethod methods[] = {
         {"nativeInit", "()Z", (void*)nativeInit_impl},
         {"nativeRelease", "()V", (void*)nativeRelease_impl},
+        {"nativeRecreateStream", "()Z", (void*)nativeRecreateStream_impl},
         {"nativeWarmup", "()V", (void*)nativeWarmup_impl},
         {"nativeLoadSound", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)nativeLoadSound_impl},
         {"nativeLoadSoundFromFd", "(Ljava/lang/String;IJJLjava/lang/String;)I", (void*)nativeLoadSoundFromFd_impl},
@@ -905,6 +1119,8 @@ Java_com_bicy_whitenoise_audio_OboeAudioEngine_registerNatives(JNIEnv* env, jobj
         {"nativeSetHighpassCutoff", "(Ljava/lang/String;F)V", (void*)nativeSetHighpassCutoff_impl},
         {"nativeSetEarlyReflectionLevel", "(Ljava/lang/String;F)V", (void*)nativeSetEarlyReflectionLevel_impl},
         {"nativeSetCreativeEffectIntensity", "(Ljava/lang/String;IF)V", (void*)nativeSetCreativeEffectIntensity_impl},
+        {"nativeSetPlaybackSpeed", "(Ljava/lang/String;F)V", (void*)nativeSetPlaybackSpeed_impl},
+        {"nativeSetPitchShift", "(Ljava/lang/String;F)V", (void*)nativeSetPitchShift_impl},
         {"nativeSeekTo", "(Ljava/lang/String;J)V", (void*)nativeSeekTo_impl},
         {"nativeGetPosition", "(Ljava/lang/String;)J", (void*)nativeGetPosition_impl},
         {"nativeGetDuration", "(Ljava/lang/String;)J", (void*)nativeGetDuration_impl},
@@ -912,6 +1128,11 @@ Java_com_bicy_whitenoise_audio_OboeAudioEngine_registerNatives(JNIEnv* env, jobj
         {"nativeIsLooping", "(Ljava/lang/String;)Z", (void*)nativeIsLooping_impl},
         {"nativeNeedsRestart", "()Z", (void*)nativeNeedsRestart_impl},
         {"nativeClearRestartFlag", "()V", (void*)nativeClearRestartFlag_impl},
+        {"nativeGetXRunCount", "()I", (void*)nativeGetXRunCount_impl},
+        {"nativeHasUnderrun", "()Z", (void*)nativeHasUnderrun_impl},
+        {"nativeClearUnderrunFlag", "()V", (void*)nativeClearUnderrunFlag_impl},
+        {"nativeSetEqualizerCurve", "(Ljava/lang/String;[F[F[I[F[I[I)V", (void*)nativeSetEqualizerCurve_impl},
+        {"nativeGetFilterResponse", "(Ljava/lang/String;F)F", (void*)nativeGetFilterResponse_impl},
         {"nativeSetEqBandGain", "(Ljava/lang/String;IF)V", (void*)nativeSetEqBandGain_impl},
         {"nativeGetEqBandGain", "(Ljava/lang/String;I)F", (void*)nativeGetEqBandGain_impl},
         {"nativeSetEqEnabled", "(Ljava/lang/String;Z)V", (void*)nativeSetEqEnabled_impl},
@@ -924,6 +1145,7 @@ Java_com_bicy_whitenoise_audio_OboeAudioEngine_registerNatives(JNIEnv* env, jobj
         {"nativeSetSpatialFixedOffset", "(Ljava/lang/String;FFFF)V", (void*)nativeSetSpatialFixedOffset_impl},
         {"nativeSetSpatialSurroundParams", "(Ljava/lang/String;IFF)V", (void*)nativeSetSpatialSurroundParams_impl},
         {"nativeSetSpatialRandomParams", "(Ljava/lang/String;FFFF)V", (void*)nativeSetSpatialRandomParams_impl},
+        {"nativeSetSpatialScatterParams", "(Ljava/lang/String;FFZZZZFFF)V", (void*)nativeSetSpatialScatterParams_impl},
         {"nativeSetFadeDuration", "(Ljava/lang/String;F)V", (void*)nativeSetFadeDuration_impl},
         {"nativeIsFadingOut", "(Ljava/lang/String;)Z", (void*)nativeIsFadingOut_impl},
         {"nativeCancelFadeOut", "(Ljava/lang/String;)V", (void*)nativeCancelFadeOut_impl},
@@ -953,20 +1175,31 @@ Java_com_bicy_whitenoise_audio_OboeAudioEngine_registerNatives(JNIEnv* env, jobj
         {"nativeSetAutoEqResponseSpeed", "(Ljava/lang/String;Ljava/lang/String;)V", (void*)nativeSetAutoEqResponseSpeed_impl},
         {"nativeSetAutoEqMaxBoost", "(Ljava/lang/String;F)V", (void*)nativeSetAutoEqMaxBoost_impl},
         {"nativeSetAutoEqMaxCut", "(Ljava/lang/String;F)V", (void*)nativeSetAutoEqMaxCut_impl},
-        {"nativeSetAutoEqSmoothing", "(Ljava/lang/String;F)V", (void*)nativeSetAutoEqSmoothing_impl},
         {"nativeSetAutoEqBrightnessTarget", "(Ljava/lang/String;F)V", (void*)nativeSetAutoEqBrightnessTarget_impl},
         {"nativeSetAutoEqLoudnessTarget", "(Ljava/lang/String;F)V", (void*)nativeSetAutoEqLoudnessTarget_impl},
         {"nativeSetAutoEqDynamicQEnabled", "(Ljava/lang/String;Z)V", (void*)nativeSetAutoEqDynamicQEnabled_impl},
         {"nativeGetAutoEqGains", "(Ljava/lang/String;)[F", (void*)nativeGetAutoEqGains_impl},
+        {"nativeGetAutoEqFrequencies", "(Ljava/lang/String;)[F", (void*)nativeGetAutoEqFrequencies_impl},
         {"nativeSetAutoEqAttack", "(Ljava/lang/String;F)V", (void*)nativeSetAutoEqAttack_impl},
         {"nativeSetAutoEqRelease", "(Ljava/lang/String;F)V", (void*)nativeSetAutoEqRelease_impl},
         {"nativeSetAutoEqMaxSlope", "(Ljava/lang/String;F)V", (void*)nativeSetAutoEqMaxSlope_impl},
         {"nativeSetAutoEqCouplingCoeff", "(Ljava/lang/String;F)V", (void*)nativeSetAutoEqCouplingCoeff_impl},
         {"nativeSetAutoEqHysteresis", "(Ljava/lang/String;F)V", (void*)nativeSetAutoEqHysteresis_impl},
+        {"nativeSetAutoEqBandCount", "(Ljava/lang/String;I)V", (void*)nativeSetAutoEqBandCount_impl},
+        {"nativeSetAutoEqBandRatios", "(Ljava/lang/String;FF)V", (void*)nativeSetAutoEqBandRatios_impl},
         {"nativeSetSpeakerPreset", "(Ljava/lang/String;Ljava/lang/String;)V", (void*)nativeSetSpeakerPreset_impl},
+        {"nativeSetAutoEqFilterOverride", "(Ljava/lang/String;IFFF)V", (void*)nativeSetAutoEqFilterOverride_impl},
+        {"nativeClearAutoEqFilterOverride", "(Ljava/lang/String;I)V", (void*)nativeClearAutoEqFilterOverride_impl},
+        {"nativeClearAllAutoEqFilterOverrides", "(Ljava/lang/String;)V", (void*)nativeClearAllAutoEqFilterOverrides_impl},
         {"nativeGetHybridEqProgress", "(Ljava/lang/String;)I", (void*)nativeGetHybridEqProgress_impl},
         {"nativeIsHybridEqAnalyzing", "(Ljava/lang/String;)Z", (void*)nativeIsHybridEqAnalyzing_impl},
         {"nativeHasHybridEqCurve", "(Ljava/lang/String;)Z", (void*)nativeHasHybridEqCurve_impl},
+        {"nativeCreateStream", "(Ljava/lang/String;I)Z", (void*)nativeCreateStream_impl},
+        {"nativeLoadSoundFromStream", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)nativeLoadSoundFromStream_impl},
+        {"nativeWriteStreamData", "(Ljava/lang/String;[B)I", (void*)nativeWriteStreamData_impl},
+        {"nativeSetStreamComplete", "(Ljava/lang/String;)V", (void*)nativeSetStreamComplete_impl},
+        {"nativeDestroyStream", "(Ljava/lang/String;)V", (void*)nativeDestroyStream_impl},
+        {"nativeHasStream", "(Ljava/lang/String;)Z", (void*)nativeHasStream_impl},
     };
     jint result = env->RegisterNatives(clazz, methods, sizeof(methods) / sizeof(methods[0]));
     LOGI("RegisterNatives result: %d (0=OK)", result);

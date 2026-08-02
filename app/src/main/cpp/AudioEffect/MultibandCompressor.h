@@ -45,11 +45,16 @@ public:
                 float mix = bandL[c] + bandM[c] + bandH[c];
                 
                 // Dry/wet blend based on intensity
-                // intensity > 1: full wet + extra output boost
+                // intensity <= 1: dry/wet 线性混合
+                // intensity > 1: 全 wet + 温和提升（非线性，避免倍数放大导致爆音）
                 if (intensity_ <= 1.0f) {
                     samples[idx] = samples[idx] * (1.0f - intensity_) + mix * intensity_;
                 } else {
-                    samples[idx] = mix * intensity_;
+                    // intensity>1 时不再做 intensity_ 倍线性放大（旧代码 mix*intensity_ 在 intensity=3 时输出 3 倍 → 爆音）
+                    // 改为全 wet + 平方根压缩的温和提升，并软限幅
+                    float extra = intensity_ - 1.0f;
+                    float boosted = mix * (1.0f + std::sqrt(extra) * 0.3f);
+                    samples[idx] = std::tanh(boosted) * 0.95f;
                 }
             }
         }
