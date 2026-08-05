@@ -62,16 +62,22 @@ fun WhiteNoiseVisualizerBackground(
     
     Canvas(modifier = modifier.fillMaxSize()) {
         if (whiteNoiseFftData.isEmpty()) return@Canvas
-        
-        val barCount = 12
+
+        // 任务8：响应频段范围（clamp 到 0..11，白噪音共 12 段）
+        val minBand = config.vizResponseMinBand.coerceIn(0, 11)
+        val maxBand = config.vizResponseMaxBand.coerceIn(0, 11)
+        val effectiveMin = minOf(minBand, maxBand)
+        val effectiveMax = maxOf(minBand, maxBand)
+        val barCount = effectiveMax - effectiveMin + 1
+        if (barCount <= 0) return@Canvas
         val barWidth = size.width / barCount
         val maxBarHeight = size.height
         val minBarHeight = size.height * 0.02f
         val baseY = size.height
-        
+
         for (i in 0 until barCount) {
-            val index = (i * whiteNoiseFftData.size / barCount).coerceIn(0, whiteNoiseFftData.size - 1)
-            val value = smoothData[i]
+            val index = (effectiveMin + i).coerceIn(0, smoothData.size - 1)
+            val value = smoothData[index]
             
             // Skip if value is NaN, negative or too small
             if (value.isNaN() || value <= 0.01f) continue
@@ -171,16 +177,22 @@ fun MusicGradientBackground(
         }
         
         if (musicFftData.isEmpty()) return@Canvas
-        
-        val barCount = 16
+
+        // 任务8：响应频段范围（音乐共 16 段）
+        val minBand = config.vizResponseMinBand.coerceIn(0, 15)
+        val maxBand = config.vizResponseMaxBand.coerceIn(0, 15)
+        val effectiveMin = minOf(minBand, maxBand)
+        val effectiveMax = maxOf(minBand, maxBand)
+        val barCount = effectiveMax - effectiveMin + 1
+        if (barCount <= 0) return@Canvas
         val barWidth = size.width / barCount
         val maxBarHeight = size.height
         val minBarHeight = size.height * 0.02f
         val baseY = size.height
-        
+
         for (i in 0 until barCount) {
-            val index = (i * musicFftData.size / barCount).coerceIn(0, musicFftData.size - 1)
-            val value = smoothData[i]
+            val index = (effectiveMin + i).coerceIn(0, smoothData.size - 1)
+            val value = smoothData[index]
             
             // Skip if value is NaN, negative or too small
             if (value.isNaN() || value <= 0.01f) continue

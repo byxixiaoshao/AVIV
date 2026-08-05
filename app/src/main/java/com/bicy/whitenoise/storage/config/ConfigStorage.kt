@@ -196,9 +196,22 @@ object ConfigStorage {
     }
     
     fun getVizRefreshRate(): Int = _config.value.vizRefreshRate
-    
+
     fun setVizRefreshRate(value: Int) {
         updateConfig { it.copy(vizRefreshRate = value) }
+    }
+
+    // 任务8：响应频段范围
+    fun getVizResponseMinBand(): Int = _config.value.vizResponseMinBand
+
+    fun setVizResponseMinBand(value: Int) {
+        updateConfig { it.copy(vizResponseMinBand = value) }
+    }
+
+    fun getVizResponseMaxBand(): Int = _config.value.vizResponseMaxBand
+
+    fun setVizResponseMaxBand(value: Int) {
+        updateConfig { it.copy(vizResponseMaxBand = value) }
     }
     
     fun getMediaControlPriority(): String = _config.value.mediaControlPriority

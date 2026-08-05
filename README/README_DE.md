@@ -6,7 +6,7 @@
 ![Language](https://img.shields.io/badge/Kotlin%20%2B%20C%2B%2B-Compose%20%2F%20Oboe-blue.svg)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 
-**Ein Android-Player für weißes Rauschen und Musik, gebaut um eine C++-Echtzeit-Audio-Engine, der ein Dutzend professionelle Effekte, räumliches Audio, AutoEQ und Online-Streaming integriert.**
+**Ein Android-Player für weißes Rauschen und Musik, gebaut um eine C++-Echtzeit-Audio-Engine, der ein Dutzend professionelle Effekte, räumliches Audio und AutoEQ integriert.**
 
 [Funktionen](#-funktionen) · [Audio-Engine](#-audio-engine) · [Architektur](#-architektur) · [Build](#-aus-quellcode-kompilieren) · [Abhängigkeiten & Lizenzen](#-open-source-abhängigkeiten--lizenzen)
 
@@ -27,7 +27,7 @@ AVIV vereint Wiedergabe von weißem Rauschen, lokale/Online-Musik und eine profe
 ## ✨ Funktionen
 
 ### 🌊 Weißes Rauschen
-- Mehrere eingebaute Quellen, nach Kategorie organisiert, lokal und online
+- Mehrere eingebaute Quellen, nach Kategorie organisiert, unterstützt lokale Musikwiedergabe
 - **Scatter-Modus**: zufällige Wiedergabe mit anpassbarem Intervall und Bereich, simuliert ein natürliches Klangfeld
 - **Unabhängige Effektkette** pro Spur (EQ / Reverb / Räumlich / Kreativ), ohne gegenseitige Störung
 - Lautstärkeverstärkung 0–300 %
@@ -35,7 +35,6 @@ AVIV vereint Wiedergabe von weißem Rauschen, lokale/Online-Musik und eine profe
 ### 🎵 Musikwiedergabe
 - Multi-Format (MP3 / WAV / FLAC / AAC usw.)
 - Playlist-Verwaltung
-- Online-Streaming über die **QuickJS-Quellskript-Engine**, automatische Multi-Engine-Erkennung & Failover bei Timeout
 
 ### 🎛️ Echtzeit-Audioeffekte (C++-Engine)
 | Effekt | Beschreibung |
@@ -146,7 +145,7 @@ com.bicy.whitenoise
 ## 📥 Download & Installation
 
 ### Systemanforderungen
-- Android 7.0 (API 24) oder höher
+- Android 10.0 (API 29) oder höher
 - Mindestens 100 MB freier Speicher
 
 ### Installation
@@ -173,7 +172,7 @@ cd AVIV/Android
 ./gradlew :app:assembleRelease
 ```
 
-> Der Build erfordert eine `keystore.properties`-Signaturkonfiguration. SoundTouch-Quellen liegen im Projekt-Root `soundtouch/` und werden von CMake automatisch als statische Bibliothek kompiliert und gelinkt.
+> Der Build erfordert eine `keystore.properties`-Signaturkonfiguration. SoundTouch-Quellen bitte selbst beschaffen.
 
 ---
 

@@ -6,7 +6,7 @@
 ![Language](https://img.shields.io/badge/Kotlin%20%2B%20C%2B%2B-Compose%20%2F%20Oboe-blue.svg)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 
-**Um player Android de ruído branco e música construído em torno de um motor de áudio em tempo real em C++, integrando uma dúzia de efeitos profissionais, áudio espacial, AutoEQ e streaming online.**
+**Um player Android de ruído branco e música construído em torno de um motor de áudio em tempo real em C++, integrando uma dúzia de efeitos profissionais, áudio espacial e AutoEQ.**
 
 [Recursos](#-recursos) · [Motor de áudio](#-motor-de-áudio) · [Arquitetura](#-arquitetura) · [Compilação](#-compilar-a-partir-do-código-fonte) · [Dependências e licenças](#-dependências-open-source--licenças)
 
@@ -27,7 +27,7 @@ O AVIV funde reprodução de ruído branco, música local/online e um motor prof
 ## ✨ Recursos
 
 ### 🌊 Ruído branco
-- Múltiplas fontes integradas organizadas por categoria, locais e online
+- Múltiplas fontes integradas organizadas por categoria, suporta reprodução de música local
 - **Modo Scatter**: reprodução aleatória com intervalo e intervalo personalizáveis, simulando um campo sonoro natural
 - **Cadeia de efeitos independente** por faixa (EQ / reverb / espacial / criativos), sem interferência
 - Faixa de ganho de volume 0–300 %
@@ -35,7 +35,6 @@ O AVIV funde reprodução de ruído branco, música local/online e um motor prof
 ### 🎵 Reprodução de música
 - Multi-formato (MP3 / WAV / FLAC / AAC, etc.)
 - Gestão de playlists
-- Streaming online via o **motor de scripts QuickJS**, detecção automática de múltiplos motores e failover automático em timeout
 
 ### 🎛️ Efeitos de áudio em tempo real (motor C++)
 | Efeito | Descrição |
@@ -146,7 +145,7 @@ com.bicy.whitenoise
 ## 📥 Download e instalação
 
 ### Requisitos do sistema
-- Android 7.0 (API 24) ou superior
+- Android 10.0 (API 29) ou superior
 - Pelo menos 100 MB de armazenamento livre
 
 ### Instalação
@@ -173,7 +172,7 @@ cd AVIV/Android
 ./gradlew :app:assembleRelease
 ```
 
-> A compilação requer uma config de assinatura `keystore.properties`. As fontes do SoundTouch estão em `soundtouch/` na raiz do projeto e o CMake as compila automaticamente como biblioteca estática.
+> A compilação requer uma config de assinatura `keystore.properties`. As fontes do SoundTouch devem ser obtidas separadamente.
 
 ---
 

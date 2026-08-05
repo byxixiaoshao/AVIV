@@ -50,6 +50,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import com.bicy.whitenoise.ui.components.InteractiveSlider
@@ -73,8 +74,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.bicy.whitenoise.R
+import com.bicy.whitenoise.storage.config.ConfigStorage
 import com.bicy.whitenoise.storage.music.MusicDirectory
 import com.bicy.whitenoise.storage.theme.CustomThemeLibrary
 import com.bicy.whitenoise.ui.theme.CustomTheme
@@ -1829,5 +1832,151 @@ fun UsageHistoryDialog(
                 }
             }
         }
+    }
+}
+
+/**
+ * 任务8：可视化配置弹窗。
+ * 替代原设置页的 slider/switch 项，集中配置可视化灵敏度、响应频段范围、降落速度。
+ * 移除"变化速度"独立项，其语义并入"降落速度"（复用 vizRefreshRate 字段作 smoothFactor）。
+ */
+@Composable
+fun VisualizationConfigDialog(onDismiss: () -> Unit) {
+    val config by ConfigStorage.config.collectAsState()
+    GlassAlertDialogSimple(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            // --- 白噪音可视化 ---
+            VizToggleRow(
+                title = stringResource(R.string.viz_wn_sensitivity),
+                checked = config.vizWnEnabled,
+                onCheckedChange = { ConfigStorage.setVizWnEnabled(it) }
+            )
+            VizSliderRow(
+                label = stringResource(R.string.viz_wn_sensitivity),
+                value = config.vizWnSensitivity.toFloat(),
+                valueRange = 0f..2f,
+                steps = 1,
+                onValueChange = { ConfigStorage.setVizWnSensitivity(it.toInt()) }
+            )
+
+            // --- 音乐可视化 ---
+            VizToggleRow(
+                title = stringResource(R.string.viz_music_sensitivity),
+                checked = config.vizMusicEnabled,
+                onCheckedChange = { ConfigStorage.setVizMusicEnabled(it) }
+            )
+            VizSliderRow(
+                label = stringResource(R.string.viz_music_sensitivity),
+                value = config.vizMusicSensitivity.toFloat(),
+                valueRange = 0f..2f,
+                steps = 1,
+                onValueChange = { ConfigStorage.setVizMusicSensitivity(it.toInt()) }
+            )
+
+            // --- 闪烁 ---
+            VizToggleRow(
+                title = stringResource(R.string.viz_flash_sensitivity),
+                checked = config.vizFlashEnabled,
+                onCheckedChange = { ConfigStorage.setVizFlashEnabled(it) }
+            )
+            VizSliderRow(
+                label = stringResource(R.string.viz_flash_sensitivity),
+                value = config.vizFlashSensitivity.toFloat(),
+                valueRange = 0f..2f,
+                steps = 1,
+                onValueChange = { ConfigStorage.setVizFlashSensitivity(it.toInt()) }
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // --- 响应频段范围（0..15，白噪音渲染时 clamp 到 0..11） ---
+            Text(
+                text = stringResource(R.string.viz_response_range),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
+            VizSliderRow(
+                label = stringResource(R.string.viz_min_band),
+                value = config.vizResponseMinBand.toFloat(),
+                valueRange = 0f..15f,
+                steps = 14,
+                onValueChange = { ConfigStorage.setVizResponseMinBand(it.toInt()) }
+            )
+            VizSliderRow(
+                label = stringResource(R.string.viz_max_band),
+                value = config.vizResponseMaxBand.toFloat(),
+                valueRange = 0f..15f,
+                steps = 14,
+                onValueChange = { ConfigStorage.setVizResponseMaxBand(it.toInt()) }
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // --- 降落速度（复用 vizRefreshRate 作 smoothFactor） ---
+            VizSliderRow(
+                label = stringResource(R.string.viz_fall_speed),
+                value = config.vizRefreshRate.toFloat(),
+                valueRange = 0f..2f,
+                steps = 1,
+                onValueChange = { ConfigStorage.setVizRefreshRate(it.toInt()) }
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text(stringResource(R.string.finish), color = MaterialTheme.colorScheme.onPrimary)
+            }
+        }
+    }
+}
+
+@Composable
+private fun VizToggleRow(title: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(title, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun VizSliderRow(
+    label: String,
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    onValueChange: (Float) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+            Text("${value.toInt()}", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
+        }
+        InteractiveSlider(
+            value = value,
+            onValueChange = onValueChange,
+            valueRange = valueRange,
+            steps = steps,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }

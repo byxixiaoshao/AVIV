@@ -7,6 +7,7 @@ import com.bicy.whitenoise.audio.ReverbManager
 import com.bicy.whitenoise.equalizer.PresetStorage
 import com.bicy.whitenoise.audio.aVzM
 import com.bicy.whitenoise.floatingpet.FloatingPetInitializer
+import com.bicy.whitenoise.music.AlbumArtCache
 import com.bicy.whitenoise.music.MusicLibraryPart.MusicLibrary
 import com.bicy.whitenoise.music.MusicPlayerController
 import com.bicy.whitenoise.music.MusicScannerPart.MusicScanner
@@ -19,6 +20,9 @@ import com.bicy.whitenoise.storage.playlist.PlaylistManagerPart.PlaylistManager
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStorage
 import com.bicy.whitenoise.subPage.setting.ItemList
 import com.bicy.whitenoise.ui.theme.ThemeColorManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.io.File
 
 object AppInitializer {
@@ -49,6 +53,21 @@ object AppInitializer {
         MusicLibrary.init(applicationContext)
         MusicPlayerController.init(applicationContext)
         PlaylistManager.init(applicationContext)
+        AlbumArtCache.init(applicationContext)
+
+        // 启动时后台扫描本地音乐：先读缓存快速显示，再增量扫描更新
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
+                if (!MusicLibrary.loadFromCacheOnly()) {
+                    MusicLibrary.scanLibrary(applicationContext)
+                } else {
+                    MusicLibrary.performIncrementalScan()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "启动扫描本地音乐失败", e)
+            }
+        }
+
         
         UsageStatsManager.init(applicationContext)
         PresetStorage.init(applicationContext)

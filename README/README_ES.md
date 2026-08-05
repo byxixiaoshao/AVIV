@@ -6,7 +6,7 @@
 ![Language](https://img.shields.io/badge/Kotlin%20%2B%20C%2B%2B-Compose%20%2F%20Oboe-blue.svg)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 
-**Un reproductor Android de ruido blanco y música construido en torno a un motor de audio en tiempo real en C++, que integra una docena de efectos profesionales, audio espacial, AutoEQ y streaming en línea.**
+**Un reproductor Android de ruido blanco y música construido en torno a un motor de audio en tiempo real en C++, que integra una docena de efectos profesionales, audio espacial y AutoEQ.**
 
 [Características](#-características) · [Motor de audio](#-motor-de-audio) · [Arquitectura](#-arquitectura) · [Compilación](#-compilar-desde-el-código-fuente) · [Dependencias y licencias](#-dependencias-open-source--licencias)
 
@@ -27,7 +27,7 @@ AVIV fusiona reproducción de ruido blanco, música local/en línea y un motor p
 ## ✨ Características
 
 ### 🌊 Ruido blanco
-- Múltiples fuentes integradas organizadas por categoría, locales y en línea
+- Múltiples fuentes integradas organizadas por categoría, admite reproducción de música local
 - **Modo Scatter**: reproducción aleatoria con intervalo y rango personalizables, simulando un campo sonoro natural
 - **Cadena de efectos independiente** por pista (EQ / reverb / espacial / creativos), sin interferencias
 - Rango de ganancia de volumen 0–300 %
@@ -35,7 +35,6 @@ AVIV fusiona reproducción de ruido blanco, música local/en línea y un motor p
 ### 🎵 Reproducción de música
 - Multi-formato (MP3 / WAV / FLAC / AAC, etc.)
 - Gestión de listas de reproducción
-- Streaming en línea con el **motor de scripts QuickJS**, detección automática multi-motor y conmutación automática ante timeout
 
 ### 🎛️ Efectos de audio en tiempo real (motor C++)
 | Efecto | Descripción |
@@ -146,7 +145,7 @@ com.bicy.whitenoise
 ## 📥 Descarga e instalación
 
 ### Requisitos del sistema
-- Android 7.0 (API 24) o superior
+- Android 10.0 (API 29) o superior
 - Al menos 100 MB de almacenamiento libre
 
 ### Instalación
@@ -173,7 +172,7 @@ cd AVIV/Android
 ./gradlew :app:assembleRelease
 ```
 
-> La compilación requiere una configuración de firma `keystore.properties`. Las fuentes de SoundTouch están en `soundtouch/` en la raíz del proyecto y CMake las compila automáticamente como biblioteca estática.
+> La compilación requiere una configuración de firma `keystore.properties`. Las fuentes de SoundTouch deben obtenerse por separado.
 
 ---
 

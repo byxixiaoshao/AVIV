@@ -105,6 +105,7 @@ import com.bicy.whitenoise.storage.music.MusicStorage
 import com.bicy.whitenoise.music.MusicCacheManager
 import com.bicy.whitenoise.music.MusicPlayerController
 import com.bicy.whitenoise.storage.config.ConfigStorage
+import com.bicy.whitenoise.storage.config.SpeakerPresetCurves
 import com.bicy.whitenoise.service.MemoryLockService
 import com.bicy.whitenoise.service.AnomalyType
 import com.bicy.whitenoise.ui.screens.ReverbConfigDialogPart.ReverbPreset
@@ -1494,13 +1495,25 @@ private fun SpeakerCompensationPanel(soundId: String?) {
     var midRatio by remember { mutableFloatStateOf(ConfigStorage.getAutoEqMidRatio()) }
     var eqAutoMode by remember { mutableStateOf(ConfigStorage.config.value.autoEqMode) }
 
-    val presets = listOf(
+    // 分类预设：设备类 + 场景类。新增预设由 SpeakerPresetCurves（Kotlin）提供补偿曲线，
+    // 原有 5 个预设（phone/earphone/bluetooth/car/flat）仍由 C++ 引擎内部计算。
+    val devicePresets = listOf(
         stringResource(R.string.speaker_preset_phone),
         stringResource(R.string.speaker_preset_earphone),
         stringResource(R.string.speaker_preset_bluetooth),
         stringResource(R.string.speaker_preset_car),
-        stringResource(R.string.speaker_preset_flat)
+        stringResource(R.string.speaker_preset_tablet),
+        stringResource(R.string.speaker_preset_headphone),
+        stringResource(R.string.speaker_preset_desktop),
+        stringResource(R.string.speaker_preset_tv)
     )
+    val scenePresets = listOf(
+        stringResource(R.string.speaker_preset_cinema),
+        stringResource(R.string.speaker_preset_night),
+        stringResource(R.string.speaker_preset_outdoor),
+        stringResource(R.string.speaker_preset_studio)
+    )
+    val flatPresetName = stringResource(R.string.speaker_preset_flat)
 
     // --- Per-filter editor state ---
     // Each entry: Pair(actualBandIndex, Triple<gainDb, freqHz, q>).
@@ -1526,6 +1539,9 @@ private fun SpeakerCompensationPanel(soundId: String?) {
         val kMaxEqFilterPoints = 48
         val stride = if (gains.size > kMaxEqFilterPoints) gains.size / kMaxEqFilterPoints else 1
 
+        // Kotlin 预设（tablet/headphone/desktop/tv/cinema/night/outdoor/studio）
+        // 由 SpeakerPresetCurves 提供补偿曲线增益，替代 C++ 引擎的 auto gain。
+        val isKotlinPreset = SpeakerPresetCurves.isKotlinPreset(presetEnglish)
         val saved = ConfigStorage.getAutoEqFilterOverridesFor(presetEnglish)
         val list = ArrayList<Pair<Int, Triple<Float, Float, Float>>>()
         var i = 0
@@ -1535,7 +1551,12 @@ private fun SpeakerCompensationPanel(soundId: String?) {
                 list.add(i to Triple(o.gainDb, o.frequencyHz, o.q))
                 OboeAudioEngine.setAutoEqFilterOverride(soundId, i, o.gainDb, o.frequencyHz, o.q)
             } else {
-                list.add(i to Triple(gains[i], freqs[i], 1.0f))
+                val baseGain = if (isKotlinPreset) SpeakerPresetCurves.gainForFreq(presetEnglish, freqs[i]) else gains[i]
+                list.add(i to Triple(baseGain, freqs[i], 1.0f))
+                // Kotlin 预设的曲线增益需推送到 C++ BiQuad 池（C++ 不内置这些预设）
+                if (isKotlinPreset) {
+                    OboeAudioEngine.setAutoEqFilterOverride(soundId, i, baseGain, freqs[i], 1.0f)
+                }
             }
             i += stride
         }
@@ -1550,17 +1571,23 @@ private fun SpeakerCompensationPanel(soundId: String?) {
         if (autoGains.isEmpty() || autoFreqs.isEmpty()) return@sync
         if (autoGains.size != autoFreqs.size) return@sync
 
+        // Kotlin 预设的增益来自 SpeakerPresetCurves 曲线；用户 override 优先；
+        // 其余用 C++ auto gain。
+        val isKotlinPreset = SpeakerPresetCurves.isKotlinPreset(presetEnglish)
+        val savedOverrides = ConfigStorage.getAutoEqFilterOverridesFor(presetEnglish)
         val pts = autoGains.mapIndexed { i, g ->
-            ControlPoint(autoFreqs[i], g.coerceIn(-24f, 24f))
+            val baseGain = when {
+                savedOverrides[i] != null -> savedOverrides[i]!!.gainDb
+                isKotlinPreset -> SpeakerPresetCurves.gainForFreq(presetEnglish, autoFreqs[i])
+                else -> g
+            }
+            ControlPoint(autoFreqs[i], baseGain.coerceIn(-24f, 24f))
         }
 
-        // If per-filter overrides exist for the current preset, the C++ side has
-        // already pushed the override-aware curve via applyAutoEqToEq (called by
-        // every setAutoEq* setter). Re-pushing the plain auto curve here would
-        // overwrite those overrides, so we skip the setEqualizerCurve call and
-        // only sync to the manual-EQ preset storage.
-        val hasOverrides = ConfigStorage.getAutoEqFilterOverridesFor(presetEnglish).isNotEmpty()
-        if (!hasOverrides) {
+        // 存在用户 override 或 Kotlin 预设时，C++ BiQuad 池已通过 setAutoEqFilterOverride
+        // 推送了正确曲线，调用 setEqualizerCurve 会覆盖这些值，因此跳过。
+        val hasOverrides = savedOverrides.isNotEmpty()
+        if (!hasOverrides && !isKotlinPreset) {
             val freqs = FloatArray(pts.size) { pts[it].frequencyHz }
             val gainsArr = FloatArray(pts.size) { pts[it].gainDb }
             val types = IntArray(pts.size) { pts[it].filterType.nativeValue }
@@ -1596,65 +1623,36 @@ private fun SpeakerCompensationPanel(soundId: String?) {
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
     ) {
-        AutoEqSectionTitle(stringResource(R.string.speaker_preset_title))
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
-                    .clickable { presetMenuExpanded = true }
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        // --- 滤波器编辑入口（上移至面板顶部，扬声器预设并入弹窗） ---
+        var showFilterEditor by remember { mutableStateOf(false) }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                .clickable { showFilterEditor = true }
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = selectedPreset,
-                    fontSize = 14.sp,
+                    text = stringResource(R.string.auto_eq_filter_editor_title),
+                    fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    modifier = Modifier.size(20.dp)
+                Text(
+                    text = selectedPreset,
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
-
-            DropdownMenu(
-                expanded = presetMenuExpanded,
-                onDismissRequest = { presetMenuExpanded = false },
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .background(MaterialTheme.colorScheme.surface)
-            ) {
-                for (preset in presets) {
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = preset,
-                                fontSize = 14.sp,
-                                color = if (selectedPreset == preset) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.onSurface
-                            )
-                        },
-                        onClick = {
-                            selectedPreset = preset
-                            presetMenuExpanded = false
-                            ConfigStorage.setSpeakerPreset(preset)
-                            val englishPreset = presetToEnglish(preset)
-                            if (soundId != null) {
-                                // Clear any active C++ overrides from the previous preset
-                                // before switching, so the new preset's auto curve is not
-                                // momentarily combined with the old preset's overrides.
-                                OboeAudioEngine.clearAllAutoEqFilterOverrides(soundId)
-                                OboeAudioEngine.setSpeakerPreset(soundId, englishPreset)
-                                syncToManualEq()
-                            }
-                        }
-                    )
-                }
-            }
+            Icon(
+                imageVector = Icons.Default.ArrowDropDown,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                modifier = Modifier.size(20.dp)
+            )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -1938,34 +1936,6 @@ private fun SpeakerCompensationPanel(soundId: String?) {
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // --- Per-filter editor (gain / frequency / Q) ---
-        // 改为独立弹窗编辑，避免内联占用过多纵向空间。
-        var showFilterEditor by remember { mutableStateOf(false) }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
-                .clickable { showFilterEditor = true }
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(R.string.auto_eq_filter_editor_title),
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Icon(
-                imageVector = Icons.Default.ArrowDropDown,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                modifier = Modifier.size(20.dp)
-            )
-        }
-
         if (showFilterEditor) {
             GlassAlertDialogSimple(
                 onDismissRequest = { showFilterEditor = false }
@@ -1975,6 +1945,84 @@ private fun SpeakerCompensationPanel(soundId: String?) {
                         .padding(16.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
+                    // 扬声器预设选择（分类：设备 / 场景 / 平坦）
+                    AutoEqSectionTitle(stringResource(R.string.speaker_preset_title))
+                    val onPresetSelected: (String) -> Unit = { preset ->
+                        selectedPreset = preset
+                        presetMenuExpanded = false
+                        ConfigStorage.setSpeakerPreset(preset)
+                        val englishPreset = presetToEnglish(preset)
+                        if (soundId != null) {
+                            OboeAudioEngine.clearAllAutoEqFilterOverrides(soundId)
+                            OboeAudioEngine.setSpeakerPreset(soundId, englishPreset)
+                            syncToManualEq()
+                        }
+                    }
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                                .clickable { presetMenuExpanded = true }
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = selectedPreset,
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = presetMenuExpanded,
+                            onDismissRequest = { presetMenuExpanded = false },
+                            modifier = Modifier
+                                .fillMaxWidth(0.9f)
+                                .background(MaterialTheme.colorScheme.surface)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.speaker_preset_category_device),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                            )
+                            devicePresets.forEach { p ->
+                                DropdownMenuItem(
+                                    text = { Text(p, fontSize = 14.sp, color = if (selectedPreset == p) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface) },
+                                    onClick = { onPresetSelected(p) }
+                                )
+                            }
+                            Text(
+                                text = stringResource(R.string.speaker_preset_category_scene),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                            )
+                            scenePresets.forEach { p ->
+                                DropdownMenuItem(
+                                    text = { Text(p, fontSize = 14.sp, color = if (selectedPreset == p) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface) },
+                                    onClick = { onPresetSelected(p) }
+                                )
+                            }
+                            DropdownMenuItem(
+                                text = { Text(flatPresetName, fontSize = 14.sp, color = if (selectedPreset == flatPresetName) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface) },
+                                onClick = { onPresetSelected(flatPresetName) }
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     AutoEqFilterEditorSection(
                         soundId = soundId,
                         presetEnglish = presetEnglish,
@@ -2256,10 +2304,20 @@ private fun formatFreq(freq: Float): String {
 
 private fun presetToEnglish(preset: String): String {
     return when {
-        preset.contains("phone", ignoreCase = true) || preset.contains("手机") -> "phone"
+        // “头戴耳机”包含“耳机”，必须先于 earphone 判断
+        preset.contains("头戴", ignoreCase = true) || preset.contains("headphone", ignoreCase = true) -> "headphone"
         preset.contains("earphone", ignoreCase = true) || preset.contains("耳机") -> "earphone"
+        // “phone”含于“headphone/earphone”，放后面
+        preset.contains("手机", ignoreCase = true) || preset.contains("phone", ignoreCase = true) -> "phone"
         preset.contains("bluetooth", ignoreCase = true) || preset.contains("蓝牙") -> "bluetooth"
         preset.contains("car", ignoreCase = true) || preset.contains("车载") -> "car"
+        preset.contains("tablet", ignoreCase = true) || preset.contains("平板") -> "tablet"
+        preset.contains("desktop", ignoreCase = true) || preset.contains("桌面") -> "desktop"
+        preset.contains("tv", ignoreCase = true) || preset.contains("电视") -> "tv"
+        preset.contains("cinema", ignoreCase = true) || preset.contains("影院") -> "cinema"
+        preset.contains("night", ignoreCase = true) || preset.contains("夜间") -> "night"
+        preset.contains("outdoor", ignoreCase = true) || preset.contains("户外") -> "outdoor"
+        preset.contains("studio", ignoreCase = true) || preset.contains("录音棚") -> "studio"
         preset.contains("flat", ignoreCase = true) || preset.contains("平坦") -> "flat"
         else -> "phone"
     }

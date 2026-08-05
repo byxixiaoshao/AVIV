@@ -92,6 +92,7 @@ import com.bicy.whitenoise.ui.screens.SettingScreenPart.EffectOrderDialog
 import com.bicy.whitenoise.ui.screens.SettingScreenPart.MediaControlPriorityDialog
 import com.bicy.whitenoise.ui.screens.SettingScreenPart.MusicDirectoryDialog
 import com.bicy.whitenoise.ui.screens.SettingScreenPart.SettingCategorySection
+import com.bicy.whitenoise.ui.screens.SettingScreenPart.VisualizationConfigDialog
 import com.bicy.whitenoise.ui.screens.SettingScreenPart.SettingClickItem
 import com.bicy.whitenoise.ui.screens.SettingScreenPart.SettingClickItemWithIcon
 import com.bicy.whitenoise.ui.screens.SettingScreenPart.SettingSliderItem
@@ -608,35 +609,21 @@ fun SettingScreen(
                         onValueChange = { alpha -> NavBackgroundConfig.setBackgroundAlpha(alpha) }
                     )
 
-                    SettingSliderWithCheckboxItem(
-                        title = stringResource(R.string.viz_wn_sensitivity),
-                        checked = globalState.vizWnEnabled,
-                        onCheckedChange = { enabled -> ConfigStorage.setVizWnEnabled(enabled) },
-                        value = globalState.vizWnSensitivity,
-                        onValueChange = { value -> ConfigStorage.setVizWnSensitivity(value) }
+                    // 任务8：可视化配置按钮 + 弹窗（替代原 slider/switch）
+                    var showVizConfigDialog by remember { mutableStateOf(false) }
+                    val vizSummary = buildString {
+                        if (globalState.vizWnEnabled) append("W ")
+                        if (globalState.vizMusicEnabled) append("M ")
+                        if (globalState.vizFlashEnabled) append("F")
+                    }.ifBlank { "—" }
+                    SettingClickItem(
+                        title = stringResource(R.string.viz_config_title),
+                        value = vizSummary,
+                        onClick = { showVizConfigDialog = true }
                     )
-                    
-                    SettingSliderWithCheckboxItem(
-                        title = stringResource(R.string.viz_music_sensitivity),
-                        checked = globalState.vizMusicEnabled,
-                        onCheckedChange = { enabled -> ConfigStorage.setVizMusicEnabled(enabled) },
-                        value = globalState.vizMusicSensitivity,
-                        onValueChange = { value -> ConfigStorage.setVizMusicSensitivity(value) }
-                    )
-                    
-                    SettingSliderWithCheckboxItem(
-                        title = stringResource(R.string.viz_flash_sensitivity),
-                        checked = globalState.vizFlashEnabled,
-                        onCheckedChange = { enabled -> ConfigStorage.setVizFlashEnabled(enabled) },
-                        value = globalState.vizFlashSensitivity,
-                        onValueChange = { value -> ConfigStorage.setVizFlashSensitivity(value) }
-                    )
-                    
-                    SettingSliderItem(
-                        title = stringResource(R.string.viz_refresh_rate),
-                        value = globalState.vizRefreshRate,
-                        onValueChange = { ConfigStorage.setVizRefreshRate(it) }
-                    )
+                    if (showVizConfigDialog) {
+                        VisualizationConfigDialog(onDismiss = { showVizConfigDialog = false })
+                    }
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     

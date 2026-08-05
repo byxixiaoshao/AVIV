@@ -143,6 +143,10 @@ class OnlineMusicController(private val appContext: Context) {
                     MusicPlayerController.setPlaylist(listOf(localTrack), 0)
                     MusicPlayerController.play()
                     MusicLibrary.addOrUpdateTrack(localTrack)
+                    // 持久化在线音乐元数据（兼容旧下载，重启后可从本地恢复）
+                    scope.launch(Dispatchers.IO) {
+                        OnlineMusicStorage.saveOnlineTrack(localTrack.copy(isOnline = true))
+                    }
                     onStatusChanged?.invoke(OnlinePlayState.Playing(localTrack))
                     return@launch
                 }
@@ -168,6 +172,9 @@ class OnlineMusicController(private val appContext: Context) {
                     albumArt = null,
                     mediaStoreId = 0
                 ))
+
+                // 持久化在线音乐元数据（歌名/歌手/专辑/streamUrl 等）
+                scope.launch(Dispatchers.IO) { OnlineMusicStorage.saveOnlineTrack(track) }
 
                 onStatusChanged?.invoke(OnlinePlayState.Playing(track))
                 ToastManager.complete("正在播放：${musicInfo.name}")

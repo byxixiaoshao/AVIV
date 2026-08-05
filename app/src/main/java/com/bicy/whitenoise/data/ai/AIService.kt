@@ -67,16 +67,33 @@ class AIService(private val context: Context) {
 
     /**
      * 工具调用确认结果
-     * - Confirm: 用户确认执行（可携带修改后的参数）
-     * - Reject: 用户拒绝执行（携带拒绝原因，AI 可据此重试）
+     * - Confirm: 用户确认执行（modifiedArgs 仅单工具时有效，多工具时为 null 直接执行原参数）
+     * - Reject: 用户拒绝执行（携带拒绝原因，AI 可据此重试），拒绝所有待确认工具
      */
     sealed class ConfirmResult {
         data class Confirm(val modifiedArgs: JSONObject? = null) : ConfirmResult()
         data class Reject(val reason: String) : ConfirmResult()
     }
 
-    /** 工具调用确认回调：返回 null 表示无需确认（直接执行） */
-    typealias ToolConfirmCallback = suspend (toolName: String, args: JSONObject) -> ConfirmResult?
+    /**
+     * 任务A: 待确认的工具调用项
+     * 包含工具名、参数、toolCallId（用于关联 tool message）和原始参数字符串
+     */
+    data class ToolConfirmItem(
+        val toolName: String,
+        val args: JSONObject,
+        val toolCallId: String,
+        val rawArgs: String
+    )
+
+    /**
+     * 任务A: 工具调用确认回调
+     * 接收待确认的修改类工具列表，返回确认/拒绝结果
+     * - 返回 null 表示无需确认（confirmMode 关闭），直接执行
+     * - 返回 Confirm 执行所有工具（modifiedArgs 仅单工具时有效）
+     * - 返回 Reject 拒绝所有工具
+     */
+    typealias ToolConfirmCallback = suspend (tools: List<ToolConfirmItem>) -> ConfirmResult?
 
     suspend fun chatWithTools(
         messages: MutableList<ChatMessage>,
@@ -148,84 +165,114 @@ class AIService(private val context: Context) {
 
             messages.add(message)
 
-            for (toolCall in message.toolCalls) {
-                val toolName = toolCall.function.name
-                val toolArgs = toolCall.function.arguments
-                Log.d(TAG, "工具调用: $toolName($toolArgs)")
-
-                onToolCall?.invoke(ToolCallInfo(toolName, toolArgs, isComplete = false))
-
-                val argsJson = try {
-                    JSONObject(toolArgs)
-                } catch (e: Exception) {
-                    Log.e(TAG, "工具参数解析失败: ${toolArgs.take(200)}", e)
-                    return Result.failure(Exception("工具参数被截断或格式错误"))
-                }
-
-                // 用户确认流程（confirmMode 开启时）
-                val effectiveArgs = confirmIfNeeded(onToolConfirm, toolName, argsJson, toolArgs, toolCall, messages, onToolCall)
-                if (effectiveArgs == null) continue  // 用户拒绝或确认失败，跳过执行
-
-                val ctx = AgentService.getCurrentContext()
-                val toolResult = AgentService.executeTool(toolName, effectiveArgs, ctx)
-
-                val (content, isError) = when (toolResult) {
-                    is ToolResult.Success -> {
-                        if (toolResult.hasOperation()) {
-                            onOperation?.invoke(OperationRecord(
-                                operationType = toolResult.operationType!!,
-                                targetType = toolResult.targetType!!,
-                                targetId = toolResult.targetId!!,
-                                targetName = toolResult.targetName ?: ""
-                            ))
-                        }
-                        toolResult.message to false
-                    }
-                    is ToolResult.Error -> "错误: ${toolResult.message}" to true
-                }
-
-                Log.d(TAG, "工具结果: $content")
-                onToolCall?.invoke(ToolCallInfo(toolName, toolArgs, content, isError, isComplete = true))
-
-                messages.add(ChatMessage(
-                    role = "tool",
-                    content = content,
-                    toolCallId = toolCall.id
-                ))
-            }
+            // 任务A: 读取类工具直接执行，修改类工具收集后合并确认（只弹一个弹窗）
+            processToolCalls(message.toolCalls!!, messages, onToolCall, onOperation, onToolConfirm)
         }
         return Result.failure(Exception("超过最大工具调用次数 ($maxIterations 次)"))
     }
 
     /**
-     * 工具调用确认：若 onToolConfirm 返回 Reject，向 messages 注入拒绝消息并返回 null（跳过执行）；
-     * 若返回 Confirm(modifiedArgs)，返回修改后的参数；若返回 null，返回原始参数（直接执行）。
+     * 任务A: 统一处理一轮中的所有工具调用
+     * - 读取类工具（isReadOnly=true）：免确认直接执行
+     * - 修改类工具：收集到列表，合并为单个确认弹窗（若 onToolConfirm 非 null）
+     *   - 用户确认 → 执行所有（单工具支持参数修改，多工具用原参数）
+     *   - 用户拒绝 → 注入拒绝消息到所有 tool message
+     *   - 返回 null → 无需确认，直接执行
      */
-    private suspend fun confirmIfNeeded(
-        onToolConfirm: ToolConfirmCallback?,
-        toolName: String,
-        argsJson: JSONObject,
-        toolArgs: String,
-        toolCall: com.bicy.whitenoise.data.ai.AIModelsPart.ToolCall,
+    private suspend fun processToolCalls(
+        toolCalls: List<com.bicy.whitenoise.data.ai.AIModelsPart.ToolCall>,
         messages: MutableList<ChatMessage>,
-        onToolCall: ((ToolCallInfo) -> Unit)?
-    ): JSONObject? {
-        if (onToolConfirm == null) return argsJson
-        return try {
-            when (val result = onToolConfirm(toolName, argsJson)) {
-                null -> argsJson
-                is ConfirmResult.Confirm -> result.modifiedArgs ?: argsJson
-                is ConfirmResult.Reject -> {
-                    val rejectMsg = "用户拒绝执行: ${result.reason}"
-                    onToolCall?.invoke(ToolCallInfo(toolName, toolArgs, rejectMsg, isError = true, isComplete = true))
-                    messages.add(ChatMessage(role = "tool", content = rejectMsg, toolCallId = toolCall.id))
-                    null
+        onToolCall: ((ToolCallInfo) -> Unit)?,
+        onOperation: ((OperationRecord) -> Unit)?,
+        onToolConfirm: ToolConfirmCallback?
+    ) {
+        val ctx = AgentService.getCurrentContext()
+        val pendingConfirmTools = mutableListOf<ToolConfirmItem>()
+
+        for (toolCall in toolCalls) {
+            val toolName = toolCall.function.name
+            val toolArgs = toolCall.function.arguments
+            Log.d(TAG, "工具调用: $toolName($toolArgs)")
+
+            onToolCall?.invoke(ToolCallInfo(toolName, toolArgs, isComplete = false))
+
+            val argsJson = try {
+                JSONObject(toolArgs)
+            } catch (e: Exception) {
+                Log.e(TAG, "工具参数解析失败: ${toolArgs.take(200)}", e)
+                messages.add(ChatMessage(role = "tool", content = "错误: 工具参数格式错误", toolCallId = toolCall.id))
+                onToolCall?.invoke(ToolCallInfo(toolName, toolArgs, "错误: 工具参数格式错误", isError = true, isComplete = true))
+                continue
+            }
+
+            if (AgentService.isToolReadOnly(toolName)) {
+                // 读取类工具——免确认直接执行
+                executeToolAndAppend(ToolConfirmItem(toolName, argsJson, toolCall.id, toolArgs), argsJson, messages, ctx, onToolCall, onOperation)
+            } else {
+                // 修改类工具——收集待确认
+                pendingConfirmTools.add(ToolConfirmItem(toolName, argsJson, toolCall.id, toolArgs))
+            }
+        }
+
+        // 任务A: 合并确认修改类工具（只弹一个弹窗）
+        if (pendingConfirmTools.isEmpty()) return
+
+        val confirmResult = onToolConfirm?.invoke(pendingConfirmTools)
+        when (confirmResult) {
+            null -> {
+                // 无需确认（confirmMode 关闭）——直接执行所有
+                for (item in pendingConfirmTools) {
+                    executeToolAndAppend(item, item.args, messages, ctx, onToolCall, onOperation)
                 }
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "工具确认流程异常", e)
-            argsJson  // 异常时直接执行
+            is ConfirmResult.Confirm -> {
+                // 用户确认——单工具支持参数修改，多工具用原参数
+                for (item in pendingConfirmTools) {
+                    val effectiveArgs = if (pendingConfirmTools.size == 1) confirmResult.modifiedArgs ?: item.args else item.args
+                    executeToolAndAppend(item, effectiveArgs, messages, ctx, onToolCall, onOperation)
+                }
+            }
+            is ConfirmResult.Reject -> {
+                // 用户拒绝——所有修改类工具注入拒绝消息
+                val rejectMsg = "用户拒绝执行: ${confirmResult.reason}"
+                for (item in pendingConfirmTools) {
+                    Log.d(TAG, "工具被拒绝: ${item.toolName}, 原因: ${confirmResult.reason}")
+                    onToolCall?.invoke(ToolCallInfo(item.toolName, item.rawArgs, rejectMsg, isError = true, isComplete = true))
+                    messages.add(ChatMessage(role = "tool", content = rejectMsg, toolCallId = item.toolCallId))
+                }
+            }
         }
+    }
+
+    /**
+     * 执行单个工具调用并追加结果到 messages
+     */
+    private suspend fun executeToolAndAppend(
+        item: ToolConfirmItem,
+        effectiveArgs: JSONObject,
+        messages: MutableList<ChatMessage>,
+        ctx: com.bicy.whitenoise.data.agent.AgentToolPart.ToolContext,
+        onToolCall: ((ToolCallInfo) -> Unit)?,
+        onOperation: ((OperationRecord) -> Unit)?
+    ) {
+        val toolResult = AgentService.executeTool(item.toolName, effectiveArgs, ctx)
+        val (content, isError) = when (toolResult) {
+            is ToolResult.Success -> {
+                if (toolResult.hasOperation()) {
+                    onOperation?.invoke(OperationRecord(
+                        operationType = toolResult.operationType!!,
+                        targetType = toolResult.targetType!!,
+                        targetId = toolResult.targetId!!,
+                        targetName = toolResult.targetName ?: ""
+                    ))
+                }
+                toolResult.message to false
+            }
+            is ToolResult.Error -> "错误: ${toolResult.message}" to true
+        }
+        Log.d(TAG, "工具结果: $content")
+        onToolCall?.invoke(ToolCallInfo(item.toolName, item.rawArgs, content, isError, isComplete = true))
+        messages.add(ChatMessage(role = "tool", content = content, toolCallId = item.toolCallId))
     }
 
     /**
@@ -346,51 +393,8 @@ class AIService(private val context: Context) {
 
             messages.add(message2)
 
-            for (toolCall in message2.toolCalls) {
-                val toolName = toolCall.function.name
-                val toolArgs = toolCall.function.arguments
-                Log.d(TAG, "工具调用: $toolName($toolArgs)")
-
-                onToolCall?.invoke(ToolCallInfo(toolName, toolArgs, isComplete = false))
-
-                val argsJson = try {
-                    JSONObject(toolArgs)
-                } catch (e: Exception) {
-                    Log.e(TAG, "工具参数解析失败: ${toolArgs.take(200)}", e)
-                    return Result.failure(Exception("工具参数被截断或格式错误"))
-                }
-
-                // 用户确认流程（confirmMode 开启时）
-                val effectiveArgs = confirmIfNeeded(onToolConfirm, toolName, argsJson, toolArgs, toolCall, messages, onToolCall)
-                if (effectiveArgs == null) continue  // 用户拒绝，跳过执行
-
-                val ctx = AgentService.getCurrentContext()
-                val toolResult = AgentService.executeTool(toolName, effectiveArgs, ctx)
-
-                val (content, isError) = when (toolResult) {
-                    is ToolResult.Success -> {
-                        if (toolResult.hasOperation()) {
-                            onOperation?.invoke(OperationRecord(
-                                operationType = toolResult.operationType!!,
-                                targetType = toolResult.targetType!!,
-                                targetId = toolResult.targetId!!,
-                                targetName = toolResult.targetName ?: ""
-                            ))
-                        }
-                        toolResult.message to false
-                    }
-                    is ToolResult.Error -> "错误: ${toolResult.message}" to true
-                }
-
-                Log.d(TAG, "工具结果: $content")
-                onToolCall?.invoke(ToolCallInfo(toolName, toolArgs, content, isError, isComplete = true))
-
-                messages.add(ChatMessage(
-                    role = "tool",
-                    content = content,
-                    toolCallId = toolCall.id
-                ))
-            }
+            // 任务A: 读取类工具直接执行，修改类工具收集后合并确认（只弹一个弹窗）
+            processToolCalls(message2.toolCalls!!, messages, onToolCall, onOperation, onToolConfirm)
         }
         return Result.failure(Exception("超过最大工具调用次数 ($maxIterations 次)"))
     }

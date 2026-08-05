@@ -100,6 +100,16 @@ class MusicService : Service() {
     private val baseStreamCheckDelayMs: Long = 1000L  // 基础退避 1s
     private val maxStreamCheckDelayMs: Long = 8000L   // 最大退避 8s
 
+    // P0: Oboe 引擎初始化状态跟踪
+    // 解决"服务异常关闭后无法恢复"的核心漏洞：
+    // 服务被 START_STICKY 重启时，若 Oboe init() 失败（设备占用/驱动异常），
+    // 旧代码仅 Log，未降级到 FallbackAudioPlayer，且 audioStreamCheckRunnable
+    // 检查 needsRestart() 时因引擎未初始化返回 false，形成死锁——服务"假活"但无音频。
+    @Volatile
+    private var isOboeInitialized = false
+    private var oboeInitRetryCount = 0
+    private val maxOboeInitRetries = 5  // 周期性重试 5 次，仍失败则保持降级
+
     // 音频缓冲区欠载（XRun）持续捕获状态
     // 旧逻辑依赖 hasUnderrun() 一次性标志，clearUnderrunFlag() 后即停止上报，
     // 无法捕获 XRun 持续增长（如减速卡顿导致的连续欠载，计数可达数百并持续增长）。
@@ -144,6 +154,35 @@ class MusicService : Service() {
     
     private val audioStreamCheckRunnable = object : Runnable {
         override fun run() {
+            // P0: Oboe 引擎健康检查——若 init() 失败导致服务降级，周期性重试恢复
+            // 这是修复"服务异常关闭后无法恢复"的关键：避免引擎未初始化时死锁
+            if (!isOboeInitialized) {
+                if (oboeInitRetryCount < maxOboeInitRetries) {
+                    oboeInitRetryCount++
+                    Log.w(TAG, "audioStreamCheckRunnable: Oboe 未初始化，重试 $oboeInitRetryCount/$maxOboeInitRetries")
+                    val retryOk = try {
+                        OboeAudioEngine.release()
+                        OboeAudioEngine.init()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "audioStreamCheckRunnable: Oboe 重试初始化异常", e)
+                        false
+                    }
+                    if (retryOk) {
+                        Log.i(TAG, "audioStreamCheckRunnable: Oboe 重试初始化成功，切回主路径")
+                        isOboeInitialized = true
+                        oboeInitRetryCount = 0
+                        com.bicy.whitenoise.audio.FallbackAudioPlayer.switchBackToOboe()
+                        // 恢复后重新加载已保存的 sounds（用户播放列表）
+                        restoreSavedSounds()
+                    } else {
+                        Log.w(TAG, "audioStreamCheckRunnable: Oboe 重试失败 ($oboeInitRetryCount/$maxOboeInitRetries)")
+                    }
+                }
+                // 无论是否重试，降级状态下也保持轮询（等待设备空闲后重试成功）
+                audioCheckHandler.postDelayed(this, 2000)
+                return
+            }
+
             // 检测音频缓冲区欠载（持续捕获）
             // 直接轮询 getXRunCount() 跟踪计数变化，替代旧的 hasUnderrun() 一次性标志：
             // 旧逻辑 clearUnderrunFlag() 后即停止上报，无法捕获 XRun 持续增长的情况。
@@ -242,6 +281,9 @@ class MusicService : Service() {
                 Log.w(TAG, "音频引擎重新初始化: $reinitialized")
 
                 if (reinitialized) {
+                    // P0: 标记 Oboe 已初始化，重置健康检查重试计数
+                    isOboeInitialized = true
+                    oboeInitRetryCount = 0
                     // P2-8: Oboe 恢复成功——如果之前在降级模式，切回 Oboe
                     if (com.bicy.whitenoise.audio.FallbackAudioPlayer.useFallbackAudioTrack) {
                         Log.i(TAG, "audioStreamCheckRunnable: Oboe 恢复成功，切回主路径")
@@ -274,6 +316,9 @@ class MusicService : Service() {
                     // P2-8: Oboe 全量重启也失败——降级到 MediaPlayer 兜底播放
                     Log.e(TAG, "audioStreamCheckRunnable: Oboe 全量重启失败，启用降级播放")
                     com.bicy.whitenoise.audio.FallbackAudioPlayer.enableFallback()
+                    // P0: 标记 Oboe 未初始化，触发健康检查周期性重试恢复
+                    isOboeInitialized = false
+                    oboeInitRetryCount = 0
                     if (wasPlaying.isNotEmpty()) {
                         for (soundId in wasPlaying) {
                             val filePath = PlaybackStateManager.getLoadedSoundPath(soundId)
@@ -311,8 +356,12 @@ class MusicService : Service() {
     
     private fun syncPlayingState() {
         val allSoundIds = PlaybackStateManager.getAllSoundIds()
-        isServicePlaying = allSoundIds.any { 
-            OboeAudioEngine.isPlaying(it) && !OboeAudioEngine.isFadingOut(it) 
+        isServicePlaying = allSoundIds.any {
+            if (isOboeInitialized) {
+                OboeAudioEngine.isPlaying(it) && !OboeAudioEngine.isFadingOut(it)
+            } else {
+                com.bicy.whitenoise.audio.FallbackAudioPlayer.isPlaying(it)
+            }
         }
     }
     
@@ -368,8 +417,31 @@ class MusicService : Service() {
         // P2-8: 初始化降级播放器（兜底）
         com.bicy.whitenoise.audio.FallbackAudioPlayer.init(this)
 
-        val initialized = OboeAudioEngine.init()
+        val initialized = try {
+            // 防御性清理：服务可能被异常杀后由 START_STICKY 重启，此时 onDestroy 未执行，
+            // nativeRelease 未调用，C++ AudioEngine 单例的 isInitialized_=true 但音频流已失效。
+            // 先 release 清理残留状态（tracks_、audioStream_），再 init 重新打开流。
+            // 进程首次启动时 release 是 no-op（isInitialized_=false），无副作用。
+            OboeAudioEngine.release()
+            OboeAudioEngine.init()
+        } catch (e: Exception) {
+            Log.e(TAG, "Oboe引擎初始化异常，尝试降级播放器", e)
+            false
+        }
+        isOboeInitialized = initialized
         Log.d(TAG, "服务创建，Oboe引擎初始化: $initialized")
+
+        // P0: Oboe 初始化失败——立即降级到 MediaPlayer 兜底，避免服务"假活"状态
+        // 旧代码仅 Log，导致 audioStreamCheckRunnable 因 needsRestart()=false 不触发恢复，
+        // 形成死锁：服务在运行但无任何音频输出，用户必须重启应用。
+        if (!initialized) {
+            Log.e(TAG, "onCreate: Oboe 初始化失败，启用降级播放器（MediaPlayer 兜底）")
+            com.bicy.whitenoise.audio.FallbackAudioPlayer.enableFallback()
+            MemoryLockService.reportAnomaly(
+                AnomalyType.AUDIO_ENGINE_RESTART,
+                "服务启动时 Oboe 引擎初始化失败，已降级到 MediaPlayer 兜底播放，将周期性重试恢复 Oboe"
+            )
+        }
 
         PlaybackStateManager.init()
         ScatteredPlayerManager.init(this)
@@ -383,22 +455,30 @@ class MusicService : Service() {
     
     private fun restoreSavedSounds() {
         val savedSoundIds = PlaybackStateManager.getAllSoundIds()
-        Log.d(TAG, "restoreSavedSounds: Found ${savedSoundIds.size} saved sounds")
-        
+        Log.d(TAG, "restoreSavedSounds: Found ${savedSoundIds.size} saved sounds, isOboeInitialized=$isOboeInitialized")
+
         if (savedSoundIds.isEmpty()) {
             Log.d(TAG, "restoreSavedSounds: No saved sounds to restore")
             return
         }
-        
+
         savedSoundIds.forEach { soundId ->
             val filePath = PlaybackStateManager.getLoadedSoundPath(soundId)
             if (filePath != null) {
                 val audioFile = File(filePath)
                 if (audioFile.exists()) {
                     Log.d(TAG, "restoreSavedSounds: Pre-loading sound $soundId from $filePath")
-                    pendingPlayRequests[soundId] = false
-                    loadRetryCount[soundId] = 0
-                    OboeAudioEngine.loadSound(soundId, filePath)
+                    if (isOboeInitialized) {
+                        pendingPlayRequests[soundId] = false
+                        loadRetryCount[soundId] = 0
+                        OboeAudioEngine.loadSound(soundId, filePath)
+                    } else {
+                        // P0: Oboe 未初始化（降级模式）——用 FallbackAudioPlayer 加载
+                        com.bicy.whitenoise.audio.FallbackAudioPlayer.loadSound(soundId, filePath)
+                        com.bicy.whitenoise.audio.FallbackAudioPlayer.setVolume(
+                            soundId, PlaybackStateManager.getVolume(soundId)
+                        )
+                    }
                 } else {
                     Log.w(TAG, "restoreSavedSounds: File not found for $soundId: $filePath")
                 }
@@ -512,6 +592,11 @@ class MusicService : Service() {
                 Log.d(TAG, "音频引擎重新初始化: $reinitialized")
 
                 if (reinitialized) {
+                    isOboeInitialized = true
+                    oboeInitRetryCount = 0
+                    if (com.bicy.whitenoise.audio.FallbackAudioPlayer.useFallbackAudioTrack) {
+                        com.bicy.whitenoise.audio.FallbackAudioPlayer.switchBackToOboe()
+                    }
                     if (wasPlaying.isNotEmpty()) {
                         for (soundId in wasPlaying) {
                             val filePath = PlaybackStateManager.getLoadedSoundPath(soundId)
@@ -557,10 +642,29 @@ class MusicService : Service() {
                     }
 
                     onAudioStreamRestarted?.invoke()
+                } else {
+                    // P0: onAppResume 全量重启失败——降级并标记未初始化，交给健康检查重试
+                    Log.e(TAG, "onAppResume: 全量重启失败，启用降级播放")
+                    isOboeInitialized = false
+                    oboeInitRetryCount = 0
+                    com.bicy.whitenoise.audio.FallbackAudioPlayer.enableFallback()
+                    if (wasPlaying.isNotEmpty()) {
+                        for (soundId in wasPlaying) {
+                            val filePath = PlaybackStateManager.getLoadedSoundPath(soundId)
+                            if (filePath != null) {
+                                com.bicy.whitenoise.audio.FallbackAudioPlayer.loadSound(soundId, filePath)
+                                com.bicy.whitenoise.audio.FallbackAudioPlayer.setVolume(
+                                    soundId, PlaybackStateManager.getVolume(soundId)
+                                )
+                                com.bicy.whitenoise.audio.FallbackAudioPlayer.playSound(soundId)
+                            }
+                        }
+                    }
+                    mainHandler.post { onAudioStreamRestarted?.invoke() }
                 }
             }
         }
-        
+
         if (!audioFocusManager.hasAudioFocus) {
             audioFocusManager.requestAudioFocus()
         }
@@ -573,11 +677,17 @@ class MusicService : Service() {
     
     fun onAppPause() {
         Log.d(TAG, "应用进入后台")
-        wasPlayingBeforePause = PlaybackStateManager.getAllSoundIds().any { OboeAudioEngine.isPlaying(it) }
+        wasPlayingBeforePause = PlaybackStateManager.getAllSoundIds().any { isActuallyPlaying(it) }
     }
-    
+
+    // P0: 统一播放状态查询——降级模式下也检查 FallbackAudioPlayer
+    private fun isActuallyPlaying(soundId: String): Boolean {
+        if (isOboeInitialized) return OboeAudioEngine.isPlaying(soundId)
+        return com.bicy.whitenoise.audio.FallbackAudioPlayer.isPlaying(soundId)
+    }
+
     private fun getPlayingCount(): Int {
-        return PlaybackStateManager.getAllSoundIds().count { OboeAudioEngine.isPlaying(it) }
+        return PlaybackStateManager.getAllSoundIds().count { isActuallyPlaying(it) }
     }
     
     private fun updateNotification() {
@@ -593,7 +703,7 @@ class MusicService : Service() {
     
     private fun updatePlayingAudioIds() {
         val allSoundIds = PlaybackStateManager.getAllSoundIds()
-        val playingIds = allSoundIds.filter { OboeAudioEngine.isPlaying(it) }.toSet()
+        val playingIds = allSoundIds.filter { isActuallyPlaying(it) }.toSet()
         _playingAudioIds.value = playingIds
     }
     
@@ -649,7 +759,39 @@ class MusicService : Service() {
                 audioFile.delete()
                 return
             }
-            
+
+            // P0: Oboe 未初始化（降级模式）——走 FallbackAudioPlayer 路径，避免 native 调用崩溃
+            if (!isOboeInitialized) {
+                Log.w(TAG, "playSound: Oboe 未初始化，使用降级播放器: $soundId")
+                if (PlaybackStateManager.getSoundConfig(soundId) == null) {
+                    val savedConfig = com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStorage.getPlaybackState().sounds.find { it.id == soundId }
+                    if (savedConfig != null) {
+                        PlaybackStateManager.playSound(soundId, audioFile.absolutePath, savedConfig)
+                    } else {
+                        val newConfig = com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStoragePart.SoundPlayConfig(
+                            id = soundId, name = soundName, filePath = audioFile.absolutePath
+                        )
+                        PlaybackStateManager.playSound(soundId, audioFile.absolutePath, newConfig)
+                    }
+                } else {
+                    PlaybackStateManager.setLoadedSoundPath(soundId, audioFile.absolutePath)
+                }
+                com.bicy.whitenoise.audio.FallbackAudioPlayer.loadSound(soundId, audioFile.absolutePath)
+                com.bicy.whitenoise.audio.FallbackAudioPlayer.setVolume(soundId, PlaybackStateManager.getVolume(soundId))
+                com.bicy.whitenoise.audio.FallbackAudioPlayer.playSound(soundId)
+                hasBeenPlayed.add(soundId)
+                PlaybackStateManager.resumeSound(soundId)
+                isServicePlaying = true
+                updatePlayingAudioIds()
+                updateWakeLockState()
+                onPlaybackStateChangeListener?.invoke(soundId, true)
+                val soundName = PlaybackStateManager.getSoundConfig(soundId)?.name ?: soundId
+                mS7k.updateMetadata(title = soundName, artist = "添空", album = "白噪音")
+                mS7k.updatePlaybackState(true, getPlayingCount())
+                updateNotification()
+                return
+            }
+
             if (OboeAudioEngine.isPlaying(soundId)) {
                 Log.d(TAG, "声音已在播放，先停止再重新播放: $soundId")
                 OboeAudioEngine.stopSound(soundId)
@@ -759,59 +901,72 @@ class MusicService : Service() {
     
     fun stopSound(soundId: String) {
         try {
-            OboeAudioEngine.stopSound(soundId)
-            OboeAudioEngine.unloadSound(soundId)
-            
+            if (isOboeInitialized) {
+                OboeAudioEngine.stopSound(soundId)
+                OboeAudioEngine.unloadSound(soundId)
+            } else {
+                com.bicy.whitenoise.audio.FallbackAudioPlayer.stopSound(soundId)
+                com.bicy.whitenoise.audio.FallbackAudioPlayer.unloadSound(soundId)
+            }
+
             hasBeenPlayed.remove(soundId)
-            
+
             PlaybackStateManager.stopSound(soundId)
-            
+
             ReverbManager.removeReverbEffect(soundId)
             com.bicy.whitenoise.audio.SpatialAudioManager.removeConfig(soundId)
             com.bicy.whitenoise.audio.CreativeEffectManager.removeConfig(soundId)
-            
+
             updatePlayingAudioIds()
             updateWakeLockState()
             onPlaybackStateChangeListener?.invoke(soundId, false)
-            
-            if (!PlaybackStateManager.getAllSoundIds().any { OboeAudioEngine.isPlaying(it) }) {
+
+            if (!PlaybackStateManager.getAllSoundIds().any { isActuallyPlaying(it) }) {
                 isServicePlaying = false
             }
-            
+
             updateNotification()
             Log.d(TAG, "停止播放: $soundId")
-            
+
         } catch (e: Exception) {
             Log.e(TAG, "停止失败: $soundId", e)
             MemoryLockService.reportAnomaly(AnomalyType.AUDIO_PLAYER_ERROR, "停止失败: $soundId", e.stackTraceToString())
         }
     }
-    
+
     fun pauseSound(soundId: String) {
         try {
-            OboeAudioEngine.setFadeDuration(soundId, 0.5f)
-            OboeAudioEngine.pauseSound(soundId)
-            
+            if (isOboeInitialized) {
+                OboeAudioEngine.setFadeDuration(soundId, 0.5f)
+                OboeAudioEngine.pauseSound(soundId)
+            } else {
+                com.bicy.whitenoise.audio.FallbackAudioPlayer.pauseSound(soundId)
+            }
+
             PlaybackStateManager.pauseSound(soundId)
-            
+
             updatePlayingAudioIds()
-            
-            if (!PlaybackStateManager.getAllSoundIds().any { OboeAudioEngine.isPlaying(it) }) {
+
+            if (!PlaybackStateManager.getAllSoundIds().any { isActuallyPlaying(it) }) {
                 isServicePlaying = false
             }
-            
+
             updateNotification()
             Log.d(TAG, "暂停播放(淡出): $soundId")
-            
+
         } catch (e: Exception) {
             Log.e(TAG, "暂停失败: $soundId", e)
             MemoryLockService.reportAnomaly(AnomalyType.AUDIO_PLAYER_ERROR, "暂停失败: $soundId", e.stackTraceToString())
         }
     }
-    
+
     fun resumeSound(soundId: String) {
         try {
-            if (OboeAudioEngine.isFadingOut(soundId)) {
+            if (!isOboeInitialized) {
+                // P0: 降级模式——直接通过 FallbackAudioPlayer 恢复
+                com.bicy.whitenoise.audio.FallbackAudioPlayer.playSound(soundId)
+                Log.d(TAG, "恢复播放(降级模式): $soundId")
+            } else if (OboeAudioEngine.isFadingOut(soundId)) {
                 OboeAudioEngine.cancelFadeOut(soundId)
                 Log.d(TAG, "取消淡出: $soundId")
             } else if (hasBeenPlayed.contains(soundId)) {
@@ -825,16 +980,16 @@ class MusicService : Service() {
                 hasBeenPlayed.add(soundId)
                 Log.d(TAG, "首次播放(淡入): $soundId")
             }
-            
+
             PlaybackStateManager.resumeSound(soundId)
-            
+
             updatePlayingAudioIds()
-            
+
             isServicePlaying = true
-            
+
             updateNotification()
             Log.d(TAG, "恢复播放(淡入): $soundId")
-            
+
         } catch (e: Exception) {
             Log.e(TAG, "恢复失败: $soundId", e)
             MemoryLockService.reportAnomaly(AnomalyType.AUDIO_PLAYER_ERROR, "恢复失败: $soundId", e.stackTraceToString())
@@ -842,7 +997,9 @@ class MusicService : Service() {
     }
     
     fun stopAllSounds() {
-        OboeAudioEngine.stopAllSounds()
+        if (isOboeInitialized) {
+            OboeAudioEngine.stopAllSounds()
+        }
 
         hasBeenPlayed.clear()
 
@@ -850,8 +1007,8 @@ class MusicService : Service() {
 
         ScatteredPlayerManager.stopAll()
 
-        // P2-8: 降级模式下也要停止
-        if (com.bicy.whitenoise.audio.FallbackAudioPlayer.useFallbackAudioTrack) {
+        // P0: 降级模式下也要停止
+        if (!isOboeInitialized) {
             com.bicy.whitenoise.audio.FallbackAudioPlayer.stopAll()
         }
 
@@ -866,21 +1023,22 @@ class MusicService : Service() {
         Log.d(TAG, "pauseAllSounds: allSoundIds=$allSoundIds")
 
         allSoundIds.forEach { soundId ->
-            if (OboeAudioEngine.isFadingOut(soundId)) {
+            // P0: 降级模式下 isFadingOut 恒为 false，用 isActuallyPlaying 判断
+            if (isOboeInitialized && OboeAudioEngine.isFadingOut(soundId)) {
                 Log.d(TAG, "pauseAllSounds: soundId=$soundId already fading out, skip")
                 return@forEach
             }
-            val isPlaying = OboeAudioEngine.isPlaying(soundId)
-            Log.d(TAG, "pauseAllSounds: soundId=$soundId, isPlaying=$isPlaying")
-            if (isPlaying) {
+            val playing = isActuallyPlaying(soundId)
+            Log.d(TAG, "pauseAllSounds: soundId=$soundId, isPlaying=$playing")
+            if (playing) {
                 pauseSound(soundId)
             }
         }
 
         ScatteredPlayerManager.pauseAll()
 
-        // P2-8: 降级模式下也要暂停
-        if (com.bicy.whitenoise.audio.FallbackAudioPlayer.useFallbackAudioTrack) {
+        // P2-8: 降级模式下也要暂停（pauseSound 已分流，但兜底调用 pauseAll 确保一致性）
+        if (!isOboeInitialized) {
             com.bicy.whitenoise.audio.FallbackAudioPlayer.pauseAll()
         }
 
@@ -900,38 +1058,41 @@ class MusicService : Service() {
         val allSoundIds = PlaybackStateManager.getAllSoundIds()
         Log.d(TAG, "duckAllSounds: ducking ${allSoundIds.size} sounds")
 
-        allSoundIds.forEach { soundId ->
-            val currentVolume = OboeAudioEngine.getVolume(soundId)
-            duckedVolumes[soundId] = currentVolume
-            // P0-1: 降低到 30% 音量（与其他应用混音时仍可微弱听见白噪音，避免完全静默）
-            OboeAudioEngine.setVolume(soundId, currentVolume * 0.3f)
-            Log.d(TAG, "duckAllSounds: $soundId volume $currentVolume -> ${currentVolume * 0.3f}")
+        if (isOboeInitialized) {
+            allSoundIds.forEach { soundId ->
+                val currentVolume = OboeAudioEngine.getVolume(soundId)
+                duckedVolumes[soundId] = currentVolume
+                OboeAudioEngine.setVolume(soundId, currentVolume * 0.3f)
+                Log.d(TAG, "duckAllSounds: $soundId volume $currentVolume -> ${currentVolume * 0.3f}")
+            }
         }
 
         ScatteredPlayerManager.duckAll()
 
-        // P2-8: 降级模式下也要 duck
-        if (com.bicy.whitenoise.audio.FallbackAudioPlayer.useFallbackAudioTrack) {
+        // P0: 降级模式下由 FallbackAudioPlayer 统一处理 duck
+        if (!isOboeInitialized) {
             com.bicy.whitenoise.audio.FallbackAudioPlayer.duckAll()
         }
     }
-    
+
     fun unduckAllSounds() {
         if (!isDucking) return
         isDucking = false
 
         Log.d(TAG, "unduckAllSounds: restoring ${duckedVolumes.size} sounds")
 
-        duckedVolumes.forEach { (soundId, originalVolume) ->
-            OboeAudioEngine.setVolume(soundId, originalVolume)
-            Log.d(TAG, "unduckAllSounds: $soundId volume restored to $originalVolume")
+        if (isOboeInitialized) {
+            duckedVolumes.forEach { (soundId, originalVolume) ->
+                OboeAudioEngine.setVolume(soundId, originalVolume)
+                Log.d(TAG, "unduckAllSounds: $soundId volume restored to $originalVolume")
+            }
         }
         duckedVolumes.clear()
 
         ScatteredPlayerManager.unduckAll()
 
-        // P2-8: 降级模式下也要 unduck
-        if (com.bicy.whitenoise.audio.FallbackAudioPlayer.useFallbackAudioTrack) {
+        // P0: 降级模式下由 FallbackAudioPlayer 统一处理 unduck
+        if (!isOboeInitialized) {
             com.bicy.whitenoise.audio.FallbackAudioPlayer.unduckAll()
         }
     }
@@ -947,18 +1108,20 @@ class MusicService : Service() {
         
         var resumedCount = 0
         allSoundIds.forEach { soundId ->
-            val isLoaded = OboeAudioEngine.isLoaded(soundId)
-            val isPlaying = OboeAudioEngine.isPlaying(soundId)
-            val isFadingOut = OboeAudioEngine.isFadingOut(soundId)
-            Log.d(TAG, "resumeAllSounds: soundId=$soundId, isLoaded=$isLoaded, isPlaying=$isPlaying, isFadingOut=$isFadingOut")
-            if (isFadingOut) {
+            // P0: 降级模式下用 FallbackAudioPlayer 查询
+            val loaded = if (isOboeInitialized) OboeAudioEngine.isLoaded(soundId)
+                else com.bicy.whitenoise.audio.FallbackAudioPlayer.isLoaded(soundId)
+            val playing = isActuallyPlaying(soundId)
+            val fadingOut = isOboeInitialized && OboeAudioEngine.isFadingOut(soundId)
+            Log.d(TAG, "resumeAllSounds: soundId=$soundId, isLoaded=$loaded, isPlaying=$playing, isFadingOut=$fadingOut")
+            if (fadingOut) {
                 Log.d(TAG, "resumeAllSounds: Cancelling fade-out for $soundId")
                 resumeSound(soundId)
                 resumedCount++
-            } else if (isLoaded && !isPlaying) {
+            } else if (loaded && !playing) {
                 resumeSound(soundId)
                 resumedCount++
-            } else if (!isLoaded) {
+            } else if (!loaded) {
                 Log.w(TAG, "resumeAllSounds: Sound $soundId not loaded, reloading...")
                 val filePath = PlaybackStateManager.getLoadedSoundPath(soundId)
                 if (filePath != null) {
@@ -974,13 +1137,13 @@ class MusicService : Service() {
                 }
             }
         }
-        
+
         Log.d(TAG, "resumeAllSounds: Resumed $resumedCount sounds")
 
         ScatteredPlayerManager.resumeAll()
 
-        // P2-8: 降级模式下也要恢复
-        if (com.bicy.whitenoise.audio.FallbackAudioPlayer.useFallbackAudioTrack) {
+        // P0: 降级模式下 resumeSound 已分流，兜底调用 resumeAll 确保一致性
+        if (!isOboeInitialized) {
             com.bicy.whitenoise.audio.FallbackAudioPlayer.resumeAll()
         }
 
@@ -990,7 +1153,7 @@ class MusicService : Service() {
     }
 
     private fun restoreStreamAndResume() {
-        val soundsToRestore = PlaybackStateManager.getAllSoundIds().filter { !OboeAudioEngine.isPlaying(it) }
+        val soundsToRestore = PlaybackStateManager.getAllSoundIds().filter { !isActuallyPlaying(it) }
         Log.i(TAG, "restoreStreamAndResume: soundsToRestore=$soundsToRestore")
         
         if (soundsToRestore.isEmpty()) {
@@ -1006,9 +1169,27 @@ class MusicService : Service() {
         Log.i(TAG, "音频引擎重新初始化: $reinitialized")
 
         if (!reinitialized) {
-            Log.e(TAG, "音频引擎重新初始化失败")
+            // P0: 重启失败——降级到 MediaPlayer 兜底，并标记未初始化交由健康检查重试
+            Log.e(TAG, "音频引擎重新初始化失败，启用降级播放")
+            isOboeInitialized = false
+            oboeInitRetryCount = 0
+            com.bicy.whitenoise.audio.FallbackAudioPlayer.enableFallback()
+            for (soundId in soundsToRestore) {
+                val filePath = PlaybackStateManager.getLoadedSoundPath(soundId)
+                if (filePath != null) {
+                    com.bicy.whitenoise.audio.FallbackAudioPlayer.loadSound(soundId, filePath)
+                    com.bicy.whitenoise.audio.FallbackAudioPlayer.setVolume(
+                        soundId, PlaybackStateManager.getVolume(soundId)
+                    )
+                    com.bicy.whitenoise.audio.FallbackAudioPlayer.playSound(soundId)
+                }
+            }
+            mainHandler.post { onAudioStreamRestarted?.invoke() }
             return
         }
+
+        isOboeInitialized = true
+        oboeInitRetryCount = 0
 
         for (soundId in soundsToRestore) {
             val filePath = PlaybackStateManager.getLoadedSoundPath(soundId)
@@ -1076,28 +1257,29 @@ class MusicService : Service() {
     
     fun setVolume(soundId: String, volume: Float) {
         PlaybackStateManager.updateVolume(soundId, volume)
-        OboeAudioEngine.setVolume(soundId, volume)
+        if (isOboeInitialized) {
+            OboeAudioEngine.setVolume(soundId, volume)
+        } else {
+            com.bicy.whitenoise.audio.FallbackAudioPlayer.setVolume(soundId, volume)
+        }
         ScatteredPlayerManager.updateTrackConfig(trackId = soundId, volume = volume)
     }
-    
+
     fun getVolume(soundId: String): Float {
         return PlaybackStateManager.getVolume(soundId)
     }
-    
-    fun isPlaying(soundId: String): Boolean {
-        return OboeAudioEngine.isPlaying(soundId)
-    }
-    
-    fun isSoundPlaying(soundId: String): Boolean {
-        return OboeAudioEngine.isPlaying(soundId)
-    }
-    
+
+    fun isPlaying(soundId: String): Boolean = isActuallyPlaying(soundId)
+
+    fun isSoundPlaying(soundId: String): Boolean = isActuallyPlaying(soundId)
+
     fun getPlayingSounds(): Set<String> {
-        return PlaybackStateManager.getAllSoundIds().filter { OboeAudioEngine.isPlaying(it) }.toSet()
+        return PlaybackStateManager.getAllSoundIds().filter { isActuallyPlaying(it) }.toSet()
     }
-    
+
     fun isLoaded(soundId: String): Boolean {
-        return OboeAudioEngine.isLoaded(soundId)
+        if (isOboeInitialized) return OboeAudioEngine.isLoaded(soundId)
+        return com.bicy.whitenoise.audio.FallbackAudioPlayer.isLoaded(soundId)
     }
     
     fun setReverbConfig(soundId: String, config: ReverbConfig) {
@@ -1160,7 +1342,7 @@ class MusicService : Service() {
     }
     
     private fun updateWakeLockState() {
-        if (PlaybackStateManager.getAllSoundIds().any { OboeAudioEngine.isPlaying(it) }) {
+        if (PlaybackStateManager.getAllSoundIds().any { isActuallyPlaying(it) }) {
             acquireWakeLock()
         } else {
             releaseWakeLock()

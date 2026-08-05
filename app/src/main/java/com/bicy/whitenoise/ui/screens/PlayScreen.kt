@@ -550,6 +550,10 @@ private fun PlayingSoundItem(
     modifier: Modifier = Modifier
 ) {
     var localVolume by remember(sound.id) { mutableStateOf(sound.volume) }
+    // 当外部音量变化（AI 调整 / 预设重载）时同步本地状态，避免 slider 不跟随
+    LaunchedEffect(sound.volume) {
+        if (localVolume != sound.volume) localVolume = sound.volume
+    }
 
     Row(
         modifier = modifier

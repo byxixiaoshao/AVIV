@@ -6,7 +6,7 @@
 ![Language](https://img.shields.io/badge/Kotlin%20%2B%20C%2B%2B-Compose%20%2F%20Oboe-blue.svg)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 
-**一款以实时 C++ 音频引擎为核心的 Android 白噪音与音乐播放器，集成十余种专业效果器、空间音频、AutoEQ 与在线流媒体。**
+**一款以实时 C++ 音频引擎为核心的 Android 白噪音与音乐播放器，集成十余种专业效果器、空间音频与AutoEQ**
 
 [功能特性](#-功能特性) · [音频引擎](#-音频引擎) · [技术架构](#-技术架构) · [构建](#-从源码构建) · [开源依赖与许可](#-开源依赖与许可)
 
@@ -27,7 +27,7 @@
 ## ✨ 功能特性
 
 ### 🌊 白噪音
-- 内置多种音源，按分类组织，支持本地与在线音源
+- 内置多种音源，按分类组织，支持本地音乐播放
 - **散布模式（Scatter）**：随机播放，可自定义间隔与范围，模拟自然声场
 - 每个音轨**独立配置效果**（EQ / 混响 / 空间 / 创意效果），互不干扰
 - 音量增益范围 0–300%
@@ -35,7 +35,6 @@
 ### 🎵 音乐播放
 - 多格式支持（MP3 / WAV / FLAC / AAC 等）
 - 播放列表管理
-- 在线流媒体：基于 **QuickJS 音源脚本引擎**，多引擎自动探测与切换，单引擎超时自动降级到下一候选
 
 ### 🎛️ 实时音频效果（C++ 引擎）
 | 效果 | 说明 |
@@ -146,7 +145,7 @@ com.bicy.whitenoise
 ## 📥 下载与安装
 
 ### 系统要求
-- Android 7.0（API 24）或更高
+- Android 10.0（API 29）或更高
 - 至少 100MB 可用存储
 
 ### 安装
@@ -173,7 +172,7 @@ cd AVIV/Android
 ./gradlew :app:assembleRelease
 ```
 
-> 构建需要 `keystore.properties` 签名配置文件。SoundTouch 源码位于项目根目录 `soundtouch/`，由 CMake 自动编译为静态库链接。
+> 构建需要 `keystore.properties` 签名配置文件。SoundTouch 源码请自行获取。
 
 ---
 

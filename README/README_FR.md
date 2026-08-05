@@ -6,7 +6,7 @@
 ![Language](https://img.shields.io/badge/Kotlin%20%2B%20C%2B%2B-Compose%20%2F%20Oboe-blue.svg)
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 
-**Un lecteur Android de bruit blanc et de musique construit autour d'un moteur audio C++ en temps réel, intégrant une dizaine d'effets professionnels, l'audio spatial, AutoEQ et le streaming en ligne.**
+**Un lecteur Android de bruit blanc et de musique construit autour d'un moteur audio C++ en temps réel, intégrant une dizaine d'effets professionnels, l'audio spatial et AutoEQ.**
 
 [Fonctionnalités](#-fonctionnalités) · [Moteur audio](#-moteur-audio) · [Architecture](#-architecture) · [Compilation](#-compiler-depuis-les-sources) · [Dépendances & licences](#-dépendances-open-source--licences)
 
@@ -27,7 +27,7 @@ AVIV fusionne lecture de bruit blanc, musique locale/en ligne et un moteur profe
 ## ✨ Fonctionnalités
 
 ### 🌊 Bruit blanc
-- Plusieurs sources intégrées organisées par catégorie, locales et en ligne
+- Plusieurs sources intégrées organisées par catégorie, prend en charge la lecture de musique locale
 - **Mode Scatter** : lecture aléatoire avec intervalle et plage personnalisables, simulant un champ sonore naturel
 - **Chaîne d'effets indépendante** par piste (EQ / réverb / spatial / créatifs), sans interférence
 - Plage de gain de volume 0–300 %
@@ -35,7 +35,6 @@ AVIV fusionne lecture de bruit blanc, musique locale/en ligne et un moteur profe
 ### 🎵 Lecture musicale
 - Multi-format (MP3 / WAV / FLAC / AAC, etc.)
 - Gestion des listes de lecture
-- Streaming en ligne via le **moteur de scripts QuickJS**, détection automatique multi-moteurs et basculement automatique en cas de timeout
 
 ### 🎛️ Effets audio en temps réel (moteur C++)
 | Effet | Description |
@@ -146,7 +145,7 @@ com.bicy.whitenoise
 ## 📥 Téléchargement & installation
 
 ### Configuration requise
-- Android 7.0 (API 24) ou supérieur
+- Android 10.0 (API 29) ou supérieur
 - Au moins 100 Mo de stockage libre
 
 ### Installation
@@ -173,7 +172,7 @@ cd AVIV/Android
 ./gradlew :app:assembleRelease
 ```
 
-> La compilation nécessite une config de signature `keystore.properties`. Les sources SoundTouch sont dans `soundtouch/` à la racine du projet, compilées en bibliothèque statique par CMake automatiquement.
+> La compilation nécessite une config de signature `keystore.properties`. Les sources SoundTouch doivent être obtenues séparément.
 
 ---
 

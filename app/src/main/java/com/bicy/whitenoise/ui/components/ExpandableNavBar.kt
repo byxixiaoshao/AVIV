@@ -827,7 +827,7 @@ private fun ExpandedNavBarContent(
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
-        if (isLandscape && showSetupContent) {
+        if (isLandscape) {
             Row(
                 modifier = Modifier.fillMaxSize().padding(16.dp)
             ) {

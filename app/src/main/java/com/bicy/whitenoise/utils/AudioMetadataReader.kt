@@ -118,9 +118,12 @@ object AudioMetadataReader {
         val sampleRate = sampleRateStr?.toIntOrNull() ?: 0
         val bitrate = bitrateStr?.toIntOrNull() ?: 0
         val channels = channelsStr?.toIntOrNull() ?: 2
-        
+        val albumArt = try { retriever.embeddedPicture } catch (e: Exception) {
+            Log.e(TAG, "Failed to extract embedded picture", e); null
+        }
+
         Log.d(TAG, "extractMetadata: title=$title, artist=$artist, album=$album, duration=$duration")
-        
+
         return AudioMetadata(
             title = title,
             artist = artist,
@@ -132,20 +135,45 @@ object AudioMetadataReader {
             genre = genre,
             year = year,
             trackNumber = trackNumber,
-            albumArt = null
+            albumArt = albumArt
         )
     }
-    
+
     fun getDuration(file: File): Long {
         return readFromFile(file)?.duration ?: 0L
     }
-    
+
     fun getTitle(file: File): String? {
         return readFromFile(file)?.title
     }
-    
+
+    /** 直接读取内嵌封面，避免完整元数据开销 */
     fun getAlbumArt(file: File): ByteArray? {
-        return readFromFile(file)?.albumArt
+        if (!file.exists()) return null
+        val retriever = MediaMetadataRetriever()
+        return try {
+            retriever.setDataSource(file.absolutePath)
+            retriever.embeddedPicture
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to get album art from file: ${file.absolutePath}", e)
+            null
+        } finally {
+            try { retriever.release() } catch (_: Exception) {}
+        }
+    }
+
+    /** 从 Uri 读取内嵌封面（适用于 MediaStore / content:// 资源） */
+    fun getAlbumArt(context: Context, uri: Uri): ByteArray? {
+        val retriever = MediaMetadataRetriever()
+        return try {
+            retriever.setDataSource(context, uri)
+            retriever.embeddedPicture
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to get album art from uri: $uri", e)
+            null
+        } finally {
+            try { retriever.release() } catch (_: Exception) {}
+        }
     }
     
     fun formatDuration(durationMs: Long): String {

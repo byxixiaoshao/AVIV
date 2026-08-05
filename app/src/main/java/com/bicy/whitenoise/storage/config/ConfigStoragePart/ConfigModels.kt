@@ -32,6 +32,9 @@ data class AppConfig(
     val vizMusicSensitivity: Int = 1,
     val vizFlashSensitivity: Int = 1,
     val vizRefreshRate: Int = 1,
+    // 任务8：响应频段范围（频段索引，0..15），白噪音渲染时 clamp 到 0..11
+    val vizResponseMinBand: Int = 0,
+    val vizResponseMaxBand: Int = 15,
     val mediaControlPriority: String = "smart",
     val autoEqEnabled: Boolean = false,
     val autoEqMode: String = "simple",

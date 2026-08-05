@@ -26,6 +26,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -57,6 +63,7 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -96,6 +103,7 @@ import com.bicy.whitenoise.onlinemusic.OnlineMusicStorage
 import com.bicy.whitenoise.storage.playlist.PlaylistManagerPart.PlaylistManager
 import com.bicy.whitenoise.storage.playlist.PlaylistManagerPart.UserPlaylist
 import com.bicy.whitenoise.music.MusicPlayerController
+import com.bicy.whitenoise.music.MusicLibraryPart.MusicLibrary
 import com.bicy.whitenoise.music.MusicLibraryPart.MusicTrack
 import com.bicy.whitenoise.onlinemusic.OnlineMusicController
 import com.bicy.whitenoise.onlinemusic.SourceScriptManager
@@ -1227,6 +1235,22 @@ fun CategorySidebar(
     selectedCategory: MusicCategory,
     onCategorySelected: (MusicCategory) -> Unit
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val isScanning by MusicLibrary.isScanning.collectAsState()
+
+    // 刷新按钮旋转动画（仅扫描中旋转）
+    val infiniteTransition = rememberInfiniteTransition(label = "refresh")
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "refreshRotation"
+    )
+
     Column(
         modifier = Modifier
             .width(56.dp)
@@ -1235,6 +1259,41 @@ fun CategorySidebar(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // 刷新按钮：扫描中旋转，点击触发扫描并弹出应用内通知
+        Box(
+            modifier = Modifier
+                .width(48.dp)
+                .height(48.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.Transparent)
+                .clickable(enabled = !isScanning) {
+                    ToastManager.info("正在扫描本地音乐…")
+                    scope.launch {
+                        val before = MusicLibrary.tracks.value.size
+                        try {
+                            MusicLibrary.scanLibrary(context)
+                        } catch (e: Exception) {
+                            Log.e("CategorySidebar", "扫描失败", e)
+                        }
+                        val added = MusicLibrary.tracks.value.size - before
+                        ToastManager.success(
+                            if (added > 0) "扫描完成，新增 $added 首" else "扫描完成，无新增"
+                        )
+                    }
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Refresh,
+                contentDescription = "刷新",
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                modifier = Modifier
+                    .size(24.dp)
+                    .graphicsLayer { rotationZ = if (isScanning) rotation else 0f }
+            )
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+
         MusicCategory.entries.forEach { category ->
             CategoryTab(
                 imageVector = category.getIcon(),

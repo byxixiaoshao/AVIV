@@ -1,5 +1,6 @@
 package com.bicy.whitenoise.ui.components
 
+import android.graphics.BitmapFactory
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -12,6 +13,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -72,9 +74,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -85,6 +89,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.bicy.whitenoise.R
+import com.bicy.whitenoise.music.AlbumArtCache
 import com.bicy.whitenoise.music.MusicLibraryPart.MusicLibrary
 import com.bicy.whitenoise.music.MusicPlayerController
 import com.bicy.whitenoise.music.MusicPlayerState
@@ -1176,7 +1181,20 @@ private fun TransitioningMainContent(
     val effectiveRepeatButtonAlpha = if (isPanelTransition) panelRepeatButtonAlpha else repeatButtonAlpha
     val effectiveControlSize = if (isPanelTransition) panelControlSize else controlSize
     val effectiveButtonSpacing = panelButtonSpacing
-    
+
+    // 专辑封面：观察 AlbumArtCache，曲目切换时按需加载（内存→磁盘→内嵌→在线占位）
+    val trackId = track?.id
+    val artMap by AlbumArtCache.artFlow.collectAsState()
+    val albumArtBytes = trackId?.let { artMap[it] } ?: trackId?.let { AlbumArtCache.getCached(it) }
+    LaunchedEffect(trackId) {
+        if (trackId != null && albumArtBytes == null && !artMap.containsKey(trackId)) {
+            AlbumArtCache.requestAlbumArt(track)
+        }
+    }
+    val albumBitmap = remember(albumArtBytes) {
+        albumArtBytes?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -1267,12 +1285,21 @@ private fun TransitioningMainContent(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.MusicNote,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(effectiveAlbumIconSize)
-                )
+                if (albumBitmap != null) {
+                    Image(
+                        bitmap = albumBitmap.asImageBitmap(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.MusicNote,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(effectiveAlbumIconSize)
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.height(24.dp))

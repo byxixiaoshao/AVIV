@@ -63,11 +63,17 @@ data class ChatUiState(
     val pendingConfirmation: PendingConfirmation? = null
 )
 
-/** 等待确认的工具调用信息 */
-data class PendingConfirmation(
+/** 任务A: 待确认弹窗中的单个工具项 */
+data class PendingToolItem(
     val toolName: String,
     val arguments: String,
     val description: String
+)
+
+/** 等待确认的工具调用信息（支持多工具合并弹窗） */
+data class PendingConfirmation(
+    val tools: List<PendingToolItem>,
+    val isSingle: Boolean = tools.size == 1
 )
 
 class AIChatViewModel(application: Application) : AndroidViewModel(application) {
@@ -202,7 +208,7 @@ class AIChatViewModel(application: Application) : AndroidViewModel(application) 
                         }
                     },
                     onOperation = null,
-                    onToolConfirm = { toolName, args -> requestConfirmation(toolName, args) }
+                    onToolConfirm = { tools -> requestConfirmation(tools) }
                 )
 
                 if (result.isFailure) {
@@ -441,26 +447,39 @@ class AIChatViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     /**
-     * 请求用户确认工具调用（confirmMode 开启时由 AIService 调用）
-     * 返回 null 表示无需确认（直接执行），否则挂起等待用户操作
+     * 任务A: 请求用户确认工具调用（confirmMode 开启时由 AIService 调用）
+     * 接收待确认的修改类工具列表，合并为单个弹窗。
+     * 返回 null 表示无需确认（直接执行），否则挂起等待用户操作。
      */
-    private suspend fun requestConfirmation(toolName: String, args: JSONObject): AIService.ConfirmResult? {
+    private suspend fun requestConfirmation(tools: List<AIService.ToolConfirmItem>): AIService.ConfirmResult? {
         if (!_uiState.value.confirmMode) return null
         val deferred = CompletableDeferred<AIService.ConfirmResult>()
         confirmDeferred = deferred
+        val pendingTools = tools.map {
+            PendingToolItem(
+                toolName = it.toolName,
+                arguments = it.args.toString(2),
+                description = AgentService.getToolDescription(it.toolName) ?: ""
+            )
+        }
         _uiState.update {
             it.copy(pendingConfirmation = PendingConfirmation(
-                toolName = toolName,
-                arguments = args.toString(2),
-                description = AgentService.getToolDescription(toolName) ?: ""
+                tools = pendingTools,
+                isSingle = pendingTools.size == 1
             ))
         }
         return deferred.await()
     }
 
-    /** 确认执行工具调用（可选传入修改后的参数 JSON 字符串） */
+    /**
+     * 确认执行工具调用（可选传入修改后的参数 JSON 字符串）
+     * 任务A: 仅单个工具时支持参数修改，多工具时忽略 modifiedArgs 直接执行原参数
+     */
     fun confirmToolCall(modifiedArgs: String? = null) {
-        val modified = modifiedArgs?.let { runCatching { JSONObject(it) }.getOrNull() }
+        val isSingle = _uiState.value.pendingConfirmation?.isSingle == true
+        val modified = if (isSingle && modifiedArgs != null) {
+            runCatching { JSONObject(modifiedArgs) }.getOrNull()
+        } else null
         confirmDeferred?.complete(AIService.ConfirmResult.Confirm(modified))
         confirmDeferred = null
         _uiState.update { it.copy(pendingConfirmation = null) }

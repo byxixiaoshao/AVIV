@@ -17,6 +17,19 @@ object AgentService {
 
     private val tools: MutableMap<String, AgentTool> = mutableMapOf()
 
+    // 任务A: 读取类工具集合——这些工具仅查询状态，不修改任何配置，免确认弹窗
+    // 修改类工具（set_*/play_*/stop_*/toggle_*/save_*/load_*/delete_*/music_* 等）需要确认
+    private val readOnlyToolNames = setOf(
+        "list_sounds", "get_playback_status",
+        "list_presets",
+        "get_algorithm_info",
+        "list_music", "get_music_playlist",
+        "get_app_info"
+    )
+
+    /** 判断工具是否为读取类（仅查询，不修改），读取类工具免确认弹窗 */
+    fun isToolReadOnly(toolName: String): Boolean = toolName in readOnlyToolNames
+
     fun init(mainViewModel: MainViewModel) {
         this.mainViewModel = mainViewModel
         registerTools()
