@@ -21,7 +21,7 @@ app/.cxx/
 app/build/
 app/release/
 app/src/main/assets/Scripts/
-
+任务细则.md
 # 顶层构建产物 / IDE / 第三方源码目录（/* 已忽略，此处显式声明意图）
 .gradle/
 .idea/
@@ -32,6 +32,7 @@ lxmusic-main/
 code_dictionary/
 error_1.txt
 error_2.txt
+git-upload.bat
 keystore.properties
 *.jks
 *.so

@@ -47,15 +47,15 @@ class SetVizSensitivityTool(private val vm: MainViewModel) : AgentTool {
         val updates = mutableListOf<String>()
         if (params.has("white_noise")) {
             val v = params.getInt("white_noise").coerceIn(0, 2)
-            ConfigStorage.setVizWnSensitivity(v); updates.add("白噪音=$v")
+            ConfigStorage.setVizWnSensitivity(v.toFloat()); updates.add("白噪音=$v")
         }
         if (params.has("music")) {
             val v = params.getInt("music").coerceIn(0, 2)
-            ConfigStorage.setVizMusicSensitivity(v); updates.add("音乐=$v")
+            ConfigStorage.setVizMusicSensitivity(v.toFloat()); updates.add("音乐=$v")
         }
         if (params.has("flash")) {
             val v = params.getInt("flash").coerceIn(0, 2)
-            ConfigStorage.setVizFlashSensitivity(v); updates.add("闪光=$v")
+            ConfigStorage.setVizFlashSensitivity(v.toFloat()); updates.add("闪光=$v")
         }
         if (updates.isEmpty()) return ToolResult.Error("未提供任何灵敏度参数")
         return ToolResult.Success(

@@ -160,58 +160,99 @@ object ConfigStorage {
     }
     
     fun getVizWnEnabled(): Boolean = _config.value.vizWnEnabled
-    
+
     fun setVizWnEnabled(enabled: Boolean) {
         updateConfig { it.copy(vizWnEnabled = enabled) }
     }
-    
+
     fun getVizMusicEnabled(): Boolean = _config.value.vizMusicEnabled
-    
+
     fun setVizMusicEnabled(enabled: Boolean) {
         updateConfig { it.copy(vizMusicEnabled = enabled) }
     }
-    
+
     fun getVizFlashEnabled(): Boolean = _config.value.vizFlashEnabled
-    
+
     fun setVizFlashEnabled(enabled: Boolean) {
         updateConfig { it.copy(vizFlashEnabled = enabled) }
     }
-    
-    fun getVizWnSensitivity(): Int = _config.value.vizWnSensitivity
-    
-    fun setVizWnSensitivity(value: Int) {
-        updateConfig { it.copy(vizWnSensitivity = value) }
-    }
-    
-    fun getVizMusicSensitivity(): Int = _config.value.vizMusicSensitivity
-    
-    fun setVizMusicSensitivity(value: Int) {
-        updateConfig { it.copy(vizMusicSensitivity = value) }
-    }
-    
-    fun getVizFlashSensitivity(): Int = _config.value.vizFlashSensitivity
-    
-    fun setVizFlashSensitivity(value: Int) {
-        updateConfig { it.copy(vizFlashSensitivity = value) }
-    }
-    
-    fun getVizRefreshRate(): Int = _config.value.vizRefreshRate
 
-    fun setVizRefreshRate(value: Int) {
-        updateConfig { it.copy(vizRefreshRate = value) }
+    // === 灵敏度 0..1 连续 ===
+    fun getVizWnSensitivity(): Float = _config.value.vizWnSensitivity
+    fun setVizWnSensitivity(value: Float) {
+        updateConfig { it.copy(vizWnSensitivity = value.coerceIn(0f, 1f)) }
+    }
+    fun getVizMusicSensitivity(): Float = _config.value.vizMusicSensitivity
+    fun setVizMusicSensitivity(value: Float) {
+        updateConfig { it.copy(vizMusicSensitivity = value.coerceIn(0f, 1f)) }
+    }
+    fun getVizFlashSensitivity(): Float = _config.value.vizFlashSensitivity
+    fun setVizFlashSensitivity(value: Float) {
+        updateConfig { it.copy(vizFlashSensitivity = value.coerceIn(0f, 1f)) }
     }
 
-    // 任务8：响应频段范围
-    fun getVizResponseMinBand(): Int = _config.value.vizResponseMinBand
-
-    fun setVizResponseMinBand(value: Int) {
-        updateConfig { it.copy(vizResponseMinBand = value) }
+    // === 降落速度 0..1（闪烁为暗淡速度） ===
+    fun getVizWnFallSpeed(): Float = _config.value.vizWnFallSpeed
+    fun setVizWnFallSpeed(value: Float) {
+        updateConfig { it.copy(vizWnFallSpeed = value.coerceIn(0f, 1f)) }
+    }
+    fun getVizMusicFallSpeed(): Float = _config.value.vizMusicFallSpeed
+    fun setVizMusicFallSpeed(value: Float) {
+        updateConfig { it.copy(vizMusicFallSpeed = value.coerceIn(0f, 1f)) }
+    }
+    fun getVizFlashFallSpeed(): Float = _config.value.vizFlashFallSpeed
+    fun setVizFlashFallSpeed(value: Float) {
+        updateConfig { it.copy(vizFlashFallSpeed = value.coerceIn(0f, 1f)) }
     }
 
-    fun getVizResponseMaxBand(): Int = _config.value.vizResponseMaxBand
+    // === 响应频段范围（per-viz） ===
+    fun getVizWnMinBand(): Int = _config.value.vizWnMinBand
+    fun setVizWnMinBand(value: Int) {
+        updateConfig { it.copy(vizWnMinBand = value.coerceIn(0, 15)) }
+    }
+    fun getVizWnMaxBand(): Int = _config.value.vizWnMaxBand
+    fun setVizWnMaxBand(value: Int) {
+        updateConfig { it.copy(vizWnMaxBand = value.coerceIn(0, 15)) }
+    }
+    fun getVizMusicMinFreq(): Float = _config.value.vizMusicMinFreq
+    fun setVizMusicMinFreq(value: Float) {
+        updateConfig { it.copy(vizMusicMinFreq = value.coerceIn(20f, 20000f)) }
+    }
+    fun getVizMusicMaxFreq(): Float = _config.value.vizMusicMaxFreq
+    fun setVizMusicMaxFreq(value: Float) {
+        updateConfig { it.copy(vizMusicMaxFreq = value.coerceIn(20f, 20000f)) }
+    }
+    fun getVizFlashMinBand(): Int = _config.value.vizFlashMinBand
+    fun setVizFlashMinBand(value: Int) {
+        updateConfig { it.copy(vizFlashMinBand = value.coerceIn(0, 15)) }
+    }
+    fun getVizFlashMaxBand(): Int = _config.value.vizFlashMaxBand
+    fun setVizFlashMaxBand(value: Int) {
+        updateConfig { it.copy(vizFlashMaxBand = value.coerceIn(0, 15)) }
+    }
 
-    fun setVizResponseMaxBand(value: Int) {
-        updateConfig { it.copy(vizResponseMaxBand = value) }
+    // === 柱形数量 8..64 ===
+    fun getVizWnBarCount(): Int = _config.value.vizWnBarCount
+    fun setVizWnBarCount(value: Int) {
+        updateConfig { it.copy(vizWnBarCount = value.coerceIn(8, 64)) }
+    }
+    fun getVizMusicBarCount(): Int = _config.value.vizMusicBarCount
+    fun setVizMusicBarCount(value: Int) {
+        updateConfig { it.copy(vizMusicBarCount = value.coerceIn(8, 64)) }
+    }
+    fun getVizFlashBarCount(): Int = _config.value.vizFlashBarCount
+    fun setVizFlashBarCount(value: Int) {
+        updateConfig { it.copy(vizFlashBarCount = value.coerceIn(8, 64)) }
+    }
+
+    // === 闪烁最低暗度 / 最高明度 0..1 ===
+    fun getVizFlashMinDarkness(): Float = _config.value.vizFlashMinDarkness
+    fun setVizFlashMinDarkness(value: Float) {
+        updateConfig { it.copy(vizFlashMinDarkness = value.coerceIn(0f, 1f)) }
+    }
+    fun getVizFlashMaxBrightness(): Float = _config.value.vizFlashMaxBrightness
+    fun setVizFlashMaxBrightness(value: Float) {
+        updateConfig { it.copy(vizFlashMaxBrightness = value.coerceIn(0f, 1f)) }
     }
     
     fun getMediaControlPriority(): String = _config.value.mediaControlPriority

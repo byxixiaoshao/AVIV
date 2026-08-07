@@ -200,6 +200,18 @@
     <string name="viz_music_sensitivity">Sensibilidad de visualización de música</string>
     <string name="viz_flash_sensitivity">Sensibilidad de flash de música</string>
     <string name="viz_refresh_rate">Velocidad de cambio de visualización</string>
+    <string name="viz_config_title">Configuración de visualización</string>
+    <string name="viz_response_range">Rango de banda de respuesta</string>
+    <string name="viz_fall_speed">Velocidad de caída</string>
+    <string name="viz_min_band">Banda mínima</string>
+    <string name="viz_max_band">Banda máxima</string>
+    <string name="viz_enabled">Activado</string>
+    <string name="viz_sensitivity">Sensibilidad</string>
+    <string name="viz_bar_count">Recuento de barras</string>
+    <string name="viz_dim_speed">Velocidad de atenuación</string>
+    <string name="viz_min_darkness">Oscuridad mínima</string>
+    <string name="viz_max_brightness">Brillo máximo</string>
+    <string name="viz_flash_params">Parámetros de flash</string>
     <string name="low">Bajo</string>
     <string name="medium">Medio</string>
     <string name="high">Alto</string>
@@ -451,6 +463,8 @@
     <string name="speaker_compensation_intensity">Intensidad de compensación</string>
     <string name="speaker_compensation_desc">Curva de compensación estática del altavoz: Aplica ganancias EQ predefinidas para compensar deficiencias de respuesta en frecuencia.</string>
     <string name="sync_compensation_to_manual_eq">Sincronizar compensación con EQ manual</string>
+    <string name="viz_3d_background">Fondo 3D</string>
+    <string name="viz_3d_glass_fade_exempt">Desenfocar fondo 3D</string>
     <string name="timer">Timer</string>
     <string name="spatial_offset_title">Spatial Offset</string>
     <string name="spatial_offset_distance">Offset Distance</string>

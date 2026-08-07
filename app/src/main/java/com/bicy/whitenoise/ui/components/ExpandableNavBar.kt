@@ -1,6 +1,7 @@
 package com.bicy.whitenoise.ui.components
 
 import android.os.Build
+import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -17,6 +18,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -479,41 +482,76 @@ fun ExpandableNavBar(
                         }
                     }
                 ) {
-                    // 底部对齐布局：Tabs 始终在底部，Timer 面板向上展开
+                    // 竖屏：Tabs 始终在底部，Timer 面板向上展开
+                    // 横屏：Tabs 始终在右侧纵向竖条，Timer 面板占据左侧区域
                     // Chat 输入使用覆盖层叠在 tabs 上方，不挤占 tab 位置
                     Box(modifier = Modifier.fillMaxSize()) {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Bottom
-                        ) {
-                            // Timer 面板：填充剩余空间，随展开淡入
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f)
-                                    .alpha(panelAlpha)
-                            ) {
-                                ExpandedNavBarContent(
-                                    alpha = panelAlpha,
-                                    textAlpha = textAlpha,
+                        if (isLandscape) {
+                            // 横屏：定时面板在左(weight 1f)，Tabs 竖条固定在右，与收起态竖条位置连续
+                            Row(modifier = Modifier.fillMaxSize()) {
+                                // Timer 面板：占据左侧区域，随展开淡入
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight()
+                                        .alpha(panelAlpha)
+                                ) {
+                                    ExpandedNavBarContent(
+                                        alpha = panelAlpha,
+                                        textAlpha = textAlpha,
+                                        timerState = timerState,
+                                        isEnabled = progress >= 0.5f,
+                                        isLandscape = isLandscape
+                                    )
+                                }
+
+                                // Tabs: 右侧纵向竖条，随展开淡出
+                                CollapsedNavBarContent(
+                                    currentRoute = currentRoute,
+                                    onRouteSelected = onRouteSelected,
+                                    alpha = contentAlpha,
+                                    selectedColor = selectedColor,
                                     timerState = timerState,
-                                    isEnabled = progress >= 0.5f,
-                                    isLandscape = isLandscape
+                                    isExpanded = isExpanded,
+                                    isLandscape = isLandscape,
+                                    glassMode = glassMode,
+                                    isWhiteNoisePlaying = isWhiteNoisePlaying
                                 )
                             }
+                        } else {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.Bottom
+                            ) {
+                                // Timer 面板：填充剩余空间，随展开淡入
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f)
+                                        .alpha(panelAlpha)
+                                ) {
+                                    ExpandedNavBarContent(
+                                        alpha = panelAlpha,
+                                        textAlpha = textAlpha,
+                                        timerState = timerState,
+                                        isEnabled = progress >= 0.5f,
+                                        isLandscape = isLandscape
+                                    )
+                                }
 
-                            // Tabs: 始终在底部，随展开淡出（不隐藏，由 alpha 控制可见性）
-                            CollapsedNavBarContent(
-                                currentRoute = currentRoute,
-                                onRouteSelected = onRouteSelected,
-                                alpha = contentAlpha,
-                                selectedColor = selectedColor,
-                                timerState = timerState,
-                                isExpanded = false,
-                                isLandscape = isLandscape,
-                                glassMode = glassMode,
-                                isWhiteNoisePlaying = isWhiteNoisePlaying
-                            )
+                                // Tabs: 始终在底部，随展开淡出（不隐藏，由 alpha 控制可见性）
+                                CollapsedNavBarContent(
+                                    currentRoute = currentRoute,
+                                    onRouteSelected = onRouteSelected,
+                                    alpha = contentAlpha,
+                                    selectedColor = selectedColor,
+                                    timerState = timerState,
+                                    isExpanded = isExpanded,
+                                    isLandscape = isLandscape,
+                                    glassMode = glassMode,
+                                    isWhiteNoisePlaying = isWhiteNoisePlaying
+                                )
+                            }
                         }
 
                         // Chat 输入区：覆盖叠在 tabs 上方，从下方滑入/滑出，不挤占 tab 位置
@@ -655,9 +693,10 @@ private fun CollapsedNavBarContent(
     } else Modifier
 
     if (isLandscape) {
+        // 横屏：保持右侧纵向竖条（宽度 = CollapsedHeight，占满面板高度），与面板收起态竖条位置一致
         Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .width(CollapsedHeight)
                 .fillMaxHeight()
                 .alpha(alpha)
                 .then(timerRingModifier),
@@ -726,6 +765,9 @@ private fun ExpandedNavBarContent(
     isEnabled: Boolean = true,
     isLandscape: Boolean = false
 ) {
+    // 运行时诊断：记录定时页实际进入的分支（true=横屏左/右分栏 / false=竖屏上下排列）
+    remember(isLandscape) { Log.d("TimerLayout", "landscape=$isLandscape") }
+
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
     val density = LocalDensity.current
@@ -828,11 +870,14 @@ private fun ExpandedNavBarContent(
             .navigationBarsPadding()
     ) {
         if (isLandscape) {
+            // 横屏仪表盘：始终显示控件（不受 showSetupContent 影响），
+            // 圆圈同时显示倒计时，控件用 textAlpha 保持可见，避免误判为竖屏
+            // 布局规格：左侧=定时球+提示+预设事件(0.45f)，右侧=时间滑块+定时设置(0.55f)，中间分隔线
             Row(
                 modifier = Modifier.fillMaxSize().padding(16.dp)
             ) {
                 Column(
-                    modifier = Modifier.weight(0.4f).fillMaxHeight(),
+                    modifier = Modifier.weight(0.45f).fillMaxHeight().verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
@@ -853,14 +898,16 @@ private fun ExpandedNavBarContent(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    // 定时球下方提示：引导用户点击定时球开始计时
+                    // 提示：未计时时引导点击定时球，计时时显示运行状态
                     Text(
-                        text = "↑点定时球开始定时↑",
+                        text = if (timerState.isActive) "计时中·点球暂停" else "↑点定时球开始定时↑",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = setupAlpha * 0.6f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = textAlpha * 0.6f)
                     )
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     Column(
                         modifier = Modifier.fillMaxWidth(),
@@ -869,21 +916,30 @@ private fun ExpandedNavBarContent(
                         PresetButtonsContent(
                             hours = hours,
                             minutes = minutes,
-                            textAlpha = setupAlpha,
+                            textAlpha = textAlpha,
                             isEnabled = isEnabled
                         )
                     }
                 }
 
+                // 左右分栏的视觉分隔线
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .fillMaxHeight()
+                        .padding(vertical = 24.dp)
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f * textAlpha))
+                )
+
                 Column(
-                    modifier = Modifier.weight(0.6f).fillMaxHeight(),
+                    modifier = Modifier.weight(0.55f).fillMaxHeight().verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
                     TimeSlidersContent(
                         hours = hours,
                         minutes = minutes,
-                        textAlpha = setupAlpha,
+                        textAlpha = textAlpha,
                         isEnabled = isEnabled
                     )
 
@@ -893,7 +949,7 @@ private fun ExpandedNavBarContent(
                         pauseType = timerState.pauseType,
                         snoozeMinutes = timerState.snoozeMinutes,
                         ringEnabled = timerState.ringEnabled,
-                        textAlpha = setupAlpha,
+                        textAlpha = textAlpha,
                         isEnabled = isEnabled
                     )
                 }
@@ -973,24 +1029,44 @@ private fun ExpandedNavBarContent(
         }
 
         if (timerState.isFinished) {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Spacer(modifier = Modifier.height(48.dp))
+            if (isLandscape) {
+                // 横屏结束态：水平排列，内容居中
+                Row(
+                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TimerFinishedContent(
+                        snoozeMinutes = timerState.snoozeMinutes,
+                        textAlpha = textAlpha
+                    )
+                    Spacer(modifier = Modifier.width(32.dp))
+                    TimerFinishedButtons(
+                        snoozeMinutes = timerState.snoozeMinutes,
+                        textAlpha = textAlpha,
+                        isEnabled = isEnabled
+                    )
+                }
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Spacer(modifier = Modifier.height(48.dp))
 
-                TimerFinishedContent(
-                    snoozeMinutes = timerState.snoozeMinutes,
-                    textAlpha = textAlpha
-                )
+                    TimerFinishedContent(
+                        snoozeMinutes = timerState.snoozeMinutes,
+                        textAlpha = textAlpha
+                    )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                TimerFinishedButtons(
-                    snoozeMinutes = timerState.snoozeMinutes,
-                    textAlpha = textAlpha,
-                    isEnabled = isEnabled
-                )
+                    TimerFinishedButtons(
+                        snoozeMinutes = timerState.snoozeMinutes,
+                        textAlpha = textAlpha,
+                        isEnabled = isEnabled
+                    )
+                }
             }
         }
     }

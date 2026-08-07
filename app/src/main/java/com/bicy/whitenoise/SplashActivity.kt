@@ -21,6 +21,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.airbnb.lottie.LottieAnimationView
+import com.airbnb.lottie.LottieProperty
+import com.airbnb.lottie.model.KeyPath
+import com.airbnb.lottie.value.LottieFrameInfo
+import com.airbnb.lottie.value.LottieValueCallback
 import com.bicy.whitenoise.audio.ReverbManager
 import com.bicy.whitenoise.music.MusicLibraryPart.MusicLibrary
 import com.bicy.whitenoise.wRT1.SecurityManager
@@ -34,6 +38,7 @@ import com.bicy.whitenoise.utils.LanguageManager
 import com.bicy.whitenoise.utils.LogManager
 import com.bicy.whitenoise.utils.ScatteredStorageManager
 import com.bicy.whitenoise.utils.SoundStorageManager
+import com.bicy.whitenoise.utils.SplashThemeResolver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -53,6 +58,12 @@ class SplashActivity : AppCompatActivity() {
     private var isSignatureInvalid = false
     private var isSecurityWarningShown = false
 
+    // 闪屏主题色（同步从持久化文件读取，避免等待 ThemeColorManager 异步初始化）
+    private var themeColors: SplashThemeResolver.ThemeColors = SplashThemeResolver.ThemeColors(
+        primary = 0xFFB8A07A.toInt(),
+        background = 0xFFFAF6F0.toInt()
+    )
+
     private val requiredPermissions: Array<String>
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             arrayOf(Manifest.permission.READ_MEDIA_AUDIO)
@@ -66,7 +77,9 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         splashContainer = FrameLayout(this)
-        splashContainer.setBackgroundColor(0xFFF7F5F0.toInt())
+        // 同步读取主题色，背景跟随主题（不等待 ThemeColorManager 异步初始化）
+        themeColors = SplashThemeResolver.resolveSync(this)
+        splashContainer.setBackgroundColor(themeColors.background)
         setContentView(splashContainer)
 
         setupSecurityWarningView()
@@ -192,6 +205,9 @@ class SplashActivity : AppCompatActivity() {
             repeatCount = 0
             speed = 1f
             enableMergePathsForKitKatAndAbove(true)
+            // 主题色应用前保持透明，避免 setAnimation 异步加载 composition
+            // 时渲染出 Lottie 原始奶白黄配色（addValueCallback 需 composition 加载后才注册）
+            alpha = 0f
         }
 
         val params = FrameLayout.LayoutParams(
@@ -219,6 +235,9 @@ class SplashActivity : AppCompatActivity() {
 
         lottieAnimationView.addLottieOnCompositionLoadedListener {
             isAnimationReady = true
+            // 主题色应用到 Lottie 后再显示并播放，避免首帧色差闪烁
+            applyThemeColorsToLottie()
+            lottieAnimationView.alpha = 1f
             lottieAnimationView.playAnimation()
             tryStartInitialization()
         }
@@ -229,6 +248,26 @@ class SplashActivity : AppCompatActivity() {
                 tryFadeOut()
             }
         })
+    }
+
+    /**
+     * 应用主题色到 Lottie 动画
+     * 策略：HSL 明度保留——高亮度色(奶油白背景)→主题背景色，灰阶图形→保留明度+主题primary色相
+     */
+    private fun applyThemeColorsToLottie() {
+        val primary = themeColors.primary
+        val background = themeColors.background
+        lottieAnimationView.addValueCallback(
+            KeyPath("**"),
+            LottieProperty.COLOR,
+            object : LottieValueCallback<Int>() {
+                override fun getValue(frameInfo: LottieFrameInfo<Int>?): Int {
+                    val original = frameInfo?.startValue ?: return primary
+                    return if (SplashThemeResolver.isBackgroundLight(original)) background
+                    else SplashThemeResolver.applyHslLuminance(original, primary)
+                }
+            }
+        )
     }
 
     private fun tryStartInitialization() {

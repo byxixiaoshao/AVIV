@@ -200,6 +200,18 @@
     <string name="viz_music_sensitivity">음악 시각화 감도</string>
     <string name="viz_flash_sensitivity">음악 플래시 감도</string>
     <string name="viz_refresh_rate">시각화 변화 속도</string>
+    <string name="viz_config_title">시각화 설정</string>
+    <string name="viz_response_range">응답 대역 범위</string>
+    <string name="viz_fall_speed">낙하 속도</string>
+    <string name="viz_min_band">최소 대역</string>
+    <string name="viz_max_band">최대 대역</string>
+    <string name="viz_enabled">활성화</string>
+    <string name="viz_sensitivity">감도</string>
+    <string name="viz_bar_count">막대 수</string>
+    <string name="viz_dim_speed">어둡기 속도</string>
+    <string name="viz_min_darkness">최소 어둠</string>
+    <string name="viz_max_brightness">최대 밝기</string>
+    <string name="viz_flash_params">플래시 매개변수</string>
     <string name="low">낮음</string>
     <string name="medium">중간</string>
     <string name="high">높음</string>
@@ -451,6 +463,8 @@
     <string name="speaker_compensation_intensity">보상 강도</string>
     <string name="speaker_compensation_desc">정적 스피커 보상 곡선: 스피커 주파수 응답 결함을 보상하기 위해 미리 정의된 EQ 게인을 적용합니다.</string>
     <string name="sync_compensation_to_manual_eq">보상을 수동 EQ에 동기화</string>
+    <string name="viz_3d_background">3D 배경</string>
+    <string name="viz_3d_glass_fade_exempt">3D 배경 흐리게</string>
     <string name="timer">Timer</string>
     <string name="spatial_offset_title">Spatial Offset</string>
     <string name="spatial_offset_distance">Offset Distance</string>

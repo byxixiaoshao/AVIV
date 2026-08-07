@@ -421,6 +421,14 @@ object OboeAudioEngine {
         return nativeGetMusicVisualizationData()
     }
     
+    fun getMusicSpectrumBins(): FloatArray {
+        return nativeGetMusicSpectrumBins()
+    }
+    
+    fun getSampleRate(): Int {
+        return nativeGetSampleRate()
+    }
+    
     fun getVisualizationEnergy(): Float {
         return nativeGetVisualizationEnergy()
     }
@@ -561,6 +569,8 @@ object OboeAudioEngine {
     private external fun nativeGetVisualizationData(): FloatArray
     private external fun nativeGetWhiteNoiseVisualizationData(): FloatArray
     private external fun nativeGetMusicVisualizationData(): FloatArray
+    private external fun nativeGetMusicSpectrumBins(): FloatArray
+    private external fun nativeGetSampleRate(): Int
     private external fun nativeGetVisualizationEnergy(): Float
     private external fun nativeGetWhiteNoiseVisualizationEnergy(): Float
     private external fun nativeGetMusicVisualizationEnergy(): Float

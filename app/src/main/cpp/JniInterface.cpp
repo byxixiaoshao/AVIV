@@ -1070,6 +1070,21 @@ static jfloatArray nativeGetMusicVisualizationData_impl(JNIEnv* env, jobject thi
     return result;
 }
 
+static jfloatArray nativeGetMusicSpectrumBins_impl(JNIEnv* env, jobject thiz) {
+    auto* engine = AudioEngine::getInstance();
+    auto data = engine->getMusicSpectrumBins();
+
+    jfloatArray result = env->NewFloatArray(static_cast<jsize>(data.size()));
+    if (result != nullptr) {
+        env->SetFloatArrayRegion(result, 0, static_cast<jsize>(data.size()), data.data());
+    }
+    return result;
+}
+
+static jint nativeGetSampleRate_impl(JNIEnv* env, jobject thiz) {
+    return static_cast<jint>(AudioEngine::getInstance()->getSampleRate());
+}
+
 static jfloat nativeGetVisualizationEnergy_impl(JNIEnv* env, jobject thiz) {
     auto* engine = AudioEngine::getInstance();
     return engine->getVisualizationEnergy();
@@ -1154,6 +1169,8 @@ Java_com_bicy_whitenoise_audio_OboeAudioEngine_registerNatives(JNIEnv* env, jobj
         {"nativeGetVisualizationData", "()[F", (void*)nativeGetVisualizationData_impl},
         {"nativeGetWhiteNoiseVisualizationData", "()[F", (void*)nativeGetWhiteNoiseVisualizationData_impl},
         {"nativeGetMusicVisualizationData", "()[F", (void*)nativeGetMusicVisualizationData_impl},
+        {"nativeGetMusicSpectrumBins", "()[F", (void*)nativeGetMusicSpectrumBins_impl},
+        {"nativeGetSampleRate", "()I", (void*)nativeGetSampleRate_impl},
         {"nativeGetVisualizationEnergy", "()F", (void*)nativeGetVisualizationEnergy_impl},
         {"nativeGetWhiteNoiseVisualizationEnergy", "()F", (void*)nativeGetWhiteNoiseVisualizationEnergy_impl},
         {"nativeGetMusicVisualizationEnergy", "()F", (void*)nativeGetMusicVisualizationEnergy_impl},

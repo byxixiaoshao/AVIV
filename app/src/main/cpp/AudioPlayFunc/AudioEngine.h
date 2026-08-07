@@ -7,6 +7,7 @@
 #include <shared_mutex>
 #include <memory>
 #include <vector>
+#include <array>
 #include <atomic>
 #include <string>
 #include "AudioTrack.h"
@@ -14,6 +15,9 @@
 
 class AudioEngine : public oboe::AudioStreamDataCallback, public oboe::AudioStreamErrorCallback {
 public:
+    // 音乐频谱分析 (对齐 web analyser.getByteFrequencyData 频域 FFT, 替代时域分段平均)
+    // 1024 点 FFT ≈ 23ms @44.1k, bin i 频率 = i * sampleRate_ / kMusicFftN
+    static constexpr int kMusicFftN = 1024;
     static AudioEngine* getInstance();
 
     bool init();
@@ -125,6 +129,8 @@ public:
     std::array<float, 16> getVisualizationData() const;
     std::array<float, 16> getWhiteNoiseVisualizationData() const;
     std::array<float, 16> getMusicVisualizationData() const;
+    // 音乐 FFT 幅度谱 bins (kMusicFftN/2 = 512, bin i 频率 = i * sampleRate_ / kMusicFftN, 归一化 0..1)
+    std::array<float, kMusicFftN / 2> getMusicSpectrumBins() const;
     float getVisualizationEnergy() const;
     float getWhiteNoiseVisualizationEnergy() const;
     float getMusicVisualizationEnergy() const;
@@ -199,6 +205,17 @@ private:
     
     std::array<float, 16> musicVizData_{};
     float musicVizEnergy_{0.0f};
+
+    // 音乐频谱分析 (见类头 kMusicFftN)
+    std::array<float, kMusicFftN> musicSpectrum_{};     // 环形缓冲: 最近 N 个单声道音乐样本
+    int musicSpectrumWrite_{0};
+    int musicSpectrumFill_{0};
+    std::array<float, kMusicFftN> musicSpectrumWorkRe_{};  // FFT 实部工作区
+    std::array<float, kMusicFftN> musicSpectrumWorkIm_{};  // FFT 虚部工作区
+    std::array<float, 16> musicBands_{};                   // 16 频段幅值 (归一化 0..1)
+    std::array<float, kMusicFftN / 2> musicSpectrumBins_{};  // 512 bins 幅度谱 (供 Hz 频率范围直接采样)
+    void computeMusicSpectrum();
+    static void fftRadix2(float* re, float* im, int n);
 };
 
 #endif

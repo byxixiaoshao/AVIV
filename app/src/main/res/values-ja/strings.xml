@@ -200,6 +200,18 @@
     <string name="viz_music_sensitivity">音楽視覚化感度</string>
     <string name="viz_flash_sensitivity">音楽フラッシュ感度</string>
     <string name="viz_refresh_rate">視覚化変化速度</string>
+    <string name="viz_config_title">視覚化設定</string>
+    <string name="viz_response_range">応答帯域範囲</string>
+    <string name="viz_fall_speed">落下速度</string>
+    <string name="viz_min_band">最小帯域</string>
+    <string name="viz_max_band">最大帯域</string>
+    <string name="viz_enabled">有効</string>
+    <string name="viz_sensitivity">感度</string>
+    <string name="viz_bar_count">バー数</string>
+    <string name="viz_dim_speed">暗転速度</string>
+    <string name="viz_min_darkness">最低暗度</string>
+    <string name="viz_max_brightness">最高明度</string>
+    <string name="viz_flash_params">フラッシュパラメータ</string>
     <string name="low">低</string>
     <string name="medium">中</string>
     <string name="high">高</string>
@@ -336,6 +348,8 @@
     <string name="speaker_compensation_intensity">補償強度</string>
     <string name="speaker_compensation_desc">静的スピーカー補償曲線：スピーカーの周波数応答不足を補償するために事前定義されたEQゲインを適用します。</string>
     <string name="sync_compensation_to_manual_eq">補償を手動EQに同期</string>
+    <string name="viz_3d_background">3D背景</string>
+    <string name="viz_3d_glass_fade_exempt">3D背景をぼかす</string>
     <string name="network">ネットワーク</string>
     <string name="local">ローカル</string>
     <string name="category">カテゴリ</string>

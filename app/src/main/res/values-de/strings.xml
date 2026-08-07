@@ -200,6 +200,18 @@
     <string name="viz_music_sensitivity">Musik-Visualisierungsempfindlichkeit</string>
     <string name="viz_flash_sensitivity">Musik-Flash-Empfindlichkeit</string>
     <string name="viz_refresh_rate">Visualisierungs-Änderungsgeschwindigkeit</string>
+    <string name="viz_config_title">Visualisierungskonfiguration</string>
+    <string name="viz_response_range">Frequenzbereich</string>
+    <string name="viz_fall_speed">Abstiegsgeschwindigkeit</string>
+    <string name="viz_min_band">Minimales Band</string>
+    <string name="viz_max_band">Maximales Band</string>
+    <string name="viz_enabled">Aktiviert</string>
+    <string name="viz_sensitivity">Empfindlichkeit</string>
+    <string name="viz_bar_count">Balkenanzahl</string>
+    <string name="viz_dim_speed">Verdunkelungsgeschwindigkeit</string>
+    <string name="viz_min_darkness">Mindestverdunkelung</string>
+    <string name="viz_max_brightness">Maximale Helligkeit</string>
+    <string name="viz_flash_params">Flash-Parameter</string>
     <string name="low">Niedrig</string>
     <string name="medium">Mittel</string>
     <string name="high">Hoch</string>
@@ -451,6 +463,8 @@
     <string name="speaker_compensation_intensity">Kompensationsintensität</string>
     <string name="speaker_compensation_desc">Statische Lautsprecher-Kompensationskurve: Wendet vordefinierte EQ-Verstärkung an, um Lautsprecher-Frequenzgang-Mängel zu kompensieren.</string>
     <string name="sync_compensation_to_manual_eq">Kompensation mit manualem EQ synchronisieren</string>
+    <string name="viz_3d_background">3D-Hintergrund</string>
+    <string name="viz_3d_glass_fade_exempt">3D-Hintergrund verwischen</string>
     <string name="timer">Timer</string>
     <string name="spatial_offset_title">Spatial Offset</string>
     <string name="spatial_offset_distance">Offset Distance</string>

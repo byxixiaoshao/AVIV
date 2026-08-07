@@ -43,6 +43,7 @@ import com.bicy.whitenoise.storage.config.FrostedGlassConfig
 import com.bicy.whitenoise.storage.config.FrostedGlassScopeConfig
 import com.bicy.whitenoise.storage.config.BlurBackdropConfig
 import com.bicy.whitenoise.storage.config.BackgroundGlassConfig
+import com.bicy.whitenoise.storage.config.Filament3DConfig
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -91,8 +92,11 @@ import com.bicy.whitenoise.ui.PageTopPadding
 import com.bicy.whitenoise.ui.screens.SettingScreenPart.EffectOrderDialog
 import com.bicy.whitenoise.ui.screens.SettingScreenPart.MediaControlPriorityDialog
 import com.bicy.whitenoise.ui.screens.SettingScreenPart.MusicDirectoryDialog
+import com.bicy.whitenoise.ui.screens.SettingScreenPart.Particle3DConfigDialog
 import com.bicy.whitenoise.ui.screens.SettingScreenPart.SettingCategorySection
-import com.bicy.whitenoise.ui.screens.SettingScreenPart.VisualizationConfigDialog
+import com.bicy.whitenoise.ui.screens.SettingScreenPart.WnVizConfigDialog
+import com.bicy.whitenoise.ui.screens.SettingScreenPart.MusicVizConfigDialog
+import com.bicy.whitenoise.ui.screens.SettingScreenPart.FlashVizConfigDialog
 import com.bicy.whitenoise.ui.screens.SettingScreenPart.SettingClickItem
 import com.bicy.whitenoise.ui.screens.SettingScreenPart.SettingClickItemWithIcon
 import com.bicy.whitenoise.ui.screens.SettingScreenPart.SettingSliderItem
@@ -455,6 +459,26 @@ fun SettingScreen(
                             }
                         }
                     )
+
+                    // 3D背景: 开启后音乐播放时淡出背景层露出 3D 音频可视化
+                    val threeDEnabled by Filament3DConfig.threeDEnabledFlow.collectAsState()
+                    var showParticle3DConfigDialog by remember { mutableStateOf(false) }
+                    SettingSwitchItem(
+                        title = stringResource(R.string.viz_3d_background),
+                        checked = threeDEnabled,
+                        onCheckedChange = { Filament3DConfig.setThreeDEnabled(it) }
+                    )
+                    // 3D 开启时显示参数配置入口
+                    if (threeDEnabled) {
+                        SettingClickItem(
+                            title = stringResource(R.string.viz_3d_config),
+                            value = "",
+                            onClick = { showParticle3DConfigDialog = true }
+                        )
+                    }
+                    if (showParticle3DConfigDialog) {
+                        Particle3DConfigDialog(onDismiss = { showParticle3DConfigDialog = false })
+                    }
                 }
             }
             
@@ -609,20 +633,33 @@ fun SettingScreen(
                         onValueChange = { alpha -> NavBackgroundConfig.setBackgroundAlpha(alpha) }
                     )
 
-                    // 任务8：可视化配置按钮 + 弹窗（替代原 slider/switch）
-                    var showVizConfigDialog by remember { mutableStateOf(false) }
-                    val vizSummary = buildString {
-                        if (globalState.vizWnEnabled) append("W ")
-                        if (globalState.vizMusicEnabled) append("M ")
-                        if (globalState.vizFlashEnabled) append("F")
-                    }.ifBlank { "—" }
+                    // 可视化配置：三个独立按钮（白噪音/音乐/闪烁）
+                    var showWnVizDialog by remember { mutableStateOf(false) }
+                    var showMusicVizDialog by remember { mutableStateOf(false) }
+                    var showFlashVizDialog by remember { mutableStateOf(false) }
                     SettingClickItem(
-                        title = stringResource(R.string.viz_config_title),
-                        value = vizSummary,
-                        onClick = { showVizConfigDialog = true }
+                        title = stringResource(R.string.viz_wn_sensitivity),
+                        value = if (globalState.vizWnEnabled) "ON" else "OFF",
+                        onClick = { showWnVizDialog = true }
                     )
-                    if (showVizConfigDialog) {
-                        VisualizationConfigDialog(onDismiss = { showVizConfigDialog = false })
+                    SettingClickItem(
+                        title = stringResource(R.string.viz_music_sensitivity),
+                        value = if (globalState.vizMusicEnabled) "ON" else "OFF",
+                        onClick = { showMusicVizDialog = true }
+                    )
+                    SettingClickItem(
+                        title = stringResource(R.string.viz_flash_sensitivity),
+                        value = if (globalState.vizFlashEnabled) "ON" else "OFF",
+                        onClick = { showFlashVizDialog = true }
+                    )
+                    if (showWnVizDialog) {
+                        WnVizConfigDialog(onDismiss = { showWnVizDialog = false })
+                    }
+                    if (showMusicVizDialog) {
+                        MusicVizConfigDialog(onDismiss = { showMusicVizDialog = false })
+                    }
+                    if (showFlashVizDialog) {
+                        FlashVizConfigDialog(onDismiss = { showFlashVizDialog = false })
                     }
                     
                     Spacer(modifier = Modifier.height(8.dp))
@@ -997,6 +1034,13 @@ fun SettingScreen(
                             title = stringResource(R.string.background_glass_enable),
                             checked = bgGlassEnabled,
                             onCheckedChange = { BackgroundGlassConfig.setEnabled(it) }
+                        )
+                        // 模糊3D背景: 开启后 3D 模式下玻璃层不随背景淡出
+                        val glassFadeExempt by Filament3DConfig.glassFadeExemptFlow.collectAsState()
+                        SettingSwitchItem(
+                            title = stringResource(R.string.viz_3d_glass_fade_exempt),
+                            checked = glassFadeExempt,
+                            onCheckedChange = { Filament3DConfig.setGlassFadeExempt(it) }
                         )
                         if (bgGlassEnabled) {
                             // 玻璃类型选择器

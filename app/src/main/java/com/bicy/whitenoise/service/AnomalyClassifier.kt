@@ -41,7 +41,8 @@ object AnomalyClassifier {
         AnomalyType.IO_ERROR,
         AnomalyType.CRYPTO_ERROR,
         AnomalyType.AUDIO_VISUALIZATION_ERROR,
-        AnomalyType.AUDIO_BUFFER_UNDERRUN -> AnomalyLevel.LOW
+        AnomalyType.AUDIO_BUFFER_UNDERRUN,
+        AnomalyType.RENDER_GL_MEMORY_ANOMALY -> AnomalyLevel.LOW
     }
 
     /**

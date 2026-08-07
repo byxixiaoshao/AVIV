@@ -43,6 +43,7 @@ enum class AnomalyType {
     IO_ERROR,
     CRYPTO_ERROR,
     AUDIO_VISUALIZATION_ERROR,
+    RENDER_GL_MEMORY_ANOMALY,  // 3D渲染配置调整导致内存异常(已自动回滚)
 }
 
 /** 异常记录 */

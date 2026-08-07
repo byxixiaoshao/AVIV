@@ -28,13 +28,29 @@ data class AppConfig(
     val vizWnEnabled: Boolean = true,
     val vizMusicEnabled: Boolean = true,
     val vizFlashEnabled: Boolean = true,
-    val vizWnSensitivity: Int = 1,
-    val vizMusicSensitivity: Int = 1,
-    val vizFlashSensitivity: Int = 1,
-    val vizRefreshRate: Int = 1,
-    // 任务8：响应频段范围（频段索引，0..15），白噪音渲染时 clamp 到 0..11
-    val vizResponseMinBand: Int = 0,
-    val vizResponseMaxBand: Int = 15,
+    // 灵敏度 0..1 连续调整
+    val vizWnSensitivity: Float = 0.5f,
+    val vizMusicSensitivity: Float = 0.5f,
+    val vizFlashSensitivity: Float = 0.5f,
+    // 降落速度 0..1（闪烁为暗淡速度），越大下降越快
+    val vizWnFallSpeed: Float = 0.5f,
+    val vizMusicFallSpeed: Float = 0.5f,
+    val vizFlashFallSpeed: Float = 0.5f,
+    // 响应频段范围（频段索引 0..15，WN 渲染时 clamp 到 0..11）
+    val vizWnMinBand: Int = 0,
+    val vizWnMaxBand: Int = 11,
+    // 音乐响应频率范围 (Hz, 人耳可听 20..20000, 直接按 Hz 采样 FFT bins)
+    val vizMusicMinFreq: Float = 20f,
+    val vizMusicMaxFreq: Float = 20000f,
+    val vizFlashMinBand: Int = 0,
+    val vizFlashMaxBand: Int = 15,
+    // 柱形数量 8..64（独立于频段范围，仅控制显示柱数）
+    val vizWnBarCount: Int = 12,
+    val vizMusicBarCount: Int = 16,
+    val vizFlashBarCount: Int = 16,
+    // 闪烁最低暗度 / 最高明度 0..1
+    val vizFlashMinDarkness: Float = 0.3f,
+    val vizFlashMaxBrightness: Float = 0.25f,
     val mediaControlPriority: String = "smart",
     val autoEqEnabled: Boolean = false,
     val autoEqMode: String = "simple",

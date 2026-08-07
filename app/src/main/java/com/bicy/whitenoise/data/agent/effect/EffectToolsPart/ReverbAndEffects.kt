@@ -110,7 +110,6 @@ class SetPitchSpeedTool(private val vm: MainViewModel) : AgentTool {
         val track = com.bicy.whitenoise.music.MusicPlayerController.state.value.currentTrack
             ?: return ToolResult.Error("当前没有播放中的音乐")
         val soundId = com.bicy.whitenoise.music.MusicCacheManager.getSoundId(track.id)
-            ?: return ToolResult.Error("无法获取当前音乐的音频ID")
 
         return when (parameter) {
             "speed" -> {

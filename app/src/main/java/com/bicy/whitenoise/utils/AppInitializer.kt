@@ -20,6 +20,7 @@ import com.bicy.whitenoise.storage.playlist.PlaylistManagerPart.PlaylistManager
 import com.bicy.whitenoise.storage.whitenoise.WhiteNoiseStorage
 import com.bicy.whitenoise.subPage.setting.ItemList
 import com.bicy.whitenoise.ui.theme.ThemeColorManager
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -31,6 +32,7 @@ object AppInitializer {
     private const val SCRIPT_EXPORTED_KEY = "builtin_scripts_exported"
     private lateinit var applicationContext: Context
     
+    @OptIn(DelicateCoroutinesApi::class)
     fun init(application: Application) {
         applicationContext = application.applicationContext
         

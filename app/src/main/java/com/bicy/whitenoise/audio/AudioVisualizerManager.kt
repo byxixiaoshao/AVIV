@@ -25,6 +25,10 @@ object aVzM {
     private val _mFD = MutableStateFlow(FloatArray(16) { 0f })
     val musicFftData: StateFlow<FloatArray> = _mFD.asStateFlow()
     
+    // 音乐 FFT 幅度谱 bins (512, bin i 频率 = i * sampleRate / 1024), 供 Hz 频率范围直接采样
+    private val _mBins = MutableStateFlow(FloatArray(512) { 0f })
+    val musicSpectrumBins: StateFlow<FloatArray> = _mBins.asStateFlow()
+    
     private val _energyLevel = MutableStateFlow(0f)
     val energyLevel: StateFlow<Float> = _energyLevel.asStateFlow()
     
@@ -69,6 +73,12 @@ object aVzM {
                         _mEL.value = if (mEnergy.isNaN() || mEnergy < 0f) 0f else mEnergy.coerceIn(0f, 1f)
                     }
                     
+                    val mBins = OboeAudioEngine.getMusicSpectrumBins()
+                    if (mBins.isNotEmpty()) {
+                        val cleanBins = mBins.map { if (it.isNaN() || it < 0f) 0f else it.coerceIn(0f, 1f) }.toFloatArray()
+                        _mBins.value = cleanBins
+                    }
+                    
                     delay(33)
                 } catch (e: Exception) {
                     Log.e(TAG, "获取可视化数据失败: ${e.message}")
@@ -86,6 +96,7 @@ object aVzM {
         _fftData.value = FloatArray(16) { 0f }
         _wnFD.value = FloatArray(16) { 0f }
         _mFD.value = FloatArray(16) { 0f }
+        _mBins.value = FloatArray(512) { 0f }
         _energyLevel.value = 0f
         _wnEL.value = 0f
         _mEL.value = 0f

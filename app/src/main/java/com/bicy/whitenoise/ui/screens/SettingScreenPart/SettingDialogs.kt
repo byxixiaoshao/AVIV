@@ -70,6 +70,9 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import kotlin.math.exp
+import kotlin.math.ln
+import kotlin.math.roundToInt
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -78,6 +81,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.bicy.whitenoise.R
 import com.bicy.whitenoise.storage.config.ConfigStorage
+import com.bicy.whitenoise.storage.config.Filament3DConfig
 import com.bicy.whitenoise.storage.music.MusicDirectory
 import com.bicy.whitenoise.storage.theme.CustomThemeLibrary
 import com.bicy.whitenoise.ui.theme.CustomTheme
@@ -1836,12 +1840,10 @@ fun UsageHistoryDialog(
 }
 
 /**
- * 任务8：可视化配置弹窗。
- * 替代原设置页的 slider/switch 项，集中配置可视化灵敏度、响应频段范围、降落速度。
- * 移除"变化速度"独立项，其语义并入"降落速度"（复用 vizRefreshRate 字段作 smoothFactor）。
+ * 白噪音可视化配置弹窗（独立配置：灵敏度/降落速度/频段范围/柱形数量）。
  */
 @Composable
-fun VisualizationConfigDialog(onDismiss: () -> Unit) {
+fun WnVizConfigDialog(onDismiss: () -> Unit) {
     val config by ConfigStorage.config.collectAsState()
     GlassAlertDialogSimple(onDismissRequest = onDismiss) {
         Column(
@@ -1849,95 +1851,133 @@ fun VisualizationConfigDialog(onDismiss: () -> Unit) {
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // --- 白噪音可视化 ---
+            Text(
+                text = stringResource(R.string.viz_wn_sensitivity),
+                fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
             VizToggleRow(
-                title = stringResource(R.string.viz_wn_sensitivity),
+                title = stringResource(R.string.viz_enabled),
                 checked = config.vizWnEnabled,
                 onCheckedChange = { ConfigStorage.setVizWnEnabled(it) }
             )
-            VizSliderRow(
-                label = stringResource(R.string.viz_wn_sensitivity),
-                value = config.vizWnSensitivity.toFloat(),
-                valueRange = 0f..2f,
-                steps = 1,
-                onValueChange = { ConfigStorage.setVizWnSensitivity(it.toInt()) }
-            )
+            VizFloatSliderRow(stringResource(R.string.viz_sensitivity), config.vizWnSensitivity, 0f..1f) {
+                ConfigStorage.setVizWnSensitivity(it)
+            }
+            VizFloatSliderRow(stringResource(R.string.viz_fall_speed), config.vizWnFallSpeed, 0f..1f) {
+                ConfigStorage.setVizWnFallSpeed(it)
+            }
+            VizIntSliderRow(stringResource(R.string.viz_min_band), config.vizWnMinBand, 0..15, 14) {
+                ConfigStorage.setVizWnMinBand(it)
+            }
+            VizIntSliderRow(stringResource(R.string.viz_max_band), config.vizWnMaxBand, 0..15, 14) {
+                ConfigStorage.setVizWnMaxBand(it)
+            }
+            VizIntSliderRow(stringResource(R.string.viz_bar_count), config.vizWnBarCount, 8..64, 55) {
+                ConfigStorage.setVizWnBarCount(it)
+            }
+            VizFinishButton(onDismiss)
+        }
+    }
+}
 
-            // --- 音乐可视化 ---
+/**
+ * 音乐可视化配置弹窗（独立配置：灵敏度/降落速度/频段范围/柱形数量）。
+ */
+@Composable
+fun MusicVizConfigDialog(onDismiss: () -> Unit) {
+    val config by ConfigStorage.config.collectAsState()
+    GlassAlertDialogSimple(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            Text(
+                text = stringResource(R.string.viz_music_sensitivity),
+                fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
             VizToggleRow(
-                title = stringResource(R.string.viz_music_sensitivity),
+                title = stringResource(R.string.viz_enabled),
                 checked = config.vizMusicEnabled,
                 onCheckedChange = { ConfigStorage.setVizMusicEnabled(it) }
             )
-            VizSliderRow(
-                label = stringResource(R.string.viz_music_sensitivity),
-                value = config.vizMusicSensitivity.toFloat(),
-                valueRange = 0f..2f,
-                steps = 1,
-                onValueChange = { ConfigStorage.setVizMusicSensitivity(it.toInt()) }
-            )
+            VizFloatSliderRow(stringResource(R.string.viz_sensitivity), config.vizMusicSensitivity, 0f..1f) {
+                ConfigStorage.setVizMusicSensitivity(it)
+            }
+            VizFloatSliderRow(stringResource(R.string.viz_fall_speed), config.vizMusicFallSpeed, 0f..1f) {
+                ConfigStorage.setVizMusicFallSpeed(it)
+            }
+            VizFreqSliderRow(stringResource(R.string.viz_min_freq), config.vizMusicMinFreq, 20f..20000f) {
+                ConfigStorage.setVizMusicMinFreq(it)
+            }
+            VizFreqSliderRow(stringResource(R.string.viz_max_freq), config.vizMusicMaxFreq, 20f..20000f) {
+                ConfigStorage.setVizMusicMaxFreq(it)
+            }
+            VizIntSliderRow(stringResource(R.string.viz_bar_count), config.vizMusicBarCount, 8..64, 55) {
+                ConfigStorage.setVizMusicBarCount(it)
+            }
+            VizFinishButton(onDismiss)
+        }
+    }
+}
 
-            // --- 闪烁 ---
+/**
+ * 闪烁可视化配置弹窗（独立配置：灵敏度/暗淡速度/频段范围/柱形数量/最低暗度/最高明度）。
+ */
+@Composable
+fun FlashVizConfigDialog(onDismiss: () -> Unit) {
+    val config by ConfigStorage.config.collectAsState()
+    GlassAlertDialogSimple(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            Text(
+                text = stringResource(R.string.viz_flash_sensitivity),
+                fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
             VizToggleRow(
-                title = stringResource(R.string.viz_flash_sensitivity),
+                title = stringResource(R.string.viz_enabled),
                 checked = config.vizFlashEnabled,
                 onCheckedChange = { ConfigStorage.setVizFlashEnabled(it) }
             )
-            VizSliderRow(
-                label = stringResource(R.string.viz_flash_sensitivity),
-                value = config.vizFlashSensitivity.toFloat(),
-                valueRange = 0f..2f,
-                steps = 1,
-                onValueChange = { ConfigStorage.setVizFlashSensitivity(it.toInt()) }
-            )
-
+            VizFloatSliderRow(stringResource(R.string.viz_sensitivity), config.vizFlashSensitivity, 0f..1f) {
+                ConfigStorage.setVizFlashSensitivity(it)
+            }
+            VizFloatSliderRow(stringResource(R.string.viz_dim_speed), config.vizFlashFallSpeed, 0f..1f) {
+                ConfigStorage.setVizFlashFallSpeed(it)
+            }
+            VizIntSliderRow(stringResource(R.string.viz_min_band), config.vizFlashMinBand, 0..15, 14) {
+                ConfigStorage.setVizFlashMinBand(it)
+            }
+            VizIntSliderRow(stringResource(R.string.viz_max_band), config.vizFlashMaxBand, 0..15, 14) {
+                ConfigStorage.setVizFlashMaxBand(it)
+            }
+            VizIntSliderRow(stringResource(R.string.viz_bar_count), config.vizFlashBarCount, 8..64, 55) {
+                ConfigStorage.setVizFlashBarCount(it)
+            }
+            // 闪烁专属：最低暗度 / 最高明度
             Spacer(modifier = Modifier.height(8.dp))
-
-            // --- 响应频段范围（0..15，白噪音渲染时 clamp 到 0..11） ---
             Text(
-                text = stringResource(R.string.viz_response_range),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
+                text = stringResource(R.string.viz_flash_params),
+                fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 modifier = Modifier.padding(vertical = 4.dp)
             )
-            VizSliderRow(
-                label = stringResource(R.string.viz_min_band),
-                value = config.vizResponseMinBand.toFloat(),
-                valueRange = 0f..15f,
-                steps = 14,
-                onValueChange = { ConfigStorage.setVizResponseMinBand(it.toInt()) }
-            )
-            VizSliderRow(
-                label = stringResource(R.string.viz_max_band),
-                value = config.vizResponseMaxBand.toFloat(),
-                valueRange = 0f..15f,
-                steps = 14,
-                onValueChange = { ConfigStorage.setVizResponseMaxBand(it.toInt()) }
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // --- 降落速度（复用 vizRefreshRate 作 smoothFactor） ---
-            VizSliderRow(
-                label = stringResource(R.string.viz_fall_speed),
-                value = config.vizRefreshRate.toFloat(),
-                valueRange = 0f..2f,
-                steps = 1,
-                onValueChange = { ConfigStorage.setVizRefreshRate(it.toInt()) }
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text(stringResource(R.string.finish), color = MaterialTheme.colorScheme.onPrimary)
+            VizFloatSliderRow(stringResource(R.string.viz_min_darkness), config.vizFlashMinDarkness, 0f..1f) {
+                ConfigStorage.setVizFlashMinDarkness(it)
             }
+            VizFloatSliderRow(stringResource(R.string.viz_max_brightness), config.vizFlashMaxBrightness, 0f..1f) {
+                ConfigStorage.setVizFlashMaxBrightness(it)
+            }
+            VizFinishButton(onDismiss)
         }
     }
 }
@@ -1954,12 +1994,12 @@ private fun VizToggleRow(title: String, checked: Boolean, onCheckedChange: (Bool
     }
 }
 
+/** 0..1 浮点滑块（灵敏度/降落速度/暗度/明度） */
 @Composable
-private fun VizSliderRow(
+private fun VizFloatSliderRow(
     label: String,
     value: Float,
     valueRange: ClosedFloatingPointRange<Float>,
-    steps: Int,
     onValueChange: (Float) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
@@ -1969,14 +2009,423 @@ private fun VizSliderRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
-            Text("${value.toInt()}", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
+            Text(String.format("%.2f", value), fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
         }
         InteractiveSlider(
             value = value,
             onValueChange = onValueChange,
             valueRange = valueRange,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+/** 整数滑块（频段/柱形数量） */
+@Composable
+private fun VizIntSliderRow(
+    label: String,
+    value: Int,
+    valueRange: IntRange,
+    steps: Int,
+    onValueChange: (Int) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+            Text("$value", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
+        }
+        InteractiveSlider(
+            value = value.toFloat(),
+            onValueChange = { onValueChange(it.toInt()) },
+            valueRange = valueRange.first.toFloat()..valueRange.last.toFloat(),
             steps = steps,
             modifier = Modifier.fillMaxWidth()
         )
+    }
+}
+
+/** Hz 频率滑块（对数刻度，符合人耳听感；显示整数 Hz） */
+@Composable
+private fun VizFreqSliderRow(
+    label: String,
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    onValueChange: (Float) -> Unit
+) {
+    val lo = valueRange.start
+    val hi = valueRange.endInclusive
+    val logLo = ln(lo)
+    val logHi = ln(hi)
+    val fraction = ((ln(value.coerceIn(lo, hi)) - logLo) / (logHi - logLo)).coerceIn(0f, 1f)
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+            Text("${value.coerceIn(lo, hi).roundToInt()} Hz", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
+        }
+        InteractiveSlider(
+            value = fraction,
+            onValueChange = { f -> onValueChange(exp(logLo + f * (logHi - logLo))) },
+            valueRange = 0f..1f,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+/** 帧率限制挡位行（30/60/90/120/144/165/无限制，0 = 无限制） */
+@Composable
+private fun VizFpsTierRow(
+    label: String,
+    value: Int,
+    onValueChange: (Int) -> Unit
+) {
+    val tiers = Filament3DConfig.FPS_TIERS
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+            Text(if (value <= 0) "∞" else "$value FPS", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
+        }
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            tiers.forEach { tier ->
+                val selected = tier == value
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(
+                            if (selected) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        )
+                        .clickable { onValueChange(tier) }
+                        .padding(vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (tier <= 0) "∞" else "$tier",
+                        fontSize = 10.sp,
+                        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** 散开形态选择行(无专辑时粒子 3D 散开形态: 云团/球壳/星环/声波罩) */
+@Composable
+private fun VizScatterModeRow(label: String, value: Int, onValueChange: (Int) -> Unit) {
+    val modes = listOf(
+        R.string.viz_3d_scatter_cloud to Filament3DConfig.SCATTER_MODE_CLOUD,
+        R.string.viz_3d_scatter_shell to Filament3DConfig.SCATTER_MODE_SHELL,
+        R.string.viz_3d_scatter_ring to Filament3DConfig.SCATTER_MODE_RING,
+        R.string.viz_3d_scatter_wave to Filament3DConfig.SCATTER_MODE_WAVE
+    )
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+        Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            modes.forEach { (strId, mode) ->
+                val selected = mode == value
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(
+                            if (selected) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        )
+                        .clickable { onValueChange(mode) }
+                        .padding(vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(strId),
+                        fontSize = 10.sp,
+                        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** 粒子光晕档位选择: 关闭/柔和/明显/强霓虹 (两趟渲染的加法光晕层强度) */
+@Composable
+private fun VizGlowTierRow(label: String, value: Int, onValueChange: (Int) -> Unit) {
+    val tiers = listOf(
+        R.string.viz_3d_glow_tier_off to Filament3DConfig.GLOW_TIER_OFF,
+        R.string.viz_3d_glow_tier_soft to Filament3DConfig.GLOW_TIER_SOFT,
+        R.string.viz_3d_glow_tier_visible to Filament3DConfig.GLOW_TIER_VISIBLE,
+        R.string.viz_3d_glow_tier_neon to Filament3DConfig.GLOW_TIER_NEON
+    )
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+        Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            tiers.forEach { (strId, tier) ->
+                val selected = tier == value
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(
+                            if (selected) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        )
+                        .clickable { onValueChange(tier) }
+                        .padding(vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(strId),
+                        fontSize = 10.sp,
+                        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** 中心光晕样式选择: 经典柔光/十字光芒/星芒/环形光波 */
+@Composable
+private fun VizBloomStyleRow(label: String, value: Int, onValueChange: (Int) -> Unit) {
+    val styles = listOf(
+        R.string.viz_3d_bloom_classic to Filament3DConfig.BLOOM_STYLE_CLASSIC,
+        R.string.viz_3d_bloom_cross to Filament3DConfig.BLOOM_STYLE_CROSS,
+        R.string.viz_3d_bloom_star to Filament3DConfig.BLOOM_STYLE_STAR,
+        R.string.viz_3d_bloom_ring to Filament3DConfig.BLOOM_STYLE_RING
+    )
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+        Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            styles.forEach { (strId, style) ->
+                val selected = style == value
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(
+                            if (selected) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        )
+                        .clickable { onValueChange(style) }
+                        .padding(vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(strId),
+                        fontSize = 10.sp,
+                        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun VizFinishButton(onDismiss: () -> Unit) {
+    Spacer(modifier = Modifier.height(12.dp))
+    Button(
+        onClick = onDismiss,
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary
+        )
+    ) {
+        Text(stringResource(R.string.finish), color = MaterialTheme.colorScheme.onPrimary)
+    }
+}
+
+/**
+ * 3D 粒子参数配置弹窗。
+ * 参数完全对齐 3d-particle-preview/index.html 的 params 面板。
+ * 3D 背景开启时在设置-音乐分类下显示入口。
+ */
+@Composable
+fun Particle3DConfigDialog(onDismiss: () -> Unit) {
+    val cfg = Filament3DConfig
+    val particleSize by cfg.particleSizeFlow.collectAsState()
+    val moveSpeed by cfg.moveSpeedFlow.collectAsState()
+    val transDuration by cfg.transDurationFlow.collectAsState()
+    val pulseAmt by cfg.pulseAmtFlow.collectAsState()
+    val glowPulse by cfg.glowPulseFlow.collectAsState()
+    val glowStrength by cfg.glowStrengthFlow.collectAsState()
+    val glowDark by cfg.glowDarkFlow.collectAsState()
+    val glowBright by cfg.glowBrightFlow.collectAsState()
+    val bloomStrength by cfg.bloomStrengthFlow.collectAsState()
+    val bloomRadius by cfg.bloomRadiusFlow.collectAsState()
+    val bloomThreshold by cfg.bloomThresholdFlow.collectAsState()
+    val bgFollowCover by cfg.bgFollowCoverFlow.collectAsState()
+    val customBg by cfg.customBgFlow.collectAsState()
+    val bassSens by cfg.bassSensFlow.collectAsState()
+    val midSens by cfg.midSensFlow.collectAsState()
+    val trebleSens by cfg.trebleSensFlow.collectAsState()
+    val gyroEnabled by cfg.gyroEnabledFlow.collectAsState()
+    val gyroSensitivity by cfg.gyroSensitivityFlow.collectAsState()
+    val gyroAmount by cfg.gyroAmountFlow.collectAsState()
+    val gyroReturn by cfg.gyroReturnFlow.collectAsState()
+    val gyroSmoothing by cfg.gyroSmoothingFlow.collectAsState()
+    val particleEdge by cfg.particleEdgeFlow.collectAsState()
+    val glowHalo by cfg.glowTierFlow.collectAsState()
+    val bloomStyle by cfg.bloomStyleFlow.collectAsState()
+    val bgBrightness by cfg.bgBrightnessFlow.collectAsState()
+    val fpsLimit by cfg.fpsLimitFlow.collectAsState()
+    val scatterMode by cfg.scatterModeFlow.collectAsState()
+    val scatterRadius by cfg.scatterRadiusFlow.collectAsState()
+
+    GlassAlertDialogSimple(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            // ── 陀螺仪 ──
+            Text(
+                text = stringResource(R.string.viz_3d_gyro_group),
+                fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            VizToggleRow(
+                title = stringResource(R.string.viz_3d_gyro_enabled),
+                checked = gyroEnabled,
+                onCheckedChange = { cfg.setGyroEnabled(it) }
+            )
+            if (gyroEnabled) {
+                VizFloatSliderRow(stringResource(R.string.viz_3d_gyro_sensitivity), gyroSensitivity, 0.2f..3f) { cfg.setGyroSensitivity(it) }
+                VizFloatSliderRow(stringResource(R.string.viz_3d_gyro_amount), gyroAmount, 0.2f..2f) { cfg.setGyroAmount(it) }
+                VizFloatSliderRow(stringResource(R.string.viz_3d_gyro_return), gyroReturn, 0.95f..0.999f) { cfg.setGyroReturn(it) }
+                VizFloatSliderRow(stringResource(R.string.viz_3d_gyro_smoothing), gyroSmoothing, 0.02f..0.8f) { cfg.setGyroSmoothing(it) }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            // ── 粒子 ──
+            Text(
+                text = stringResource(R.string.viz_3d_particle_group),
+                fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            VizIntSliderRow(stringResource(R.string.viz_3d_particle_count), particleEdge, 10..2000, 20) { cfg.setParticleEdge(it) }
+            VizFpsTierRow(stringResource(R.string.viz_3d_fps_limit), fpsLimit) { cfg.setFpsLimit(it) }
+            VizFloatSliderRow(stringResource(R.string.viz_3d_particle_size), particleSize, 0.2f..3f) { cfg.setParticleSize(it) }
+            VizFloatSliderRow(stringResource(R.string.viz_3d_move_speed), moveSpeed, 0f..3f) { cfg.setMoveSpeed(it) }
+            VizFloatSliderRow(stringResource(R.string.viz_3d_trans_duration), transDuration, 0.3f..3f) { cfg.setTransDuration(it) }
+            VizFloatSliderRow(stringResource(R.string.viz_3d_pulse_amt), pulseAmt, 0f..1f) { cfg.setPulseAmt(it) }
+            // 无专辑散开形态 + 散开半径
+            VizScatterModeRow(stringResource(R.string.viz_3d_scatter_group), scatterMode) { cfg.setScatterMode(it) }
+            VizFloatSliderRow(
+                stringResource(R.string.viz_3d_scatter_radius), scatterRadius,
+                Filament3DConfig.MIN_SCATTER_RADIUS..Filament3DConfig.MAX_SCATTER_RADIUS
+            ) { cfg.setScatterRadius(it) }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            // ── 粒子发光 ──
+            Text(
+                text = stringResource(R.string.viz_3d_glow_group),
+                fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            VizToggleRow(
+                title = stringResource(R.string.viz_3d_glow_pulse),
+                checked = glowPulse,
+                onCheckedChange = { cfg.setGlowPulse(it) }
+            )
+            VizGlowTierRow(stringResource(R.string.viz_3d_glow_halo), glowHalo) { cfg.setGlowTier(it) }
+            if (!glowPulse) {
+                VizFloatSliderRow(stringResource(R.string.viz_3d_glow_strength), glowStrength, 0.2f..3f) { cfg.setGlowStrength(it) }
+            } else {
+                VizFloatSliderRow(stringResource(R.string.viz_3d_glow_dark), glowDark, 0f..1f) { cfg.setGlowDark(it) }
+                VizFloatSliderRow(stringResource(R.string.viz_3d_glow_bright), glowBright, 0.5f..4f) { cfg.setGlowBright(it) }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            // ── Bloom ──
+            Text(
+                text = stringResource(R.string.viz_3d_bloom_group),
+                fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            VizBloomStyleRow(stringResource(R.string.viz_3d_bloom_style), bloomStyle) { cfg.setBloomStyle(it) }
+            VizFloatSliderRow(stringResource(R.string.viz_3d_bloom_strength), bloomStrength, 0f..3f) { cfg.setBloomStrength(it) }
+            VizFloatSliderRow(stringResource(R.string.viz_3d_bloom_radius), bloomRadius, 0f..1.5f) { cfg.setBloomRadius(it) }
+            VizFloatSliderRow(stringResource(R.string.viz_3d_bloom_threshold), bloomThreshold, 0f..1f) { cfg.setBloomThreshold(it) }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            // ── 背景色 ──
+            Text(
+                text = stringResource(R.string.viz_3d_bg_group),
+                fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            VizToggleRow(
+                title = stringResource(R.string.viz_3d_bg_follow_cover),
+                checked = bgFollowCover,
+                onCheckedChange = { cfg.setBgFollowCover(it) }
+            )
+            VizFloatSliderRow(stringResource(R.string.viz_3d_bg_brightness), bgBrightness, 0.02f..0.5f) { cfg.setBgBrightness(it) }
+            if (!bgFollowCover) {
+                Text(
+                    text = stringResource(R.string.viz_3d_custom_bg),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(top = 6.dp, bottom = 4.dp)
+                )
+                val presets = listOf(
+                    0xFF101018.toInt(), 0xFF000000.toInt(), 0xFF1A0F2E.toInt(),
+                    0xFF0F1A2E.toInt(), 0xFF0F2E1A.toInt(), 0xFF2E1A0F.toInt(),
+                    0xFF1A1A1A.toInt(), 0xFF0A0A12.toInt()
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    presets.forEach { color ->
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color(color))
+                                .then(
+                                    if (customBg == color) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                                    else Modifier.border(1.dp, Color.White.copy(alpha = 0.3f), CircleShape)
+                                )
+                                .clickable { cfg.setCustomBg(color) }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            // ── 敏感度 ──
+            Text(
+                text = stringResource(R.string.viz_3d_sensitivity_group),
+                fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            VizFloatSliderRow(stringResource(R.string.viz_3d_bass_sens), bassSens, 0f..4f) { cfg.setBassSens(it) }
+            VizFloatSliderRow(stringResource(R.string.viz_3d_mid_sen), midSens, 0f..4f) { cfg.setMidSens(it) }
+            VizFloatSliderRow(stringResource(R.string.viz_3d_treble_sens), trebleSens, 0f..4f) { cfg.setTrebleSens(it) }
+
+            VizFinishButton(onDismiss)
+        }
     }
 }

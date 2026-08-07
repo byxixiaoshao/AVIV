@@ -166,7 +166,7 @@ class AIService(private val context: Context) {
             messages.add(message)
 
             // 任务A: 读取类工具直接执行，修改类工具收集后合并确认（只弹一个弹窗）
-            processToolCalls(message.toolCalls!!, messages, onToolCall, onOperation, onToolConfirm)
+            processToolCalls(message.toolCalls, messages, onToolCall, onOperation, onToolConfirm)
         }
         return Result.failure(Exception("超过最大工具调用次数 ($maxIterations 次)"))
     }

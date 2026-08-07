@@ -99,6 +99,9 @@ import com.bicy.whitenoise.ui.components.glass.DialogBlurState
 import com.bicy.whitenoise.storage.config.BlurBackdropConfig
 import com.bicy.whitenoise.storage.config.BackgroundRenderConfig
 import com.bicy.whitenoise.storage.config.BackgroundGlassConfig
+import com.bicy.whitenoise.storage.config.Filament3DConfig
+import com.bicy.whitenoise.music.MusicPlayerController
+import com.bicy.whitenoise.ui.background.Particle3DBackground
 import android.os.Build
 import android.content.Context
 import android.widget.Toast
@@ -277,13 +280,49 @@ fun MainScreen() {
 
     @Composable
     fun BackgroundLayer() {
+        // ── Filament 3D 背景：播放时淡出背景层露出 3D 可视化 ──
+        val bg3DEnabled by Filament3DConfig.threeDEnabledFlow.collectAsState()
+        val glassFadeExempt by Filament3DConfig.glassFadeExemptFlow.collectAsState()
+        val playerState by MusicPlayerController.state.collectAsState()
+        val isMusicPlaying = playerState.isPlaying
+
+        // 背景淡出透明度: 1=正常显示, 0=完全淡出(透明度100)
+        val bgFadeAlpha = remember { Animatable(1f) }
+        LaunchedEffect(bg3DEnabled, isMusicPlaying) {
+            val target = if (bg3DEnabled && isMusicPlaying) 0f else 1f
+            bgFadeAlpha.animateTo(
+                targetValue = target,
+                animationSpec = tween(durationMillis = if (target == 0f) 800 else 400)
+            )
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
+                .background(MaterialTheme.colorScheme.background.copy(alpha = bgFadeAlpha.value))
         ) {
+            // 背景玻璃模糊作用对象: 3D 粒子 + 白噪音可视化 + 背景图片 (仅「模糊3D背景」开启时整体模糊成玻璃质感)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(
+                        if (bgGlassEnabled && glassFadeExempt && bgGlassBlur > 0f && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            Modifier.blur((bgGlassBlur * 20).dp)
+                        } else {
+                            Modifier
+                        }
+                    )
+            ) {
+            // ── 最底层: 3D 粒子音频可视化层 (TextureView, 可被 RenderEffect 采样) ──
+            if (bg3DEnabled) {
+                Particle3DBackground(enabled = true, modifier = Modifier.fillMaxSize())
+            }
+
+            // 白噪音可视化层随 3D 模式淡出, 避免遮挡 3D 粒子
             WhiteNoiseVisualizerBackground(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(bgFadeAlpha.value)
             )
 
             val hasRenderEffect = bgRenderEnabled && (
@@ -301,9 +340,11 @@ fun MainScreen() {
                 androidx.compose.ui.graphics.ColorMatrix(renderColorMatrix.array)
             } else null
 
+            // 背景图片层 + 纯色背景层（3D 模式下随播放淡出, 透明度100）
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .alpha(bgFadeAlpha.value)
                     .then(
                         if (hasRenderEffect && bgRenderBlur > 0f && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                             Modifier.blur((bgRenderBlur * 25).dp)
@@ -319,15 +360,7 @@ fun MainScreen() {
                             .crossfade(true)
                             .build(),
                         contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .then(
-                                if (bgGlassEnabled && bgGlassBlur > 0f && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                    Modifier.blur((bgGlassBlur * 20).dp)
-                                } else {
-                                    Modifier
-                                }
-                            ),
+                        modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
                         colorFilter = if (hasRenderEffect && composeColorMatrix != null) {
                             ColorFilter.colorMatrix(composeColorMatrix)
@@ -341,23 +374,32 @@ fun MainScreen() {
                         .background(MaterialTheme.colorScheme.background.copy(alpha = backgroundAlpha))
                 )
             }
+            }  // 关闭背景玻璃模糊作用层
 
+            // 模糊玻璃渲染层（开启「模糊3D背景」时豁免淡出）
             if (bgGlassEnabled) {
-                BackgroundGlassOverlay(
-                    type = bgGlassType,
-                    opacity = bgGlassOpacity,
-                    darkness = bgGlassDarkness,
-                    noise = bgGlassNoise,
-                    gridSize = bgGlassGridSize,
-                    gradient = bgGlassGradient,
-                    sheen = bgGlassSheen
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .alpha(if (glassFadeExempt) 1f else bgFadeAlpha.value)
+                ) {
+                    BackgroundGlassOverlay(
+                        type = bgGlassType,
+                        opacity = bgGlassOpacity,
+                        darkness = bgGlassDarkness,
+                        noise = bgGlassNoise,
+                        gridSize = bgGlassGridSize,
+                        gradient = bgGlassGradient,
+                        sheen = bgGlassSheen
+                    )
+                }
             }
 
             if (bgRenderEnabled && bgVignette > 0f) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .alpha(bgFadeAlpha.value)
                         .background(
                             Brush.radialGradient(
                                 colors = listOf(

@@ -200,6 +200,18 @@
     <string name="viz_music_sensitivity">Чувствительность визуализации музыки</string>
     <string name="viz_flash_sensitivity">Чувствительность вспышки музыки</string>
     <string name="viz_refresh_rate">Скорость изменения визуализации</string>
+    <string name="viz_config_title">Конфигурация визуализации</string>
+    <string name="viz_response_range">Диапазон полос отклика</string>
+    <string name="viz_fall_speed">Скорость падения</string>
+    <string name="viz_min_band">Минимальная полоса</string>
+    <string name="viz_max_band">Максимальная полоса</string>
+    <string name="viz_enabled">Включено</string>
+    <string name="viz_sensitivity">Чувствительность</string>
+    <string name="viz_bar_count">Количество полос</string>
+    <string name="viz_dim_speed">Скорость затемнения</string>
+    <string name="viz_min_darkness">Минимальная темнота</string>
+    <string name="viz_max_brightness">Максимальная яркость</string>
+    <string name="viz_flash_params">Параметры вспышки</string>
     <string name="low">Низкий</string>
     <string name="medium">Средний</string>
     <string name="high">Высокий</string>
@@ -451,6 +463,8 @@
     <string name="speaker_compensation_intensity">Интенсивность компенсации</string>
     <string name="speaker_compensation_desc">Статическая кривая компенсации динамика: применяет предопределённые усиления EQ для компенсации недостатков частотной характеристики динамика.</string>
     <string name="sync_compensation_to_manual_eq">Синхронизировать компенсацию с ручным EQ</string>
+    <string name="viz_3d_background">3D-фон</string>
+    <string name="viz_3d_glass_fade_exempt">Размытие 3D-фона</string>
     <string name="timer">Timer</string>
     <string name="spatial_offset_title">Spatial Offset</string>
     <string name="spatial_offset_distance">Offset Distance</string>

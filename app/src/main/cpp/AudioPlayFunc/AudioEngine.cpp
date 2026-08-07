@@ -831,8 +831,24 @@ oboe::DataCallbackResult AudioEngine::onAudioReady(oboe::AudioStream* stream, vo
     {
         std::lock_guard<std::mutex> vizLock(vizMutex_);
         constexpr int bandCount = 16;
+
+        // 音乐频谱分析: 累积当前回调的单声道音乐样本到环形缓冲,
+        // 满窗(1024)后 FFT 得到 16 频段 (对齐 web analyser.getByteFrequencyData 频域划分)
+        if (channelCount_ > 0) {
+            for (int32_t i = 0; i < numFrames; ++i) {
+                float mono = 0.0f;
+                for (int32_t c = 0; c < channelCount_; ++c) mono += musicBuffer_[i * channelCount_ + c];
+                mono /= static_cast<float>(channelCount_);
+                musicSpectrum_[musicSpectrumWrite_] = mono;
+                musicSpectrumWrite_ = (musicSpectrumWrite_ + 1) % kMusicFftN;
+                if (musicSpectrumFill_ < kMusicFftN) ++musicSpectrumFill_;
+            }
+        }
+        if (musicSpectrumFill_ >= kMusicFftN) {
+            computeMusicSpectrum();
+        }
+
         int samplesPerBand = totalSamples / bandCount;
-        
         if (samplesPerBand > 0) {
             float totalEnergy = 0.0f;
             float whiteNoiseEnergy = 0.0f;
@@ -841,25 +857,23 @@ oboe::DataCallbackResult AudioEngine::onAudioReady(oboe::AudioStream* stream, vo
             for (int b = 0; b < bandCount; ++b) {
                 float sum = 0.0f;
                 float wnSum = 0.0f;
-                float musicSum = 0.0f;
                 int start = b * samplesPerBand;
                 int end = std::min(start + samplesPerBand, totalSamples);
                 
                 for (int i = start; i < end; ++i) {
                     sum += std::abs(output[i]);
                     wnSum += std::abs(whiteNoiseBuffer_[i]);
-                    musicSum += std::abs(musicBuffer_[i]);
                 }
                 
                 // Calculate values and ensure they are valid (not NaN, not negative)
                 float vizValue = sum / samplesPerBand;
                 float wnValue = wnSum / samplesPerBand;
-                float musicValue = musicSum / samplesPerBand;
                 
                 // Filter out NaN and invalid values, clamp to valid range
                 vizData_[b] = (std::isnan(vizValue) || vizValue < 0.0f) ? 0.0f : std::clamp(vizValue, 0.0f, 1.0f);
                 whiteNoiseVizData_[b] = (std::isnan(wnValue) || wnValue < 0.0f) ? 0.0f : std::clamp(wnValue, 0.0f, 1.0f);
-                musicVizData_[b] = (std::isnan(musicValue) || musicValue < 0.0f) ? 0.0f : std::clamp(musicValue, 0.0f, 1.0f);
+                // 音乐可视化: 使用 FFT 频段 (computeMusicSpectrum 填充 musicBands_)
+                musicVizData_[b] = musicBands_[b];
                 
                 totalEnergy += vizData_[b];
                 whiteNoiseEnergy += whiteNoiseVizData_[b];
@@ -874,6 +888,78 @@ oboe::DataCallbackResult AudioEngine::onAudioReady(oboe::AudioStream* stream, vo
     }
 
     return oboe::DataCallbackResult::Continue;
+}
+
+void AudioEngine::computeMusicSpectrum() {
+    // 环形缓冲 → 连续时间窗 (最近 kMusicFftN 个样本)
+    for (int i = 0; i < kMusicFftN; ++i) {
+        musicSpectrumWorkRe_[i] = musicSpectrum_[(musicSpectrumWrite_ + i) % kMusicFftN];
+        musicSpectrumWorkIm_[i] = 0.0f;
+    }
+    fftRadix2(musicSpectrumWorkRe_.data(), musicSpectrumWorkIm_.data(), kMusicFftN);
+
+    // 幅度谱 bins 0..N/2-1 (N=1024 → 512 bins, bin i 频率 = i * sampleRate_ / N)
+    // 频段划分对齐 web (fftSize=512: bins 0-3 bass / 4-47 mid / 48+ treble):
+    //   bass:   bins 0..5    (0~258Hz)     → band 0-1
+    //   mid:    bins 6..95   (258~4134Hz)  → band 2-7
+    //   treble: bins 96..511 (4134~22050Hz)→ band 8-15
+    const float norm = 2.0f / kMusicFftN;  // 单边幅度归一化
+    constexpr int midBands = 6, trebleBands = 8;
+
+    auto bandAvg = [&](int from, int until) -> float {
+        if (until <= from) return 0.0f;
+        float s = 0.0f;
+        for (int i = from; i < until; ++i) {
+            float re = musicSpectrumWorkRe_[i], im = musicSpectrumWorkIm_[i];
+            s += std::sqrt(re * re + im * im);
+        }
+        return s / static_cast<float>(until - from);
+    };
+
+    musicBands_[0] = std::clamp(bandAvg(0, 3) * norm, 0.0f, 1.0f);
+    musicBands_[1] = std::clamp(bandAvg(3, 6) * norm, 0.0f, 1.0f);
+    for (int b = 0; b < midBands; ++b) {
+        int start = 6 + b * 15;
+        musicBands_[2 + b] = std::clamp(bandAvg(start, start + 15) * norm, 0.0f, 1.0f);
+    }
+    for (int b = 0; b < trebleBands; ++b) {
+        int start = 96 + b * 52;
+        musicBands_[8 + b] = std::clamp(bandAvg(start, start + 52) * norm, 0.0f, 1.0f);
+    }
+
+    // 填充 512 bins 幅度谱: 供上层按 Hz 频率范围直接采样 (bin i 频率 = i * sampleRate_ / kMusicFftN)
+    for (int i = 0; i < kMusicFftN / 2; ++i) {
+        float re = musicSpectrumWorkRe_[i], im = musicSpectrumWorkIm_[i];
+        musicSpectrumBins_[i] = std::clamp(std::sqrt(re * re + im * im) * norm, 0.0f, 1.0f);
+    }
+}
+
+void AudioEngine::fftRadix2(float* re, float* im, int n) {
+    // bit-reversal permutation
+    for (int i = 1, j = 0; i < n; ++i) {
+        int bit = n >> 1;
+        for (; j & bit; bit >>= 1) j ^= bit;
+        j ^= bit;
+        if (i < j) { std::swap(re[i], re[j]); std::swap(im[i], im[j]); }
+    }
+    const float kPi = 3.14159265358979323846f;
+    for (int len = 2; len <= n; len <<= 1) {
+        float ang = -2.0f * kPi / static_cast<float>(len);
+        float wRe = std::cos(ang), wIm = std::sin(ang);
+        for (int i = 0; i < n; i += len) {
+            float curRe = 1.0f, curIm = 0.0f;
+            for (int k = 0; k < len / 2; ++k) {
+                float uRe = re[i + k], uIm = im[i + k];
+                float vRe = re[i + k + len / 2] * curRe - im[i + k + len / 2] * curIm;
+                float vIm = re[i + k + len / 2] * curIm + im[i + k + len / 2] * curRe;
+                re[i + k] = uRe + vRe; im[i + k] = uIm + vIm;
+                re[i + k + len / 2] = uRe - vRe; im[i + k + len / 2] = uIm - vIm;
+                float nRe = curRe * wRe - curIm * wIm;
+                curIm = curRe * wIm + curIm * wRe;
+                curRe = nRe;
+            }
+        }
+    }
 }
 
 void AudioEngine::onErrorBeforeClose(oboe::AudioStream* stream, oboe::Result error) {
@@ -935,6 +1021,11 @@ std::array<float, 16> AudioEngine::getWhiteNoiseVisualizationData() const {
 std::array<float, 16> AudioEngine::getMusicVisualizationData() const {
     std::lock_guard<std::mutex> lock(vizMutex_);
     return musicVizData_;
+}
+
+std::array<float, AudioEngine::kMusicFftN / 2> AudioEngine::getMusicSpectrumBins() const {
+    std::lock_guard<std::mutex> lock(vizMutex_);
+    return musicSpectrumBins_;
 }
 
 float AudioEngine::getVisualizationEnergy() const {
